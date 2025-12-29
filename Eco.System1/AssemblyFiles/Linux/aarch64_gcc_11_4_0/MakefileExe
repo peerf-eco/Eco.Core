@@ -1,0 +1,107 @@
+ifeq ($(OS), Windows_NT)
+	#WINDOWS USE THESE DEFINITIONS
+	RM = -del /q /f
+	SLASH = \\
+	SWALLOW_OUTPUT = >nul 2>nul
+	TOOLCHAIN = $(ECO_TOOLCHAIN)/gcc-win64-11.1.0/bin/
+	TOOL = x86_64-w64-mingw32-
+else
+	#LINUX USE THESE DEFINITIONS
+	RM = -rm -f
+	SLASH = /
+	SWALLOW_OUTPUT =
+	TOOLCHAIN = 
+	TOOL = 
+endif 
+
+ifeq ($(TARGET), 1)
+OUT_TARGET = EcoSystem1UnitTest
+ifeq ($(DEBUG), 1)
+CONFIG_TARGET = StaticDebug
+CCFLAGS_TARGET = -Wall -g -DECO_LIB
+LDFLAGS_TARGET =
+ARCH_TARGET = arm64-v8a
+else
+CONFIG_TARGET = StaticRelease
+CCFLAGS_TARGET = -O3 -DECO_LIB
+LDFLAGS_TARGET =
+ARCH_TARGET = arm64-v8a
+endif
+else
+OUT_TARGET = EcoSystem1UnitTest
+ifeq ($(DEBUG), 1)
+CONFIG_TARGET = DynamicDebug
+CCFLAGS_TARGET = -Wall -g -DECO_DLL
+LDFLAGS_TARGET = 
+ARCH_TARGET = arm64-v8a
+else
+CONFIG_TARGET = DynamicRelease
+CCFLAGS_TARGET = -O3 -DECO_DLL
+LDFLAGS_TARGET = 
+ARCH_TARGET = arm64-v8a
+endif
+endif
+
+# source files.
+SRC = \
+..$(SLASH)..$(SLASH)..$(SLASH)UnitTestFiles$(SLASH)SourceFiles$(SLASH)EcoUnitTestMain.c
+
+
+# include directories
+INCLUDES = \
+-I ..$(SLASH)..$(SLASH)..$(SLASH)HeaderFiles \
+-I ..$(SLASH)..$(SLASH)..$(SLASH)SharedFiles \
+-I ..$(SLASH)..$(SLASH)..$(SLASH)UnitTestFiles$(SLASH)HeaderFiles \
+-I $(ECO_FRAMEWORK)$(SLASH)Eco.Core1$(SLASH)SharedFiles \
+-I $(ECO_FRAMEWORK)$(SLASH)Eco.InterfaceBus1$(SLASH)SharedFiles \
+-I $(ECO_FRAMEWORK)$(SLASH)Eco.FileSystemManagement1$(SLASH)SharedFiles \
+-I $(ECO_FRAMEWORK)$(SLASH)Eco.MemoryManager1$(SLASH)SharedFiles \
+-I $(ECO_FRAMEWORK)$(SLASH)Eco.List1$(SLASH)SharedFiles
+
+# libraries directories
+LIB_DIR = \
+-L ..$(SLASH)..$(SLASH)..$(SLASH)BuildFiles$(SLASH)Linux$(SLASH)$(ARCH_TARGET)$(SLASH)$(CONFIG_TARGET) \
+-L $(ECO_FRAMEWORK)$(SLASH)Eco.InterfaceBus1$(SLASH)BuildFiles$(SLASH)Linux$(SLASH)$(ARCH_TARGET)$(SLASH)StaticRelease \
+-L $(ECO_FRAMEWORK)$(SLASH)Eco.FileSystemManagement1$(SLASH)BuildFiles$(SLASH)Linux$(SLASH)$(ARCH_TARGET)$(SLASH)StaticRelease \
+-L $(ECO_FRAMEWORK)$(SLASH)Eco.MemoryManager1$(SLASH)BuildFiles$(SLASH)Linux$(SLASH)$(ARCH_TARGET)$(SLASH)StaticRelease \
+-L $(ECO_FRAMEWORK)$(SLASH)Eco.System1$(SLASH)BuildFiles$(SLASH)Linux$(SLASH)$(ARCH_TARGET)$(SLASH)StaticRelease \
+-L $(ECO_FRAMEWORK)$(SLASH)Eco.List1$(SLASH)BuildFiles$(SLASH)Linux$(SLASH)$(ARCH_TARGET)$(SLASH)StaticRelease
+
+OBJ = $(SRC:.c=.o)
+
+OUT = $(OUT_TARGET)
+OUT_DIR = ..$(SLASH)..$(SLASH)..$(SLASH)BuildFiles$(SLASH)Linux$(SLASH)$(ARCH_TARGET)$(SLASH)$(CONFIG_TARGET)
+
+# C++ compiler flags (-g -O2 -Wall)
+CCFLAGS = $(CCFLAGS_TARGET) -DLINUX -DUGUID_UTILITY -DECO_LINUX -DECO_AARCH64
+
+# compiler
+GNU = $(TOOLCHAIN)
+CC = $(TOOL)gcc
+AR = $(TOOL)gcc-ar
+
+ifeq ($(TARGET), 1)
+LIBS_TARGET= -l00000000000000000000000042757331 -l00000000000000000000000046534D31 -l0000000000000000000000004D656D31 -l53884AFC93C448ECAA929C8D3A562281
+else
+LIBS_TARGET=
+endif
+
+# library paths
+LIBS = $(LIB_DIR) -lm -lc -lgcc -ldl -l00000000000000000000000053595333 $(LIBS_TARGET)
+
+# compile flags
+LDFLAGS = $(LDFLAGS_TARGET) $(LIBS)
+
+.SUFFIXES: .c
+
+.c.o:
+	$(GNU)$(CC) $(INCLUDES) $(CCFLAGS) -c $< -o $@
+
+$(OUT): $(OBJ)
+	mkdir -p $(OUT_DIR)
+	$(GNU)$(CC) ${LDFLAGS} -o $(OUT_DIR)/$(OUT) $(OBJ) $(LDFLAGS)
+	rm $(OBJ)
+
+clean:
+	rm $(OBJ) $(OUT_DIR)/$(OUT)
+
