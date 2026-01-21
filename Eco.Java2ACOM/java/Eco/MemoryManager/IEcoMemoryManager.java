@@ -1,0 +1,13 @@
+package Eco.MemoryManager;
+
+import Eco.Core.IEcoUnknown;
+import Eco.Core.UGUID;
+
+public class IEcoMemoryManager extends IEcoUnknown {
+    public static UGUID CID = new UGUID((byte) 0x01, (byte) 0x10, new byte[]{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x4D, 0x65, 0x6D, 0x31});
+    public static UGUID IID = new UGUID((byte) 0x01, (byte) 0x10, new byte[]{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, (byte) 0xB0, 0x00, 0x00, 0x00, 0x01, 0x01});
+
+    public native int Init(long startAddress, long size);
+    public native boolean get_Status(EcoMemoryManagerStatus status);
+    public native boolean get_UsedBlocks(EcoMemoryManagerBlock[] blocks, long[] sizeInBlocks);
+}

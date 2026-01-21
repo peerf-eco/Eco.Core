@@ -1,0 +1,12 @@
+package Eco.FileSystemManagement;
+
+import Eco.Core.IEcoUnknown;
+import Eco.Core.UGUID;
+
+public class IEcoFileManager extends IEcoUnknown {
+    public static UGUID IID = new UGUID((byte) 0x01, (byte) 0x10, new byte[]{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, (byte) 0xC0, 0x00, 0x00, 0x00, 0x01, 0x02});
+
+    public native IEcoFile Create(String pszName);
+    public native IEcoFile Open(String pszName);
+    public native int Close(IEcoFile iFile);
+}
