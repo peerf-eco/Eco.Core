@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "eco-python2acom"
-version = "0.1.0"
+version = "0.2.0"
 description = "Library for working with ACOM in Python"
 authors = ["Sergei Vdovenkov <vdovenkov2000@gmail.com>"]
 readme = "README.md"
@@ -102,6 +102,7 @@ warn_no_return = true
 warn_unreachable = true
 strict_equality = true
 show_error_codes = true
+disable_error_code = ["attr-defined", "empty-body"] # Allow dynamic attributes in examples (interface decorators add _iid_ dynamically)
 
 [[tool.mypy.overrides]]
 module = [
@@ -109,8 +110,6 @@ module = [
     "examples.*",
 ]
 disallow_untyped_defs = false
-# Allow dynamic attributes in examples (interface decorators add _iid_ dynamically)
-disable_error_code = ["attr-defined", "empty-body"]
 
 [tool.pytest.ini_options]
 minversion = "7.0"

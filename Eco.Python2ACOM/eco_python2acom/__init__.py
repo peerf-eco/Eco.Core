@@ -3,29 +3,34 @@
 This library provides a bridge between Python and ACOM (Eco Component Object Model),
 enabling Python applications to load and interact with EcoOS components.
 
-Version: 0.1.0 - Core types module
+Version: 0.2.0 - Core types + Interface decorators
 
 Current features:
     - ctypes aliases for EcoOS C types (Int16, Int32, etc.)
     - UGUID structure for component/interface identification
     - Error handling with EcoError and EcoErrorCode
+    - Interface decorators (@interface, @method) for declarative definitions
+    - Base interfaces (IEcoUnknown, IEcoComponentFactory)
 
 Planned features (next versions):
-    - Interface decorators (@interface, @method)
     - EcoSystem container (Unikernel Bridge)
     - ComponentWrapper for calling component methods
     - Logging support
 
-Example (basic types):
-    >>> from eco_python2acom import Int16, Int32, Bool, VoidPtr
-    >>> from eco_python2acom import UGUID, EcoError
+Example (defining an interface):
+    >>> from eco_python2acom import interface, method, Int16, Int32
+    >>>
+    >>> @interface(iid="93221116-2248-4742-AE06-82819447843D")
+    ... class IEcoCalculatorX:
+    ...     @method
+    ...     def Addition(self, a: Int16, b: Int16) -> Int32: ...
 
 Notes:
     - This library is part of the EcoOS ecosystem.
     - For more information, see: https://docs.ecoos.dev/
 """
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
 # Core exports (types, errors, GUID)
 from eco_python2acom.core import (
@@ -79,6 +84,21 @@ from eco_python2acom.core import (
     check_result,
     get_type_size,
     is_success,
+)
+
+# Interface exports
+from eco_python2acom.interfaces import (
+    IEcoComponentFactory,
+    IEcoComponentFactoryVTbl,
+    IEcoUnknown,
+    IEcoUnknownVTbl,
+    InterfaceDescriptor,
+    MethodDescriptor,
+    get_all_interfaces,
+    get_interface,
+    iid_of,
+    interface,
+    method,
 )
 
 __all__ = [
@@ -149,4 +169,19 @@ __all__ = [
     "EcoErrorCode",
     "check_result",
     "is_success",
+    # Base interfaces
+    "IEcoUnknown",
+    "IEcoUnknownVTbl",
+    "IEcoComponentFactory",
+    "IEcoComponentFactoryVTbl",
+    # Interface decorators
+    "interface",
+    "method",
+    "iid_of",
+    # Interface descriptors
+    "InterfaceDescriptor",
+    "MethodDescriptor",
+    # Interface registry
+    "get_interface",
+    "get_all_interfaces",
 ]
