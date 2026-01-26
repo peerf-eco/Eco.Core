@@ -81,6 +81,7 @@ ignore = [
     "E501",  # line too long, handled by black
     "B008",  # do not perform function calls in argument defaults
     "C901",  # too complex
+    "UP007", # Use X | Y for type annotations - prefer Optional
 ]
 
 [tool.ruff.lint.per-file-ignores]
@@ -96,7 +97,7 @@ check_untyped_defs = true
 disallow_untyped_decorators = false
 no_implicit_optional = true
 warn_redundant_casts = true
-warn_unused_ignores = true
+warn_unused_ignores = false  # Disable to allow 'type: ignore' without warnings
 warn_no_return = true
 warn_unreachable = true
 strict_equality = true
@@ -105,8 +106,11 @@ show_error_codes = true
 [[tool.mypy.overrides]]
 module = [
     "tests.*",
+    "examples.*",
 ]
 disallow_untyped_defs = false
+# Allow dynamic attributes in examples (interface decorators add _iid_ dynamically)
+disable_error_code = ["attr-defined", "empty-body"]
 
 [tool.pytest.ini_options]
 minversion = "7.0"

@@ -1,49 +1,33 @@
-"""Eco.Python2ACOM - Python to ACOM Bridge Library.
+"""Core module for eco_python2acom.
 
-This library provides a bridge between Python and ACOM (Eco Component Object Model),
-enabling Python applications to load and interact with EcoOS components.
+This module provides fundamental types, GUID handling, and error codes
+for working with ACOM (Eco Component Object Model) components.
 
-Version: 0.1.0 - Core types module
+Submodules:
+    - types: ctypes aliases for EcoOS C types
+    - guid: UGUID structure and utilities
+    - errors: EcoError exception and error codes
 
-Current features:
-    - ctypes aliases for EcoOS C types (Int16, Int32, etc.)
-    - UGUID structure for component/interface identification
-    - Error handling with EcoError and EcoErrorCode
-
-Planned features (next versions):
-    - Interface decorators (@interface, @method)
-    - EcoSystem container (Unikernel Bridge)
-    - ComponentWrapper for calling component methods
-    - Logging support
-
-Example (basic types):
-    >>> from eco_python2acom import Int16, Int32, Bool, VoidPtr
-    >>> from eco_python2acom import UGUID, EcoError
-
-Notes:
-    - This library is part of the EcoOS ecosystem.
-    - For more information, see: https://docs.ecoos.dev/
+Example:
+    >>> from eco_python2acom.core import Int16, Int32, UGUID, EcoError
+    >>> from eco_python2acom.core import IS_WINDOWS, IS_64BIT
 """
 
-__version__ = "0.1.0"
-
-# Core exports (types, errors, GUID)
-from eco_python2acom.core import (
+from eco_python2acom.core.errors import EcoError, EcoErrorCode, check_result, is_success
+from eco_python2acom.core.guid import UGUID
+from eco_python2acom.core.types import (
     FUNCTYPE,
     IS_64BIT,
     IS_LINUX,
     IS_MACOS,
     IS_WINDOWS,
     TYPE_SIZES,
-    UGUID,
     Bool,
     Byte,
     Char,
     CharPtr,
     Double,
     DoublePtr,
-    EcoError,
-    EcoErrorCode,
     EcoResult,
     Float,
     FloatPtr,
@@ -76,14 +60,10 @@ from eco_python2acom.core import (
     VoidPtrPtr,
     WChar,
     WCharPtr,
-    check_result,
     get_type_size,
-    is_success,
 )
 
 __all__ = [
-    # Version
-    "__version__",
     # Platform detection
     "IS_WINDOWS",
     "IS_LINUX",
