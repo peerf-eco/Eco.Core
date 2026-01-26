@@ -1,7 +1,7 @@
 """Type aliases for ACOM/EcoOS types.
 
 This module provides Python ctypes aliases that correspond to EcoOS C types
-from the `depend.h` header file. These aliases simplify the declaration of
+from the depend.h header file. These aliases simplify the declaration of
 interface methods and ensure type compatibility when calling DLL functions.
 
 Supported platforms:
@@ -232,14 +232,6 @@ DoublePtr = POINTER(c_double)
 
 # Pointer to void pointer (double pointer)
 VoidPtrPtr = POINTER(c_void_p)
-
-# =============================================================================
-# HRESULT Type (for COM compatibility)
-# =============================================================================
-
-# HRESULT is a 32-bit value used for error codes
-# In EcoOS, result codes are int16_t, but we provide this for COM interop
-HResult: TypeAlias = c_int32
 
 # =============================================================================
 # EcoOS-specific Result Type
