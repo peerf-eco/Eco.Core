@@ -1,0 +1,86 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup Label="NsightTegraProject">
+    <NsightTegraProjectRevisionNumber>11</NsightTegraProjectRevisionNumber>
+  </PropertyGroup>
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Tegra-Android">
+      <Configuration>Debug</Configuration>
+      <Platform>Tegra-Android</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Tegra-Android">
+      <Configuration>Release</Configuration>
+      <Platform>Tegra-Android</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Shipping|Tegra-Android">
+      <Configuration>Shipping</Configuration>
+      <Platform>Tegra-Android</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\..\HeaderFiles\CEcoCommandArguments1.h" />
+    <ClInclude Include="..\..\..\HeaderFiles\CEcoSystem1.h" />
+    <ClInclude Include="..\..\..\HeaderFiles\CEcoSystem1EntryPoint.h" />
+    <ClInclude Include="..\..\..\HeaderFiles\CEcoSystemInformation1.h" />
+    <ClInclude Include="..\..\..\SharedFiles\IEcoAndroidNativeApp1.h" />
+    <ClInclude Include="..\..\..\SharedFiles\IEcoCommandArguments1.h" />
+    <ClInclude Include="..\..\..\SharedFiles\IEcoSystemInformation1.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\..\SourceFiles\CEcoSystem1.c" />
+    <ClCompile Include="..\..\..\SourceFiles\CEcoSystem1EntryPoint.c" />
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{E9F40AAF-C416-452A-80D1-073941E9E8A0}</ProjectGuid>
+    <RootNamespace>Eco.System1</RootNamespace>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Label="Configuration" Condition="'$(Configuration)|$(Platform)'=='Debug|Tegra-Android'">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <AndroidTargetAPI>android-15</AndroidTargetAPI>
+    <AndroidArch>armv7-a</AndroidArch>
+    <AndroidMinAPI>android-15</AndroidMinAPI>
+  </PropertyGroup>
+  <PropertyGroup Label="Configuration" Condition="'$(Configuration)|$(Platform)'=='Release|Tegra-Android'">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <AndroidTargetAPI>android-15</AndroidTargetAPI>
+  </PropertyGroup>
+  <PropertyGroup Label="Configuration" Condition="'$(Configuration)|$(Platform)'=='Shipping|Tegra-Android'">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <AndroidTargetAPI>android-15</AndroidTargetAPI>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros">
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Tegra-Android'">
+    <TargetName>lib00000000000000000000000000000100</TargetName>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Tegra-Android'">
+    <ClCompile>
+      <CppLanguageStandard>gnu++11</CppLanguageStandard>
+      <AdditionalIncludeDirectories>..\..\..\HeaderFiles;..\..\..\SharedFiles;..\..\..\..\Eco.Core1\SharedFiles;..\..\..\..\Eco.InterfaceBus1\SharedFiles;..\..\..\..\Eco.MemoryManager1\SharedFiles;..\..\..\..\Eco.FileSystemManagement1\SharedFiles</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>ECO_LIB;ECO_ANDROID;UGUID_UTILITY;__ANDROID__;ECO_MEM_EXT;ECO_FILE_EXT;ECO_NET_EXT</PreprocessorDefinitions>
+    </ClCompile>
+    <Lib>
+      <AdditionalDependencies>00000000000000000000000042757331;00000000000000000000000046534D31;0000000000000000000000004D656D31;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>..\..\..\..\Eco.FileSystemManagement1\BuildFiles\Android\armeabi-v7a\StaticDebug;..\..\..\..\Eco.MemoryManager1\BuildFiles\Android\armeabi-v7a\StaticDebug;..\..\..\..\Eco.InterfaceBus1\BuildFiles\Android\armeabi-v7a\StaticDebug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <ThinArchive>true</ThinArchive>
+      <OutputFile>..\..\..\BuildFiles\Android\armeabi-v7a\StaticDebug\$(TargetName)$(TargetExt)</OutputFile>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Tegra-Android'">
+    <ClCompile>
+      <CppLanguageStandard>gnu++11</CppLanguageStandard>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Shipping|Tegra-Android'">
+    <ClCompile>
+      <CppLanguageStandard>gnu++11</CppLanguageStandard>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

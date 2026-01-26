@@ -1,0 +1,109 @@
+LOCAL_PATH:= $(call my-dir)
+
+
+ifeq ($(TARGET_ARCH_ABI),armeabi)
+  ARCH_TARGET := ECO_ARM
+  LIBS_TARGET := 00000000000000000000000053595331
+endif
+ifeq ($(TARGET_ARCH_ABI),armeabi-v7a)
+  ARCH_TARGET := ECO_AARCH32
+  LIBS_TARGET := 00000000000000000000000053595332
+endif
+ifeq ($(TARGET_ARCH_ABI),arm64-v8a)
+  ARCH_TARGET := ECO_AARCH64
+  LIBS_TARGET := 00000000000000000000000053595333
+endif
+ifeq ($(TARGET_ARCH_ABI),mips)
+  ARCH_TARGET := ECO_MIPS
+  LIBS_TARGET := 00000000000000000000000053595331
+endif
+ifeq ($(TARGET_ARCH_ABI),mips64)
+  ARCH_TARGET := ECO_MIPS64
+  LIBS_TARGET := 00000000000000000000000053595332
+endif
+ifeq ($(TARGET_ARCH_ABI),x86)
+  ARCH_TARGET := ECO_X86_32
+  LIBS_TARGET := 00000000000000000000000053595332
+endif
+ifeq ($(TARGET_ARCH_ABI),x86_64)
+  ARCH_TARGET := ECO_X86_64
+  LIBS_TARGET := 00000000000000000000000053595333
+endif
+
+########################
+# prepare Eco.System1
+include $(CLEAR_VARS)
+LOCAL_MODULE    := lib$(LIBS_TARGET)
+LOCAL_SRC_FILES := $(LOCAL_PATH)/../../../../../../BuildFiles/Android/$(TARGET_ARCH_ABI)/StaticRelease/lib$(LIBS_TARGET).a 
+include $(PREBUILT_STATIC_LIBRARY)
+########################
+
+########################
+# prepare Eco.InterfaceBus1
+include $(CLEAR_VARS)
+LOCAL_MODULE    := lib00000000000000000000000042757331
+LOCAL_SRC_FILES := $(ECO_FRAMEWORK)/Eco.InterfaceBus1/BuildFiles/Android/$(TARGET_ARCH_ABI)/StaticRelease/lib00000000000000000000000042757331.a 
+include $(PREBUILT_STATIC_LIBRARY)
+########################
+
+########################
+# prepare Eco.MemoryManager1
+include $(CLEAR_VARS)
+LOCAL_MODULE    := lib0000000000000000000000004D656D31
+LOCAL_SRC_FILES := $(ECO_FRAMEWORK)/Eco.MemoryManager1/BuildFiles/Android/$(TARGET_ARCH_ABI)/StaticRelease/lib0000000000000000000000004D656D31.a 
+include $(PREBUILT_STATIC_LIBRARY)
+########################
+
+########################
+# prepare Eco.FileSystemManagement1
+include $(CLEAR_VARS)
+LOCAL_MODULE    := lib00000000000000000000000046534D31
+LOCAL_SRC_FILES := $(ECO_FRAMEWORK)/Eco.FileSystemManagement1/BuildFiles/Android/$(TARGET_ARCH_ABI)/StaticRelease/lib00000000000000000000000046534D31.a 
+include $(PREBUILT_STATIC_LIBRARY)
+########################
+
+########################
+# prepare Eco.List1
+include $(CLEAR_VARS)
+LOCAL_MODULE    := lib53884AFC93C448ECAA929C8D3A562281
+LOCAL_SRC_FILES := $(ECO_FRAMEWORK)/Eco.List1/BuildFiles/Android/$(TARGET_ARCH_ABI)/StaticRelease/lib53884AFC93C448ECAA929C8D3A562281.a 
+include $(PREBUILT_STATIC_LIBRARY)
+########################
+
+#
+# Eco.System1UnitTest
+#
+include $(CLEAR_VARS)
+
+LOCAL_C_INCLUDES := $(ECO_FRAMEWORK)/Eco.Core1/SharedFiles
+LOCAL_C_INCLUDES += $(ECO_FRAMEWORK)/Eco.InterfaceBus1/SharedFiles
+LOCAL_C_INCLUDES += $(ECO_FRAMEWORK)/Eco.MemoryManager1/SharedFiles
+LOCAL_C_INCLUDES += $(ECO_FRAMEWORK)/Eco.FileSystemManagement1/SharedFiles
+LOCAL_C_INCLUDES += $(ECO_FRAMEWORK)/Eco.List1/SharedFiles
+LOCAL_C_INCLUDES += $(LOCAL_PATH)/../../../../../HeaderFiles
+LOCAL_C_INCLUDES += $(LOCAL_PATH)/../../../../../HeaderFiles/Android
+LOCAL_C_INCLUDES += $(LOCAL_PATH)/../../../../../SharedFiles
+LOCAL_C_INCLUDES += $(LOCAL_PATH)/../../../../../UnitTestFiles/HeaderFiles
+TARGET_PLATFORM := android-15
+TARGET_OUT := $(LOCAL_PATH)/../build/libs/$(TARGET_ARCH_ABI)/$(CONFIGURATION)
+LOCAL_SRC_FILES := $(LOCAL_PATH)/../../../../../../UnitTestFiles/SourceFiles/EcoUnitTestMain.c \
+$(LOCAL_PATH)/../../../../../../UnitTestFiles/SourceFiles/EcoDemoDialogAid.c
+
+
+ifeq ($(TARGET_LINK),0)
+
+LOCAL_MODULE := Eco.System1UnitTest
+LOCAL_CFLAGS := -std=c99 -DECO_LIB -DECO_ANDROID -DUGUID_UTILITY -D__ANDROID__ -DDISABLE_IMPORTGL -D$(ARCH_TARGET)
+LOCAL_LDLIBS := -lc -lm -llog -landroid -latomic -lEGL -lGLESv1_CM
+LOCAL_LDFLAGS += -u ANativeActivity_onCreate
+LOCAL_STATIC_LIBRARIES := $(LIBS_TARGET) 00000000000000000000000042757331 0000000000000000000000004D656D31 00000000000000000000000046534D31 53884AFC93C448ECAA929C8D3A562281
+include $(BUILD_SHARED_LIBRARY)
+
+else
+
+LOCAL_MODULE := Eco.VFB1UnitTest
+LOCAL_CFLAGS := -std=c99 -DECO_DLL -DECO_ANDROID -DUGUID_UTILITY -D__ANDROID__
+
+include $(BUILD_EXECUTABLE)
+
+endif

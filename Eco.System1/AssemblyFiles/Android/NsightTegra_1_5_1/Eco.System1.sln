@@ -1,0 +1,46 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Eco.System1", "Eco.System1.vcxproj", "{E9F40AAF-C416-452A-80D1-073941E9E8A0}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Eco.Syatem1UnitTest", "Eco.Syatem1UnitTest.vcxproj", "{78C541F7-3239-4BBC-BB39-69404B960DA5}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Tegra-Android = Debug|Tegra-Android
+		Release|Tegra-Android = Release|Tegra-Android
+		Shipping|Tegra-Android = Shipping|Tegra-Android
+		StaticDebug|Tegra-Android = StaticDebug|Tegra-Android
+		StaticRelease|Tegra-Android = StaticRelease|Tegra-Android
+		StaticShipping|Tegra-Android = StaticShipping|Tegra-Android
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{E9F40AAF-C416-452A-80D1-073941E9E8A0}.Debug|Tegra-Android.ActiveCfg = Debug|Tegra-Android
+		{E9F40AAF-C416-452A-80D1-073941E9E8A0}.Debug|Tegra-Android.Build.0 = Debug|Tegra-Android
+		{E9F40AAF-C416-452A-80D1-073941E9E8A0}.Release|Tegra-Android.ActiveCfg = Release|Tegra-Android
+		{E9F40AAF-C416-452A-80D1-073941E9E8A0}.Release|Tegra-Android.Build.0 = Release|Tegra-Android
+		{E9F40AAF-C416-452A-80D1-073941E9E8A0}.Shipping|Tegra-Android.ActiveCfg = Shipping|Tegra-Android
+		{E9F40AAF-C416-452A-80D1-073941E9E8A0}.Shipping|Tegra-Android.Build.0 = Shipping|Tegra-Android
+		{E9F40AAF-C416-452A-80D1-073941E9E8A0}.StaticDebug|Tegra-Android.ActiveCfg = Debug|Tegra-Android
+		{E9F40AAF-C416-452A-80D1-073941E9E8A0}.StaticDebug|Tegra-Android.Build.0 = Debug|Tegra-Android
+		{E9F40AAF-C416-452A-80D1-073941E9E8A0}.StaticRelease|Tegra-Android.ActiveCfg = Release|Tegra-Android
+		{E9F40AAF-C416-452A-80D1-073941E9E8A0}.StaticRelease|Tegra-Android.Build.0 = Release|Tegra-Android
+		{E9F40AAF-C416-452A-80D1-073941E9E8A0}.StaticShipping|Tegra-Android.ActiveCfg = Shipping|Tegra-Android
+		{E9F40AAF-C416-452A-80D1-073941E9E8A0}.StaticShipping|Tegra-Android.Build.0 = Shipping|Tegra-Android
+		{78C541F7-3239-4BBC-BB39-69404B960DA5}.Debug|Tegra-Android.ActiveCfg = StaticDebug|Tegra-Android
+		{78C541F7-3239-4BBC-BB39-69404B960DA5}.Debug|Tegra-Android.Build.0 = StaticDebug|Tegra-Android
+		{78C541F7-3239-4BBC-BB39-69404B960DA5}.Release|Tegra-Android.ActiveCfg = StaticRelease|Tegra-Android
+		{78C541F7-3239-4BBC-BB39-69404B960DA5}.Release|Tegra-Android.Build.0 = StaticRelease|Tegra-Android
+		{78C541F7-3239-4BBC-BB39-69404B960DA5}.Shipping|Tegra-Android.ActiveCfg = StaticShipping|Tegra-Android
+		{78C541F7-3239-4BBC-BB39-69404B960DA5}.Shipping|Tegra-Android.Build.0 = StaticShipping|Tegra-Android
+		{78C541F7-3239-4BBC-BB39-69404B960DA5}.StaticDebug|Tegra-Android.ActiveCfg = StaticDebug|Tegra-Android
+		{78C541F7-3239-4BBC-BB39-69404B960DA5}.StaticDebug|Tegra-Android.Build.0 = StaticDebug|Tegra-Android
+		{78C541F7-3239-4BBC-BB39-69404B960DA5}.StaticRelease|Tegra-Android.ActiveCfg = StaticRelease|Tegra-Android
+		{78C541F7-3239-4BBC-BB39-69404B960DA5}.StaticRelease|Tegra-Android.Build.0 = StaticRelease|Tegra-Android
+		{78C541F7-3239-4BBC-BB39-69404B960DA5}.StaticShipping|Tegra-Android.ActiveCfg = StaticShipping|Tegra-Android
+		{78C541F7-3239-4BBC-BB39-69404B960DA5}.StaticShipping|Tegra-Android.Build.0 = StaticShipping|Tegra-Android
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
