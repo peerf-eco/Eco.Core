@@ -6,10 +6,11 @@ definition tools using Python decorators.
 Submodules:
     base:
         IEcoUnknown - Base interface for all ACOM components.
-        IEcoUnknownVTbl - Virtual table for IEcoUnknown.
         IEcoComponentFactory - Factory interface for component creation.
-        IEcoComponentFactoryVTbl - Virtual table for factory.
-        Pointer types (IEcoUnknownPtr, IEcoComponentFactoryPtr).
+        IEcoInterfaceBus1 - Interface bus for component registration/querying.
+        IEcoInterfaceBus1MemExt - Memory extension for the interface bus.
+        IEcoMemoryManager1 - Memory management interface.
+        Well-known GUIDs (CID_*, IID_*, GID_*).
         Helper functions (create_vtbl_type, create_interface_type).
 
     decorators:

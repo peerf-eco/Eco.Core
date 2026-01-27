@@ -10,10 +10,12 @@ Package Structure:
     │   ├── guid        # UGUID structure for identifiers
     │   └── errors      # EcoError exception and error codes
     ├── interfaces/     # Interface definitions and decorators
-    │   ├── base        # IEcoUnknown, IEcoComponentFactory
+    │   ├── base        # IEcoUnknown, IEcoComponentFactory, IEcoInterfaceBus1
     │   └── decorators  # @interface, @method decorators
-    └── client/         # Client-side component wrappers
-        └── component   # ComponentWrapper class
+    ├── client/         # Client-side component wrappers
+    │   └── component   # ComponentWrapper class
+    └── runtime/        # EcoOS runtime initialization
+        └── system      # EcoSystem container (Unikernel Bridge)
 
 Usage:
     Import from submodules explicitly for better clarity:
@@ -23,6 +25,7 @@ Usage:
     >>> from eco_python2acom.core.errors import EcoError, check_result
     >>> from eco_python2acom.interfaces.decorators import interface, method
     >>> from eco_python2acom.client.component import ComponentWrapper
+    >>> from eco_python2acom.runtime.system import EcoSystem
 
 Example:
     >>> from eco_python2acom.core.types import Int16, Int32
@@ -39,6 +42,6 @@ Notes:
     - For more information, see: https://docs.ecoos.dev/
 """
 
-__version__ = "0.3.0"
+__version__ = "0.4.0"
 
 __all__: list[str] = ["__version__"]
