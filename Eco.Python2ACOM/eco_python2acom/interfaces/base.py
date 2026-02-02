@@ -133,16 +133,6 @@ IEcoUnknownPtrPtr = ctypes.POINTER(IEcoUnknownPtr)
 # IEcoUnknown Virtual Table
 # =============================================================================
 
-# Method signatures for IEcoUnknown
-# int16_t QueryInterface(IEcoUnknownPtr me, const UGUID* riid, voidptr_t* ppv)
-QueryInterfaceFunc = FUNCTYPE(Int16, IEcoUnknownPtr, UGUIDPtr, VoidPtrPtr)
-
-# uint32_t AddRef(IEcoUnknownPtr me)
-AddRefFunc = FUNCTYPE(UInt32, IEcoUnknownPtr)
-
-# uint32_t Release(IEcoUnknownPtr me)
-ReleaseFunc = FUNCTYPE(UInt32, IEcoUnknownPtr)
-
 
 class IEcoUnknownVTbl(ctypes.Structure):
     """Virtual table for IEcoUnknown interface.
@@ -150,16 +140,18 @@ class IEcoUnknownVTbl(ctypes.Structure):
     Contains function pointers for the three fundamental methods:
     QueryInterface, AddRef, and Release.
 
-    Attributes:
-        QueryInterface: Query for a specific interface by IID.
-        AddRef: Increment the reference count.
-        Release: Decrement the reference count.
+    Note:
+        All pointer arguments use VoidPtr for compatibility with c_void_p
+        values passed from Python code.
     """
 
     _fields_: ClassVar[list[tuple[str, type]]] = [
-        ("QueryInterface", QueryInterfaceFunc),
-        ("AddRef", AddRefFunc),
-        ("Release", ReleaseFunc),
+        # int16_t QueryInterface(me, riid, ppv)
+        ("QueryInterface", FUNCTYPE(Int16, VoidPtr, UGUIDPtr, VoidPtrPtr)),
+        # uint32_t AddRef(me)
+        ("AddRef", FUNCTYPE(UInt32, VoidPtr)),
+        # uint32_t Release(me)
+        ("Release", FUNCTYPE(UInt32, VoidPtr)),
     ]
 
 
@@ -171,24 +163,6 @@ IEcoUnknown._fields_ = [("pVTbl", ctypes.POINTER(IEcoUnknownVTbl))]
 # IEcoComponentFactory Virtual Table
 # =============================================================================
 
-# Method signatures for IEcoComponentFactory
-# int16_t Alloc(me, pISystem, pIUnknownOuter, riid, ppv)
-AllocFunc = FUNCTYPE(
-    Int16, IEcoComponentFactoryPtr, IEcoUnknownPtr, IEcoUnknownPtr, UGUIDPtr, VoidPtrPtr
-)
-
-# int16_t Init(me, pISystem, pv)
-InitFunc = FUNCTYPE(Int16, IEcoComponentFactoryPtr, IEcoUnknownPtr, VoidPtr)
-
-# char_t* get_Name(me)
-GetNameFunc = FUNCTYPE(CharPtr, IEcoComponentFactoryPtr)
-
-# char_t* get_Version(me)
-GetVersionFunc = FUNCTYPE(CharPtr, IEcoComponentFactoryPtr)
-
-# char_t* get_Manufacturer(me)
-GetManufacturerFunc = FUNCTYPE(CharPtr, IEcoComponentFactoryPtr)
-
 
 class IEcoComponentFactoryVTbl(ctypes.Structure):
     """Virtual table for IEcoComponentFactory interface.
@@ -196,28 +170,27 @@ class IEcoComponentFactoryVTbl(ctypes.Structure):
     Contains function pointers for factory methods including
     IEcoUnknown methods and factory-specific methods.
 
-    Attributes:
-        QueryInterface: Query for a specific interface by IID (inherited).
-        AddRef: Increment the reference count (inherited).
-        Release: Decrement the reference count (inherited).
-        Alloc: Allocate a new component instance.
-        Init: Initialize a component instance.
-        get_Name: Get the component name.
-        get_Version: Get the component version.
-        get_Manufacturer: Get the component manufacturer.
+    Note:
+        All pointer arguments use VoidPtr for compatibility with c_void_p
+        values passed from Python code.
     """
 
     _fields_: ClassVar[list[tuple[str, type]]] = [
         # IEcoUnknown methods
-        ("QueryInterface", FUNCTYPE(Int16, IEcoComponentFactoryPtr, UGUIDPtr, VoidPtrPtr)),
-        ("AddRef", FUNCTYPE(UInt32, IEcoComponentFactoryPtr)),
-        ("Release", FUNCTYPE(UInt32, IEcoComponentFactoryPtr)),
+        ("QueryInterface", FUNCTYPE(Int16, VoidPtr, UGUIDPtr, VoidPtrPtr)),
+        ("AddRef", FUNCTYPE(UInt32, VoidPtr)),
+        ("Release", FUNCTYPE(UInt32, VoidPtr)),
         # IEcoComponentFactory methods
-        ("Alloc", AllocFunc),
-        ("Init", InitFunc),
-        ("get_Name", GetNameFunc),
-        ("get_Version", GetVersionFunc),
-        ("get_Manufacturer", GetManufacturerFunc),
+        # int16_t Alloc(me, pISystem, pIUnknownOuter, riid, ppv)
+        ("Alloc", FUNCTYPE(Int16, VoidPtr, VoidPtr, VoidPtr, UGUIDPtr, VoidPtrPtr)),
+        # int16_t Init(me, pISystem, pv)
+        ("Init", FUNCTYPE(Int16, VoidPtr, VoidPtr, VoidPtr)),
+        # char_t* get_Name(me)
+        ("get_Name", FUNCTYPE(CharPtr, VoidPtr)),
+        # char_t* get_Version(me)
+        ("get_Version", FUNCTYPE(CharPtr, VoidPtr)),
+        # char_t* get_Manufacturer(me)
+        ("get_Manufacturer", FUNCTYPE(CharPtr, VoidPtr)),
     ]
 
 
