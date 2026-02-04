@@ -3,6 +3,11 @@
 - Build `Java2ACOM.dll`
   - Go to `cd AssemblyFiles/Windows`
   - Change `MICROSOFT_VISUAL_STUDIO_PATH` and `MICROSOFT_SDK_PATH` in `build.bat` if needed
+  - Install `libffi`
+    - Download [libffi-3.5.2-x86-32bit-msvc-binaries.zip](https://github.com/libffi/libffi/releases/download/v3.5.2/libffi-3.5.2-x86-32bit-msvc-binaries.zip)
+    - Extract `ffi.h` and `ffitarget.h` into `%MICROSOFT_VISUAL_STUDIO_PATH%\VC\include`
+    - Extract `libffi-8.lib` into `%MICROSOFT_VISUAL_STUDIO_PATH%\VC\lib`
+    - Extract `libffi-8.dll` into working directory
   - Run `build.bat`
 - Build and run unit test
   - Open project in **IntelliJ IDEA**

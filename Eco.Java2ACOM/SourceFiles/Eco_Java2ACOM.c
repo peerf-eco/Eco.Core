@@ -43,3 +43,21 @@ void getCharArray(JNIEnv* env, jstring str, char_t** result) {
     }
     (*env)->ReleaseStringChars(env, str, chars);
 }
+
+void getObjectClassName(JNIEnv* env, jobject obj, char_t** result) {
+    jclass clazz = (*env)->GetObjectClass(env, obj);
+    jmethodID method = (*env)->GetMethodID(env, clazz, "getClass", "()Ljava/lang/Class;");
+    jobject classObj = (*env)->CallObjectMethod(env, obj, method);
+    jstring str;
+    clazz = (*env)->GetObjectClass(env, classObj);
+    method = (*env)->GetMethodID(env, clazz, "getName", "()Ljava/lang/String;");
+    str = (jstring)(*env)->CallObjectMethod(env, classObj, method);
+    getCharArray(env, str, result);
+}
+
+void getClassName(JNIEnv* env, jclass classObj, char_t** result) {
+    jclass clazz = (*env)->FindClass(env, "java/lang/Class");
+    jmethodID method = (*env)->GetMethodID(env, clazz, "getName", "()Ljava/lang/String;");
+    jstring str = (jstring)(*env)->CallObjectMethod(env, classObj, method);
+    getCharArray(env, str, result);
+}
