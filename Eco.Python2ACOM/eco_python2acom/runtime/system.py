@@ -1,568 +1,384 @@
-"""EcoSystem container - main entry point for ACOM component interaction.
+"""EcoSystem - main entry point for ACOM component interaction.
 
 This module implements the Python equivalent of CEcoSystem1 from EcoOS.
 It provides initialization of the runtime environment and access to
 the interface bus for component registration and querying.
 
-Architecture Overview:
-    EcoSystem acts as a "Unikernel Bridge" that:
-    1. Loads runtime DLLs (InterfaceBus, MemoryManager) from ECO_FRAMEWORK_RT
-    2. Initializes the EcoOS runtime environment
-    3. Provides API for loading and using ACOM components
+The bootstrap sequence mirrors ``createCEcoSystem1`` from C:
+    1. Load InterfaceBus DLL -> create instance via factory Alloc
+    2. Load MemoryManager DLL -> register factory with bus
+    3. Configure MemExt (set manager CID, enable pool)
+    4. QueryComponent MemoryManager -> Init(0, heap_size)
+    5. Load FileSystem DLL -> register factory with bus (optional)
+    6. Configure FileExt (optional)
+    7. Scan user_dll_path for component DLLs -> register each
+    8. Init bus factory (factory.Init(None, bus_ptr))
 
-    The flow for using a component:
-    1. Create EcoSystem and call init()
-    2. Load component DLL with load_component(cid, dll_path)
-    3. Query component interface with query_component(cid, iid, InterfaceClass)
-    4. Call methods on the returned ComponentWrapper
-    5. Release resources when done
+After initialization the user accesses the ``bus`` property and
+works with components via ``bus.QueryComponent()``.
 
 Example:
-    >>> from eco_python2acom.runtime.system import EcoSystem
-    >>> from eco_python2acom.core.guid import UGUID
-    >>> from eco_python2acom.interfaces.decorators import interface, method
-    >>> from eco_python2acom.core.types import Int16, Int32
-    >>>
-    >>> @interface(iid="93221116-2248-4742-AE06-82819447843D")
-    ... class IEcoCalculatorX:
-    ...     @method
-    ...     def Addition(self, a: Int16, b: Int16) -> Int32: ...
-    >>>
-    >>> CID = UGUID.from_string("4828F655-2E45-40E7-8121-EBD220DC360E")
-    >>>
     >>> with EcoSystem() as eco:
-    ...     eco.load_component(CID, "calculator.dll")
-    ...     calc = eco.query_component(CID, IEcoCalculatorX._iid_, IEcoCalculatorX)
-    ...     print(calc.Addition(10, 20))  # 30
-    ...     calc.release()
+    ...     ppv = VoidPtr()
+    ...     eco.bus.QueryComponent(
+    ...         ByRef(CID_Calculator), None,
+    ...         ByRef(IID_IEcoCalculatorX), ByRef(ppv),
+    ...     )
+    ...     calc = IEcoCalculatorX(ppv)
+    ...     calc.Addition(10, 20)
+    ...     calc.Release()
 """
 
 from __future__ import annotations
 
-import ctypes
 import os
-import platform
-from ctypes import POINTER, byref
 from pathlib import Path
 from typing import Any, Optional, Union
 
-from eco_python2acom.core.errors import EcoError, EcoErrorCode, check_result
-from eco_python2acom.core.guid import UGUID
-from eco_python2acom.core.types import VoidPtr
-from eco_python2acom.interfaces.base import (
+from eco_python2acom.core.errors import EcoError
+from eco_python2acom.core.types import Bool, ByRef, CastPtr, UInt32, VoidPtr
+from eco_python2acom.interfaces.base import IEcoComponentFactory, IEcoUnknownPtr
+from eco_python2acom.interfaces.guids.cid import (
+    CID_EcoFileSystemManagement1,
     CID_EcoInterfaceBus1,
     CID_EcoMemoryManager1,
-    GID_IEcoSystem_x64,
-    GID_IEcoSystem_x86,
-    IEcoComponentFactory,
-    IEcoInterfaceBus1,
-    IEcoInterfaceBus1MemExt,
-    IEcoMemoryManager1,
+)
+from eco_python2acom.interfaces.guids.iid import (
     IID_IEcoInterfaceBus1,
+    IID_IEcoInterfaceBus1FileExt,
     IID_IEcoInterfaceBus1MemExt,
+    IID_IEcoMemoryAllocator1,
     IID_IEcoMemoryManager1,
 )
+from eco_python2acom.interfaces.system.interface_bus import (
+    IEcoInterfaceBus1,
+    IEcoInterfaceBus1FileExt,
+    IEcoInterfaceBus1MemExt,
+)
+from eco_python2acom.interfaces.system.memory_manager import (
+    IEcoMemoryAllocator1,
+    IEcoMemoryManager1,
+)
+from eco_python2acom.runtime.helpers import filename_to_guid, get_runtime_dll_path, is_eco_dll
+from eco_python2acom.runtime.loader import DllLoader, LoadedDll
 
-# =============================================================================
-# Helper Functions
-# =============================================================================
+# Default heap size for MemoryManager (~1.5 GB)
+_DEFAULT_HEAP_SIZE = 0x60000000
 
-
-def get_system_gid() -> UGUID:
-    """Get the system GID based on current architecture.
-
-    Returns:
-        UGUID for the current system architecture (x64 or x86).
-    """
-    is_64bit = platform.machine().endswith("64") or platform.architecture()[0] == "64bit"
-    return GID_IEcoSystem_x64 if is_64bit else GID_IEcoSystem_x86
-
-
-def guid_to_filename(guid: UGUID, extension: str = ".dll") -> str:
-    """Convert UGUID to hex filename format used by EcoOS.
-
-    Args:
-        guid: The UGUID to convert.
-        extension: File extension (default: .dll for Windows).
-
-    Returns:
-        Filename like "00000000000000000000000042757331.dll"
-    """
-    hex_str = "".join(f"{b:02X}" for b in guid.Data)
-    return hex_str + extension
-
-
-# =============================================================================
-# EcoSystem Class
-# =============================================================================
+# System CIDs that are loaded from ECO_FRAMEWORK_RT (not user components)
+_SYSTEM_CIDS = frozenset(
+    bytes(cid.Data)
+    for cid in (CID_EcoInterfaceBus1, CID_EcoMemoryManager1, CID_EcoFileSystemManagement1)
+)
 
 
 class EcoSystem:
-    """EcoOS System container - Unikernel Bridge for Python.
+    """EcoOS System container -- Unikernel Bridge for Python.
 
-    This class provides the main entry point for interacting with ACOM components.
-    It initializes the EcoOS runtime environment including:
-    - IEcoInterfaceBus1 for component registration and querying
-    - IEcoMemoryManager1 for memory management
+    Bootstraps the ACOM runtime (InterfaceBus, MemoryManager,
+    optionally FileSystemManagement), auto-registers user component
+    DLLs found in ``user_dll_path``, and exposes the ``bus`` for
+    the user to query components.
 
-    The class can be used as a context manager for automatic resource cleanup.
+    Usage as a context manager::
+
+        with EcoSystem() as eco:
+            ppv = VoidPtr()
+            eco.bus.QueryComponent(ByRef(cid), None, ByRef(iid), ByRef(ppv))
+            calc = IEcoCalculatorX(ppv)
+            calc.Addition(10, 20)
+            calc.Release()
 
     Attributes:
-        is_initialized: Whether the system has been initialized.
-        runtime_path: Path to ECO_FRAMEWORK_RT directory.
-
-    Example:
-        >>> with EcoSystem() as eco:
-        ...     eco.load_component(cid, dll_path)
-        ...     calc = eco.query_component(cid, iid, IEcoCalculatorX)
-        ...     print(calc.Addition(10, 20))
+        bus: The initialized ``IEcoInterfaceBus1`` instance.
     """
 
     def __init__(
         self,
-        eco_framework_rt: Optional[str] = None,
-        auto_init: bool = False,
+        runtime_path: Optional[str] = None,
+        user_dll_path: Optional[Union[str, Path]] = None,
+        heap_size: int = _DEFAULT_HEAP_SIZE,
     ) -> None:
         """Initialize EcoSystem container.
 
         Args:
-            eco_framework_rt: Path to ECO_FRAMEWORK_RT directory.
-                If None, uses ECO_FRAMEWORK_RT environment variable.
-            auto_init: If True, automatically initialize during construction.
+            runtime_path: Path to ``ECO_FRAMEWORK_RT`` directory.
+                If None, reads the ``ECO_FRAMEWORK_RT`` environment variable.
+            user_dll_path: Directory to scan for user component DLLs.
+                If None, uses the current working directory.
+            heap_size: Heap size for the memory manager in bytes.
+                Defaults to ~1.5 GB (0x60000000).
         """
-        self._eco_framework_rt = eco_framework_rt or os.environ.get("ECO_FRAMEWORK_RT", "")
+        self._runtime_path = runtime_path or os.environ.get("ECO_FRAMEWORK_RT", None)
+        self._user_dll_path = Path(user_dll_path) if user_dll_path else Path.cwd()
+        self._heap_size = UInt32(heap_size)
+        self._loader = DllLoader()
         self._is_initialized = False
 
-        # Runtime components
-        self._bus_dll: Optional[ctypes.WinDLL] = None
-        self._bus_factory_ptr: VoidPtr = VoidPtr()
+        # Internal references (set during init, released during cleanup)
         self._bus_factory: Optional[IEcoComponentFactory] = None
-        self._bus_ptr: VoidPtr = VoidPtr()
         self._bus: Optional[IEcoInterfaceBus1] = None
-
-        self._mem_dll: Optional[ctypes.WinDLL] = None
-        self._mem_factory_ptr: VoidPtr = VoidPtr()
-        self._mem_mgr_ptr: VoidPtr = VoidPtr()
         self._mem_mgr: Optional[IEcoMemoryManager1] = None
+        self._mem_alloc: Optional[IEcoMemoryAllocator1] = None
 
-        self._mem_ext_ptr: VoidPtr = VoidPtr()
-        self._mem_ext: Optional[IEcoInterfaceBus1MemExt] = None
+        # Keep loaded DLLs alive so ctypes doesn't unload them
+        self._loaded_dlls: list[LoadedDll] = []
 
-        # Loaded component DLLs cache
-        self._loaded_dlls: dict[str, ctypes.WinDLL] = {}
-
-        # System GID for current architecture
-        self._system_gid = get_system_gid()
-
-        if auto_init:
-            self.init()
+    # =========================================================================
+    # Properties
+    # =========================================================================
 
     @property
     def is_initialized(self) -> bool:
-        """Check if the system is initialized."""
+        """Whether the system has been initialized."""
         return self._is_initialized
 
     @property
-    def runtime_path(self) -> str:
-        """Get the ECO_FRAMEWORK_RT path."""
-        return self._eco_framework_rt or ""
+    def bus(self) -> IEcoInterfaceBus1:
+        """The initialized interface bus.
+
+        Use this to query/create components::
+
+            ppv = VoidPtr()
+            eco.bus.QueryComponent(ByRef(cid), None, ByRef(iid), ByRef(ppv))
+
+        Raises:
+            RuntimeError: If system not initialized.
+        """
+        if not self._is_initialized or self._bus is None:
+            raise RuntimeError("EcoSystem is not initialized. Call init() first.")
+        return self._bus
+
+    @property
+    def loader(self) -> DllLoader:
+        """The DLL loader instance."""
+        return self._loader
+
+    # =========================================================================
+    # Context Manager
+    # =========================================================================
 
     def __enter__(self) -> EcoSystem:
-        """Enter context manager - initialize system."""
+        """Enter context manager -- initialize system."""
         if not self._is_initialized:
             self.init()
         return self
 
     def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
-        """Exit context manager - release resources."""
+        """Exit context manager -- release resources."""
         self.release()
 
-    def get_runtime_path(self) -> Path:
-        """Get the runtime path for current architecture.
-
-        Returns:
-            Path to runtime directory containing DLLs.
-
-        Raises:
-            FileNotFoundError: If ECO_FRAMEWORK_RT is not set or doesn't exist.
-        """
-        if not self._eco_framework_rt:
-            raise FileNotFoundError(
-                "ECO_FRAMEWORK_RT environment variable is not set. "
-                "Please set it to the path containing EcoOS runtime libraries."
-            )
-
-        base_path = Path(self._eco_framework_rt)
-        if not base_path.exists():
-            raise FileNotFoundError(f"ECO_FRAMEWORK_RT path does not exist: {base_path}")
-
-        # Runtime DLLs are in subdirectory named by system GID
-        runtime_path = base_path / guid_to_filename(self._system_gid, "")
-        if not runtime_path.exists():
-            # Try without subdirectory (flat structure)
-            runtime_path = base_path
-
-        return runtime_path
-
-    def load_dll(self, cid: UGUID, search_path: Optional[Path] = None) -> ctypes.WinDLL:
-        """Load a component DLL by its CID.
-
-        Args:
-            cid: Component ID (CID) of the component.
-            search_path: Optional path to search for DLL.
-
-        Returns:
-            Loaded WinDLL instance.
-
-        Raises:
-            FileNotFoundError: If DLL cannot be found.
-        """
-        dll_name = guid_to_filename(cid)
-        dll_key = dll_name.lower()
-
-        # Check cache
-        if dll_key in self._loaded_dlls:
-            return self._loaded_dlls[dll_key]
-
-        # Build search paths
-        search_paths: list[Path] = []
-        if search_path:
-            search_paths.append(search_path)
-
-        try:
-            runtime_path = self.get_runtime_path()
-            search_paths.append(runtime_path)
-        except FileNotFoundError:
-            pass
-
-        # Try to load from search paths
-        for path in search_paths:
-            dll_path = path / dll_name
-            if dll_path.exists():
-                dll = ctypes.WinDLL(str(dll_path))
-                self._loaded_dlls[dll_key] = dll
-                return dll
-
-        # Try system path
-        try:
-            dll = ctypes.WinDLL(dll_name)
-            self._loaded_dlls[dll_key] = dll
-            return dll
-        except OSError as e:
-            raise FileNotFoundError(
-                f"Cannot find component DLL: {dll_name}. "
-                f"Searched in: {[str(p) for p in search_paths]}. "
-                f"Error: {e}"
-            ) from e
-
-    def get_factory_ptr(self, dll: ctypes.WinDLL) -> VoidPtr:
-        """Get IEcoComponentFactory pointer from DLL.
-
-        Args:
-            dll: Loaded DLL instance.
-
-        Returns:
-            Pointer to component factory.
-
-        Raises:
-            EcoError: If factory function cannot be found.
-        """
-        try:
-            get_factory = dll.GetIEcoComponentFactoryPtr
-            get_factory.restype = VoidPtr
-            get_factory.argtypes = []
-            result: VoidPtr = get_factory()
-            return result
-        except AttributeError as err:
-            raise EcoError(
-                EcoErrorCode.COMPONENT_NOTFOUND,
-                "DLL does not export GetIEcoComponentFactoryPtr",
-            ) from err
+    # =========================================================================
+    # Initialization (mirrors createCEcoSystem1)
+    # =========================================================================
 
     def init(self) -> None:
         """Initialize the EcoOS runtime environment.
 
-        This method performs the following steps:
-        1. Loads InterfaceBus DLL and creates IEcoInterfaceBus1 instance
-        2. Loads and registers MemoryManager
-        3. Configures memory extension for dynamic allocation
-        4. Initializes the bus with system context
+        Follows the same bootstrap sequence as ``createCEcoSystem1``:
+
+        1. InterfaceBus -- load, create instance
+        2. MemoryManager -- register, configure MemExt, init heap
+        3. FileSystem -- register, configure FileExt (optional)
+        4. User DLLs -- scan ``user_dll_path``, register each
+        5. Finalize bus factory
 
         Raises:
             FileNotFoundError: If runtime DLLs cannot be found.
-            EcoError: If initialization fails.
+            EcoError: If any initialization step fails.
         """
         if self._is_initialized:
             return
 
-        # Step 1: Load InterfaceBus DLL
-        self._bus_dll = self.load_dll(CID_EcoInterfaceBus1)
-        self._bus_factory_ptr = self.get_factory_ptr(self._bus_dll)
+        if self._runtime_path is None:
+            raise FileNotFoundError(
+                "Runtime path not configured. "
+                "Set ECO_FRAMEWORK_RT environment variable or pass runtime_path."
+            )
 
-        bus_factory = ctypes.cast(self._bus_factory_ptr, POINTER(IEcoComponentFactory))
-        self._bus_factory = bus_factory.contents
+        rt_path = get_runtime_dll_path(self._runtime_path)
 
-        # Step 2: Create InterfaceBus instance
-        result = self._bus_factory.pVTbl.contents.Alloc(
-            self._bus_factory_ptr,
-            None,  # pISystem = NULL (we create the system)
-            None,  # pIUnknownOuter = NULL (no aggregation)
-            byref(IID_IEcoInterfaceBus1),
-            byref(self._bus_ptr),
-        )
+        # Step 1: Load InterfaceBus and create instance
+        self._init_interface_bus(rt_path)
 
-        if result != 0 or not self._bus_ptr.value:
+        # Step 2: Register MemoryManager factory with bus
+        self._register_memory_manager(rt_path)
+
+        # Step 3: Configure MemExt on the bus
+        self._configure_mem_ext()
+
+        # Step 4: Initialize MemoryManager heap
+        self._init_memory_manager()
+
+        # Step 5: Register FileSystemManagement factory (optional)
+        self._register_file_system(rt_path)
+
+        # Step 6: Configure FileExt on the bus (optional)
+        self._configure_file_ext()
+
+        # Step 7: Auto-register user component DLLs
+        self._scan_and_register_user_dlls()
+
+        # Step 8: Finalize bus factory
+        if self._bus_factory is not None and self._bus is not None:
+            self._bus_factory.Init(None, self._bus._ptr)
+
+        self._is_initialized = True
+
+    # =========================================================================
+    # Bootstrap helpers (private)
+    # =========================================================================
+
+    def _init_interface_bus(self, rt_path: Path) -> None:
+        """Load InterfaceBus DLL, create bus instance via factory."""
+        loaded = self._loader.load_by_cid(CID_EcoInterfaceBus1, [rt_path])
+        self._loaded_dlls.append(loaded)
+        self._bus_factory = loaded.factory
+
+        bus_ptr = VoidPtr()
+        result = self._bus_factory.Alloc(None, None, ByRef(IID_IEcoInterfaceBus1), ByRef(bus_ptr))
+        if result != 0 or not bus_ptr.value:
             raise EcoError(result, "Failed to create InterfaceBus instance")
 
-        self._bus = ctypes.cast(self._bus_ptr, POINTER(IEcoInterfaceBus1)).contents
+        self._bus = IEcoInterfaceBus1(bus_ptr)
 
-        # Step 3: Load and register MemoryManager
-        self._mem_dll = self.load_dll(CID_EcoMemoryManager1)
-        self._mem_factory_ptr = self.get_factory_ptr(self._mem_dll)
+    def _register_memory_manager(self, rt_path: Path) -> None:
+        """Load MemoryManager DLL and register its factory with the bus."""
+        loaded = self._loader.load_by_cid(CID_EcoMemoryManager1, [rt_path])
+        self._loaded_dlls.append(loaded)
 
-        result = self._bus.pVTbl.contents.RegisterComponent(
-            self._bus_ptr,
-            byref(CID_EcoMemoryManager1),
-            self._mem_factory_ptr,
+        result = self._bus.RegisterComponent(
+            ByRef(CID_EcoMemoryManager1),
+            CastPtr(loaded.factory._ptr, IEcoUnknownPtr),
         )
         if result != 0:
             raise EcoError(result, "Failed to register MemoryManager")
 
-        # Step 4: Get and configure memory extension
-        result = self._bus.pVTbl.contents.QueryInterface(
-            self._bus_ptr,
-            byref(IID_IEcoInterfaceBus1MemExt),
-            byref(self._mem_ext_ptr),
-        )
+    def _configure_mem_ext(self) -> None:
+        """Configure InterfaceBus memory extension."""
+        mem_ext_ptr = VoidPtr()
+        result = self._bus.QueryInterface(ByRef(IID_IEcoInterfaceBus1MemExt), ByRef(mem_ext_ptr))
+        if result == 0 and mem_ext_ptr.value:
+            mem_ext = IEcoInterfaceBus1MemExt(mem_ext_ptr)
+            mem_ext.set_Manager(ByRef(CID_EcoMemoryManager1))
+            mem_ext.set_ExpandPool(Bool(True))
+            mem_ext.Release()
 
-        if result == 0 and self._mem_ext_ptr.value:
-            self._mem_ext = ctypes.cast(
-                self._mem_ext_ptr, POINTER(IEcoInterfaceBus1MemExt)
-            ).contents
-
-            # Set memory manager and enable pool expansion
-            self._mem_ext.pVTbl.contents.set_Manager(
-                self._mem_ext_ptr, byref(CID_EcoMemoryManager1)
-            )
-            self._mem_ext.pVTbl.contents.set_ExpandPool(self._mem_ext_ptr, 1)
-
-        # Step 5: Get MemoryManager and initialize
-        result = self._bus.pVTbl.contents.QueryComponent(
-            self._bus_ptr,
-            byref(CID_EcoMemoryManager1),
+    def _init_memory_manager(self) -> None:
+        """Query and initialize MemoryManager with heap."""
+        mgr_ptr = VoidPtr()
+        result = self._bus.QueryComponent(
+            ByRef(CID_EcoMemoryManager1),
             None,
-            byref(IID_IEcoMemoryManager1),
-            byref(self._mem_mgr_ptr),
+            ByRef(IID_IEcoMemoryManager1),
+            ByRef(mgr_ptr),
         )
+        if result != 0 or not mgr_ptr.value:
+            raise EcoError(result, "Failed to get MemoryManager interface")
 
-        if result == 0 and self._mem_mgr_ptr.value:
-            self._mem_mgr = ctypes.cast(self._mem_mgr_ptr, POINTER(IEcoMemoryManager1)).contents
-            # Initialize with 1.5GB heap (0x60000000 bytes)
-            self._mem_mgr.pVTbl.contents.Init(self._mem_mgr_ptr, None, 0x60000000)
+        self._mem_mgr = IEcoMemoryManager1(mgr_ptr)
+        self._mem_mgr.Init(None, self._heap_size)
 
-        # Step 6: Initialize Bus with factory
-        self._bus_factory.pVTbl.contents.Init(
-            self._bus_factory_ptr,
+        # Also get IEcoMemoryAllocator1 for convenience
+        alloc_ptr = VoidPtr()
+        result = self._bus.QueryComponent(
+            ByRef(CID_EcoMemoryManager1),
             None,
-            self._bus_ptr,
+            ByRef(IID_IEcoMemoryAllocator1),
+            ByRef(alloc_ptr),
         )
+        if result != 0 or not alloc_ptr.value:
+            raise EcoError(result, "Failed to get MemoryAllocator interface")
 
-        self._is_initialized = True
+        self._mem_alloc = IEcoMemoryAllocator1(alloc_ptr)
+
+    def _register_file_system(self, rt_path: Path) -> None:
+        """Load FileSystemManagement DLL and register with bus (optional)."""
+        try:
+            loaded = self._loader.load_by_cid(CID_EcoFileSystemManagement1, [rt_path])
+        except FileNotFoundError:
+            return  # FileSystem is optional
+
+        self._loaded_dlls.append(loaded)
+
+        result = self._bus.RegisterComponent(
+            ByRef(CID_EcoFileSystemManagement1),
+            CastPtr(loaded.factory._ptr, IEcoUnknownPtr),
+        )
+        if result != 0:
+            raise EcoError(result, "Failed to register FileSystemManagement")
+
+    def _configure_file_ext(self) -> None:
+        """Configure InterfaceBus file extension (optional)."""
+        file_ext_ptr = VoidPtr()
+        result = self._bus.QueryInterface(ByRef(IID_IEcoInterfaceBus1FileExt), ByRef(file_ext_ptr))
+        if result == 0 and file_ext_ptr.value:
+            file_ext = IEcoInterfaceBus1FileExt(file_ext_ptr)
+            file_ext.set_Manager(ByRef(CID_EcoFileSystemManagement1))
+            file_ext.Release()
+
+    def _scan_and_register_user_dlls(self) -> None:
+        """Scan user_dll_path for EcoOS DLLs and register each with the bus.
+
+        Skips DLLs whose CID matches a known system component (Bus,
+        MemoryManager, FileSystem) since those are already loaded.
+        """
+        if not self._user_dll_path.is_dir():
+            return
+
+        for dll_file in self._user_dll_path.iterdir():
+            if not dll_file.is_file() or not is_eco_dll(dll_file.name):
+                continue
+
+            # Derive CID from filename
+            cid = filename_to_guid(dll_file.name)
+            if cid is None:
+                continue
+
+            # Skip system components (already registered)
+            if bytes(cid.Data) in _SYSTEM_CIDS:
+                continue
+
+            try:
+                loaded = self._loader.load(dll_file)
+                self._loaded_dlls.append(loaded)
+
+                self._bus.RegisterComponent(
+                    ByRef(cid),
+                    CastPtr(loaded.factory._ptr, IEcoUnknownPtr),
+                )
+            except Exception:
+                # Non-critical: skip DLLs that fail to load/register
+                continue
+
+    # =========================================================================
+    # Cleanup
+    # =========================================================================
 
     def release(self) -> None:
-        """Release all resources and cleanup.
+        """Release all internal resources.
 
-        This method releases all ACOM interfaces and clears DLL cache.
-        Safe to call multiple times.
+        Releases in reverse order (MemAllocator -> MemManager -> Bus),
+        matching the C-side ``deleteCEcoSystem1`` logic.
         """
         if not self._is_initialized:
             return
 
-        # Release in reverse order of acquisition
-        if self._mem_mgr and self._mem_mgr_ptr.value:
-            self._mem_mgr.pVTbl.contents.Release(self._mem_mgr_ptr)
-            self._mem_mgr = None
-            self._mem_mgr_ptr = VoidPtr()
+        # Release in reverse initialization order
+        for iface in (self._mem_alloc, self._mem_mgr, self._bus):
+            if iface is not None:
+                try:
+                    iface.Release()
+                except Exception:
+                    pass
 
-        if self._mem_ext and self._mem_ext_ptr.value:
-            self._mem_ext.pVTbl.contents.Release(self._mem_ext_ptr)
-            self._mem_ext = None
-            self._mem_ext_ptr = VoidPtr()
-
-        if self._bus and self._bus_ptr.value:
-            self._bus.pVTbl.contents.Release(self._bus_ptr)
-            self._bus = None
-            self._bus_ptr = VoidPtr()
-
+        self._bus = None
+        self._bus_factory = None
+        self._mem_mgr = None
+        self._mem_alloc = None
         self._loaded_dlls.clear()
         self._is_initialized = False
 
-    def register_component(
-        self,
-        cid: Union[UGUID, str],
-        factory_ptr: VoidPtr,
-    ) -> None:
-        """Register a component with the interface bus.
-
-        Args:
-            cid: Component ID (CID) - UGUID or string like "4828F655-2E45-40E7-..."
-            factory_ptr: Pointer to component factory (from GetIEcoComponentFactoryPtr).
-
-        Raises:
-            EcoError: If registration fails.
-            RuntimeError: If system is not initialized.
-        """
-        if not self._is_initialized or not self._bus:
-            raise RuntimeError("EcoSystem is not initialized. Call init() first.")
-
-        if isinstance(cid, str):
-            cid = UGUID.from_string(cid)
-
-        result = self._bus.pVTbl.contents.RegisterComponent(
-            self._bus_ptr,
-            byref(cid),
-            factory_ptr,
-        )
-        check_result(result, "RegisterComponent")
-
-    def load_component(
-        self,
-        cid: Union[UGUID, str],
-        dll_path: Union[str, Path],
-    ) -> VoidPtr:
-        """Load a component DLL and register it with the interface bus.
-
-        This is the main method for loading user components.
-
-        Args:
-            cid: Component ID (CID) for registration.
-            dll_path: Path to the component DLL file.
-
-        Returns:
-            Pointer to the component factory.
-
-        Raises:
-            FileNotFoundError: If DLL cannot be found.
-            EcoError: If registration fails.
-            RuntimeError: If system is not initialized.
-
-        Example:
-            >>> cid = UGUID.from_string("4828F655-2E45-40E7-8121-EBD220DC360E")
-            >>> eco.load_component(cid, "path/to/component.dll")
-        """
-        if not self._is_initialized:
-            raise RuntimeError("EcoSystem is not initialized. Call init() first.")
-
-        dll_path = Path(dll_path)
-
-        # Resolve relative path
-        if not dll_path.is_absolute():
-            for search_path in [Path.cwd(), self.get_runtime_path()]:
-                full_path = search_path / dll_path
-                if full_path.exists():
-                    dll_path = full_path
-                    break
-
-        if not dll_path.exists():
-            raise FileNotFoundError(f"Component DLL not found: {dll_path}")
-
-        # Load DLL
-        dll = ctypes.WinDLL(str(dll_path))
-        self._loaded_dlls[dll_path.name.lower()] = dll
-
-        # Get factory
-        factory_ptr = self.get_factory_ptr(dll)
-
-        # Register
-        self.register_component(cid, factory_ptr)
-
-        return factory_ptr
-
-    def query_component(
-        self,
-        cid: Union[UGUID, str],
-        iid: Union[UGUID, str],
-        interface_class: Optional[type[Any]] = None,
-    ) -> Any:
-        """Create a component instance and return interface pointer.
-
-        This method:
-        1. Creates a NEW instance of the component identified by CID
-        2. Returns a POINTER to the interface identified by IID
-
-        The returned interface pointer can be used to:
-        - Call methods of that interface
-        - Query other interfaces via QueryInterface (query_interface method)
-
-        Note:
-            Each call creates a NEW component instance. The component may
-            implement multiple interfaces (e.g., IEcoCalculatorX and IEcoCalculatorY).
-            Use query_interface() to get other interfaces from the same instance.
-
-        Args:
-            cid: Component ID (CID) - identifies WHICH component to create.
-            iid: Interface ID (IID) - identifies WHICH interface to return.
-            interface_class: Optional Python class decorated with @interface.
-                If provided, returns a ComponentWrapper for convenient method calls.
-
-        Returns:
-            If interface_class is provided: ComponentWrapper wrapping the interface.
-            Otherwise: Raw VoidPtr pointer to the interface.
-
-        Raises:
-            EcoError: If component creation or interface query fails.
-            RuntimeError: If system is not initialized.
-
-        Example:
-            >>> # Create component and get IEcoCalculatorX interface
-            >>> calc_x = eco.query_component(cid, IEcoCalculatorX._iid_, IEcoCalculatorX)
-            >>> print(calc_x.Addition(10, 20))  # 30
-            >>>
-            >>> # Get another interface from the SAME component instance
-            >>> calc_y = calc_x.query_interface(IEcoCalculatorY)
-            >>> print(calc_y.Multiplication(6, 7))  # 42
-        """
-        if not self._is_initialized or not self._bus:
-            raise RuntimeError("EcoSystem is not initialized. Call init() first.")
-
-        if isinstance(cid, str):
-            cid = UGUID.from_string(cid)
-        if isinstance(iid, str):
-            iid = UGUID.from_string(iid)
-
-        # Output: pointer to the requested interface
-        interface_ptr = VoidPtr()
-        result = self._bus.pVTbl.contents.QueryComponent(
-            self._bus_ptr,
-            byref(cid),
-            None,  # pIUnknownOuter (no aggregation)
-            byref(iid),
-            byref(interface_ptr),
-        )
-
-        check_result(result, "QueryComponent")
-
-        if interface_class is not None:
-            from eco_python2acom.client.component import ComponentWrapper
-
-            return ComponentWrapper(interface_ptr, interface_class)
-
-        return interface_ptr
-
-    def get_bus_ptr(self) -> VoidPtr:
-        """Get the raw InterfaceBus pointer.
-
-        Returns:
-            Pointer to IEcoInterfaceBus1 interface.
-
-        Raises:
-            RuntimeError: If system is not initialized.
-        """
-        if not self._is_initialized:
-            raise RuntimeError("EcoSystem is not initialized. Call init() first.")
-        return self._bus_ptr
-
     def __repr__(self) -> str:
-        """Return string representation."""
         status = "initialized" if self._is_initialized else "not initialized"
-        return f"EcoSystem(status={status}, runtime_path={self._eco_framework_rt!r})"
+        return f"<EcoSystem [{status}]>"

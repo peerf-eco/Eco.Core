@@ -1,42 +1,41 @@
 """Decorators for declarative interface definitions.
 
-This module provides decorators and utilities for defining ACOM interfaces
-in a Pythonic, declarative way. Instead of manually creating ctypes structures,
-you can use class decorators and method annotations.
+This module provides decorators for defining ACOM interfaces
+in a Pythonic, declarative way with proper inheritance support.
+
+After decoration, interface classes are directly instantiable from
+a VoidPtr, and all methods dispatch through the VTbl.
+
+Key Components:
+    @interface: Class decorator to define an ACOM interface.
+    @method: Method decorator to mark interface methods.
+    MethodDescriptor: Metadata container for method information.
+    InterfaceDescriptor: Metadata container for interface information.
 
 Example:
-    >>> from eco_python2acom.interfaces.decorators import interface, method
-    >>> from eco_python2acom.core.types import Int16, Int32
-    >>> from eco_python2acom.core import UGUID
-    >>>
     >>> @interface(iid="93221116-2248-4742-AE06-82819447843D")
-    >>> class IEcoCalculatorX:
-    ...     '''Calculator X interface.'''
-    ...
+    ... class IEcoCalculatorX(IEcoUnknown):
     ...     @method
-    ...     def Addition(self, a: Int16, b: Int16) -> Int32:
-    ...         '''Add two numbers.'''
-    ...         ...
-    ...
-    ...     @method
-    ...     def Subtraction(self, a: Int16, b: Int16) -> Int16:
-    ...         '''Subtract two numbers.'''
-    ...         ...
+    ...     def Addition(self, a: Int16, b: Int16) -> Int32: ...
     >>>
-    >>> # Access generated ctypes structures
-    >>> vtbl_type = IEcoCalculatorX._vtbl_type_
-    >>> interface_type = IEcoCalculatorX._interface_type_
+    >>> calc = IEcoCalculatorX(ptr)
+    >>> calc.Addition(10, 20)
 """
 
 from __future__ import annotations
 
-import ctypes
 from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Any, ClassVar, Optional, get_type_hints
+from typing import Any, ClassVar, Optional, TypeVar, Union, get_args, get_origin, get_type_hints
 
-from eco_python2acom.core.guid import UGUID, UGUIDPtr
-from eco_python2acom.core.types import FUNCTYPE, Int16, UInt32, VoidPtrPtr
+from eco_python2acom.core.guid import UGUID
+from eco_python2acom.core.types import FUNCTYPE, CastPtr, EcoStructure, Int16, Ptr, VoidPtr
+
+# TypeVar for @method
+F = TypeVar("F", bound=Callable[..., Any])
+
+# TypeVar for @interface
+C = TypeVar("C", bound=type)
 
 # =============================================================================
 # Method Descriptor
@@ -63,18 +62,39 @@ class MethodDescriptor:
     doc: Optional[str] = None
 
 
-def method(func: Callable[..., Any]) -> MethodDescriptor:
-    """Decorator to mark a method as an interface method.
+def _unwrap_optional(hint: type) -> type:
+    """Extract the wrapped type from an Optional or Union type hint.
 
-    The decorator extracts type hints from the function signature
-    and creates a MethodDescriptor that will be used to generate
-    the ctypes function type.
+    Unwraps Optional[X] (which is Union[X, None]) to return just X.
+    Non-Union types are returned unchanged.
+
+    Args:
+        hint: A type hint, potentially Optional[T] or Union[T, None].
+
+    Returns:
+        The unwrapped type if Optional/Union, otherwise the original hint.
+    """
+    if get_origin(hint) is Union:
+        args = [arg for arg in get_args(hint) if arg is not type(None)]
+        return next(iter(args))  # type: ignore
+    return hint
+
+
+def method(func: F) -> F:
+    """Decorator to mark a method as an ACOM interface method.
+
+    Extracts type hints from the function signature and creates a
+    MethodDescriptor. The @interface decorator will later replace
+    it with a real VTbl dispatcher.
+
+    Typed as ``F -> F`` (identity) so the IDE preserves the original
+    method signature for autocomplete and type checking.
 
     Args:
         func: The method function with type annotations.
 
     Returns:
-        A descriptor containing the method metadata.
+        MethodDescriptor at runtime (typed as F for IDE).
 
     Example:
         >>> @method
@@ -86,14 +106,18 @@ def method(func: Callable[..., Any]) -> MethodDescriptor:
     return_type = hints.pop("return", Int16)
 
     # Get parameter types (skip 'self')
-    param_types = list(hints.values())
+    param_types = [_unwrap_optional(t) for t in hints.values()]
+    return_type = _unwrap_optional(return_type)
 
-    return MethodDescriptor(
+    descriptor = MethodDescriptor(
         name=func.__name__,
         param_types=param_types,
         return_type=return_type,
         doc=func.__doc__,
     )
+
+    func._method_descriptor_ = descriptor
+    return func
 
 
 # =============================================================================
@@ -111,7 +135,8 @@ class InterfaceDescriptor:
     Attributes:
         name: The interface name.
         iid: The interface identifier.
-        methods: List of interface methods.
+        methods: List of ALL interface methods (including inherited).
+        own_methods: List of methods defined in this interface only.
         vtbl_type: The generated VTbl ctypes structure.
         interface_type: The generated interface ctypes structure.
         interface_ptr: The POINTER type for this interface.
@@ -120,34 +145,10 @@ class InterfaceDescriptor:
     name: str
     iid: UGUID
     methods: list[MethodDescriptor] = field(default_factory=list)
-    vtbl_type: Optional[type[ctypes.Structure]] = None
-    interface_type: Optional[type[ctypes.Structure]] = None
+    own_methods: list[MethodDescriptor] = field(default_factory=list)
+    vtbl_type: Optional[type[EcoStructure]] = None
+    interface_type: Optional[type[EcoStructure]] = None
     interface_ptr: Optional[type] = None
-
-
-# Registry of all defined interfaces
-_interface_registry: dict[str, InterfaceDescriptor] = {}
-
-
-def get_interface(name: str) -> Optional[InterfaceDescriptor]:
-    """Get an interface descriptor by name.
-
-    Args:
-        name: The interface name.
-
-    Returns:
-        The interface descriptor, or None if not found.
-    """
-    return _interface_registry.get(name)
-
-
-def get_all_interfaces() -> dict[str, InterfaceDescriptor]:
-    """Get all registered interface descriptors.
-
-    Returns:
-        Dictionary mapping interface names to descriptors.
-    """
-    return _interface_registry.copy()
 
 
 # =============================================================================
@@ -155,12 +156,18 @@ def get_all_interfaces() -> dict[str, InterfaceDescriptor]:
 # =============================================================================
 
 
-def interface(iid: str | UGUID, preamble: int = 0x01, length: int = 0x10) -> Callable[[type], type]:
+def interface(iid: Union[str, UGUID], preamble: int = 0x01, length: int = 0x10) -> Callable[[C], C]:
     """Decorator to define an ACOM interface.
 
-    This decorator transforms a class with @method-decorated methods
-    into an interface definition, generating the necessary ctypes
-    structures for VTbl and the interface itself.
+    This decorator transforms a class with @method-decorated stubs
+    into a fully functional interface. After decoration the class:
+
+    1. Can be instantiated from a ``VoidPtr``:  ``obj = IFoo(ptr)``
+    2. Has real methods that dispatch through the C VTbl.
+    3. Preserves type signatures so the IDE shows autocomplete.
+
+    Inheritance is fully supported - methods from parent interfaces
+    are automatically included in the VTbl in the correct order.
 
     Args:
         iid: The interface identifier as a GUID string or UGUID instance.
@@ -172,12 +179,15 @@ def interface(iid: str | UGUID, preamble: int = 0x01, length: int = 0x10) -> Cal
 
     Example:
         >>> @interface(iid="93221116-2248-4742-AE06-82819447843D")
-        ... class IEcoCalculatorX:
+        ... class IEcoCalculatorX(IEcoUnknown):
         ...     @method
         ...     def Addition(self, a: Int16, b: Int16) -> Int32: ...
+        >>>
+        >>> calc = IEcoCalculatorX(some_ptr)
+        >>> calc.Addition(10, 20)
     """
 
-    def decorator(cls: type) -> type:
+    def decorator(cls: C) -> C:
         # Parse IID
         if isinstance(iid, str):
             guid = UGUID(iid, preamble=preamble)
@@ -185,21 +195,66 @@ def interface(iid: str | UGUID, preamble: int = 0x01, length: int = 0x10) -> Cal
         else:
             guid = iid
 
-        # Collect methods
-        methods: list[MethodDescriptor] = []
+        # Collect own methods from this class (preserving definition order)
+        own_methods: list[MethodDescriptor] = []
         for attr in cls.__dict__.values():
-            if isinstance(attr, MethodDescriptor):
-                methods.append(attr)
+            if hasattr(attr, "_method_descriptor_") and isinstance(
+                attr._method_descriptor_, MethodDescriptor
+            ):
+                own_methods.append(attr._method_descriptor_)
+
+        # Collect inherited methods from parent classes (in MRO order)
+        inherited_methods: list[MethodDescriptor] = []
+        for base in cls.__mro__:
+            if base is cls:
+                continue
+
+            if hasattr(base, "_descriptor_") and base._descriptor_ is not None:
+                inherited_methods = list(base._descriptor_.methods)
+                break
+
+        # Combine: inherited first, then own
+        all_methods = inherited_methods + own_methods
 
         # Create interface descriptor
         descriptor = InterfaceDescriptor(
             name=cls.__name__,
             iid=guid,
-            methods=methods,
+            methods=all_methods,
+            own_methods=own_methods,
         )
 
         # Generate ctypes structures
         _generate_ctypes_structures(descriptor)
+
+        # Make the class directly instantiable from VoidPtr
+        class_name = cls.__name__
+
+        def __init__(self, ptr: VoidPtr) -> None:
+            if not ptr:
+                raise ValueError(f"{class_name}: NULL pointer")
+            self._ptr = ptr
+            self._vtbl = CastPtr(ptr, descriptor.interface_ptr).contents.pVTbl.contents  # type: ignore
+
+        cls.__init__ = __init__  # type: ignore
+
+        # Replace each @method stub with a real VTbl dispatcher
+        def _make_dispatch(name: str, doc: Optional[str]) -> Callable[..., Any]:
+            def dispatch(self, *args: Any) -> Any:
+                return getattr(self._vtbl, name)(self._ptr, *args)
+
+            dispatch.__name__ = name
+            dispatch.__doc__ = doc
+            return dispatch
+
+        for method in all_methods:
+            setattr(cls, method.name, _make_dispatch(method.name, method.doc))
+
+        def __repr__(self) -> str:
+            addr = self._ptr.value if self._ptr else 0
+            return f"<{class_name} at 0x{addr:X}>"
+
+        cls.__repr__ = __repr__  # type: ignore
 
         # Store metadata on the class
         cls._descriptor_ = descriptor
@@ -207,9 +262,6 @@ def interface(iid: str | UGUID, preamble: int = 0x01, length: int = 0x10) -> Cal
         cls._vtbl_type_ = descriptor.vtbl_type
         cls._interface_type_ = descriptor.interface_type
         cls._interface_ptr_ = descriptor.interface_ptr
-
-        # Register interface
-        _interface_registry[cls.__name__] = descriptor
 
         return cls
 
@@ -219,75 +271,45 @@ def interface(iid: str | UGUID, preamble: int = 0x01, length: int = 0x10) -> Cal
 def _generate_ctypes_structures(descriptor: InterfaceDescriptor) -> None:
     """Generate ctypes VTbl and interface structures for a descriptor.
 
+    Creates:
+    1. VTbl structure with all methods (inherited + own)
+    2. Interface structure with pVTbl pointer
+    3. Pointer type for the interface
+
     Args:
         descriptor: The interface descriptor to generate structures for.
     """
+    # Build VTbl fields from all methods
+    vtbl_fields: list[tuple[str, type]] = []
 
-    # Create the interface structure (empty, for forward reference)
-    class InterfaceType(ctypes.Structure):
-        pass
-
-    InterfaceType.__name__ = descriptor.name
-    InterfaceType.__qualname__ = descriptor.name
-
-    # Create pointer type
-    interface_ptr = ctypes.POINTER(InterfaceType)
-
-    # Build VTbl fields
-    # Start with IEcoUnknown methods
-    vtbl_fields: list[tuple[str, type]] = [
-        ("QueryInterface", FUNCTYPE(Int16, interface_ptr, UGUIDPtr, VoidPtrPtr)),
-        ("AddRef", FUNCTYPE(UInt32, interface_ptr)),
-        ("Release", FUNCTYPE(UInt32, interface_ptr)),
-    ]
-
-    # Add interface-specific methods
     for method_desc in descriptor.methods:
-        # Build function type: return_type, self_ptr, *param_types
+        # Build function type: return_type, me_ptr, *param_types
         func_type = FUNCTYPE(
             method_desc.return_type,
-            interface_ptr,
+            VoidPtr,
             *method_desc.param_types,
         )
         vtbl_fields.append((method_desc.name, func_type))
 
     # Create VTbl structure
-    class VTblType(ctypes.Structure):
+    class VTblType(EcoStructure):
         _fields_: ClassVar[list[tuple[str, type]]] = vtbl_fields
 
     VTblType.__name__ = f"{descriptor.name}VTbl"
     VTblType.__qualname__ = f"{descriptor.name}VTbl"
 
-    # Now set the interface structure fields
-    InterfaceType._fields_ = [("pVTbl", ctypes.POINTER(VTblType))]
+    # Create interface structure
+    class InterfaceType(EcoStructure):
+        pass
+
+    InterfaceType.__name__ = descriptor.name
+    InterfaceType.__qualname__ = descriptor.name
+    InterfaceType._fields_ = [("pVTbl", Ptr(VTblType))]
+
+    # Create pointer type
+    interface_ptr = Ptr(InterfaceType)
 
     # Store in descriptor
     descriptor.vtbl_type = VTblType
     descriptor.interface_type = InterfaceType
     descriptor.interface_ptr = interface_ptr
-
-
-# =============================================================================
-# Convenience function for IID comparison
-# =============================================================================
-
-
-def iid_of(interface_class: type) -> UGUID:
-    """Get the IID of a decorated interface class.
-
-    Args:
-        interface_class: An interface class decorated with @interface.
-
-    Returns:
-        The interface identifier.
-
-    Raises:
-        AttributeError: If the class is not a decorated interface.
-
-    Example:
-        >>> from eco_python2acom.interfaces.decorators import interface, iid_of
-        >>> @interface(iid="93221116-2248-4742-AE06-82819447843D")
-        ... class IMyInterface: ...
-        >>> iid = iid_of(IMyInterface)
-    """
-    return interface_class._iid_  # type: ignore[no-any-return]

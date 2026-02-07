@@ -13,38 +13,25 @@ Note:
 
 from __future__ import annotations
 
-import ctypes
 import re
-from typing import ClassVar, Optional
+from ctypes import _Pointer
+from typing import TYPE_CHECKING, ClassVar, Optional
+
+from eco_python2acom.core.types import EcoStructure, Ptr, UInt8
 
 
-class UGUID(ctypes.Structure):
+class UGUID(EcoStructure):
     """ACOM Universal GUID structure.
 
     An 18-byte structure used for component and interface identification
     in the EcoOS/ACOM system.
-
-    Args:
-        guid_string: A GUID string in format "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX".
-        data: Raw 16-byte GUID data.
-        preamble: Preamble byte (default: 0x01).
-        length: Length byte (default: 0x10 = 16).
-
-    Attributes:
-        Preamble: Version/format indicator (1 byte).
-        Length: Length of data portion (1 byte).
-        Data: The 16-byte GUID data.
     """
 
     _fields_: ClassVar[list[tuple[str, type]]] = [
-        ("Preamble", ctypes.c_uint8),
-        ("Length", ctypes.c_uint8),
-        ("Data", ctypes.c_uint8 * 16),
+        ("Preamble", UInt8),
+        ("Length", UInt8),
+        ("Data", UInt8 * 16),
     ]
-
-    # Well-known GUIDs
-    IID_IEcoUnknown: ClassVar[UGUID]
-    IID_IEcoComponentFactory: ClassVar[UGUID]
 
     # Regex pattern for GUID string validation
     _GUID_PATTERN: ClassVar[re.Pattern[str]] = re.compile(
@@ -64,18 +51,27 @@ class UGUID(ctypes.Structure):
         preamble: int = 0x01,
         length: int = 0x10,
     ) -> None:
-        super().__init__()
-        self.Preamble = preamble
-        self.Length = length
+        """Initialize UGUID from a string or raw bytes.
+
+        Args:
+            guid_string: Optional GUID string in format "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX".
+            data: Optional 16-byte raw data for the GUID.
+            preamble: Preamble byte (default 0x01).
+            length: Length byte (default 0x10).
+
+        Raises:
+            ValueError: If both guid_string and data are provided, or if the
+                provided data is not 16 bytes long.
+        """
+        super().__init__(Preamble=preamble, Length=length)
+
+        if guid_string is not None and data is not None:
+            raise ValueError("Provide either 'guid_string' or 'data', not both.")
 
         if guid_string is not None:
             self._from_string(guid_string)
         elif data is not None:
             self._from_bytes(data)
-        else:
-            # Initialize with zeros
-            for i in range(16):
-                self.Data[i] = 0
 
     def _from_string(self, guid_string: str) -> None:
         """Parse a GUID string into the Data field.
@@ -93,12 +89,8 @@ class UGUID(ctypes.Structure):
                 "Expected format: XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
             )
 
-        # Concatenate all groups and convert to bytes
         hex_str = "".join(match.groups())
-        data_bytes = bytes.fromhex(hex_str)
-
-        for i, byte in enumerate(data_bytes):
-            self.Data[i] = byte
+        self.Data[:] = bytes.fromhex(hex_str)
 
     def _from_bytes(self, data: bytes) -> None:
         """Initialize from raw bytes.
@@ -107,16 +99,15 @@ class UGUID(ctypes.Structure):
             data: 16-byte GUID data.
 
         Raises:
-            ValueError: If data length is not 16.
+            ValueError: If data length is not 0x10 (16 bytes).
         """
-        if len(data) != 16:
+        if len(data) != 0x10:
             raise ValueError(f"GUID data must be 16 bytes, got {len(data)}")
 
-        for i, byte in enumerate(data):
-            self.Data[i] = byte
+        self.Data[:] = data
 
     def to_bytes(self) -> bytes:
-        """Convert the Data field to bytes.
+        """Convert the 'Data' field to bytes.
 
         Returns:
             The 16-byte GUID data.
@@ -140,14 +131,12 @@ class UGUID(ctypes.Structure):
             f"{data[8:10].hex().upper()}-"
             f"{data[10:16].hex().upper()}"
         )
-        if with_braces:
-            return f"{{{guid_str}}}"
-        return guid_str
+        return f"{{{guid_str}}}" if with_braces else guid_str
 
     def __eq__(self, other: object) -> bool:
         """Compare two UGUIDs for equality.
 
-        Comparison is done on all 18 bytes (Preamble + Length + Data).
+        Comparison is done on all 18 bytes (preamble, length, data).
         """
         if not isinstance(other, UGUID):
             return NotImplemented
@@ -204,58 +193,8 @@ class UGUID(ctypes.Structure):
         return cls(guid_string=guid_string)
 
 
-# =============================================================================
-# Well-known GUIDs (from IEcoBase1.h)
-# =============================================================================
-
-# IEcoUnknown IID = 00000000-0000-0000-0000-0000000000AA
-UGUID.IID_IEcoUnknown = UGUID.from_raw(
-    0x01,
-    0x10,
-    [
-        0x00,
-        0x00,
-        0x00,
-        0x00,
-        0x00,
-        0x00,
-        0x00,
-        0x00,
-        0x00,
-        0x00,
-        0x00,
-        0x00,
-        0x00,
-        0x00,
-        0x00,
-        0xAA,
-    ],
-)
-
-# IEcoComponentFactory IID = 00000000-0000-0000-0000-000000000055
-UGUID.IID_IEcoComponentFactory = UGUID.from_raw(
-    0x01,
-    0x10,
-    [
-        0x00,
-        0x00,
-        0x00,
-        0x00,
-        0x00,
-        0x00,
-        0x00,
-        0x00,
-        0x00,
-        0x00,
-        0x00,
-        0x00,
-        0x00,
-        0x00,
-        0x00,
-        0x55,
-    ],
-)
-
-
-# Type alias for flexibility
-UGUIDPtr = ctypes.POINTER(UGUID)
+# Create a pointer type for UGUID
+if TYPE_CHECKING:
+    UGUIDPtr = _Pointer[UGUID]
+else:
+    UGUIDPtr = Ptr(UGUID)

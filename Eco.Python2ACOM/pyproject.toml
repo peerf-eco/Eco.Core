@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "eco-python2acom"
-version = "0.4.0"
-description = "Library for working with ACOM in Python"
+version = "0.5.0"
+description = "Python bridge for ACOM component technology (EcoOS)"
 authors = ["Sergei Vdovenkov <vdovenkov2000@gmail.com>"]
 readme = "README.md"
 license = "MIT"
@@ -12,11 +12,15 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
     "Typing :: Typed",
+    "Operating System :: Microsoft :: Windows",
+    "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 
 [tool.poetry.dependencies]
 python = "^3.11"
+rich = {version = "^13.0.0", optional = true}
 
 [tool.poetry.group.dev.dependencies]
 black = "^23.0.0"
@@ -72,7 +76,6 @@ select = [
     "E",   # pycodestyle errors
     "W",   # pycodestyle warnings
     "F",   # pyflakes
-    "I",   # isort
     "B",   # flake8-bugbear
     "C4",  # flake8-comprehensions
     "UP",  # pyupgrade
@@ -102,7 +105,8 @@ warn_no_return = true
 warn_unreachable = true
 strict_equality = true
 show_error_codes = true
-disable_error_code = ["attr-defined", "empty-body"] # Allow dynamic attributes in examples (interface decorators add _iid_ dynamically)
+ignore_missing_imports = true
+disable_error_code = ["attr-defined", "empty-body", "valid-type", "type-var", "union-attr"]
 
 [[tool.mypy.overrides]]
 module = [

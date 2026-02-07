@@ -1,198 +1,242 @@
 #!/usr/bin/env python3
-"""Example: Using Eco.Calculator component through Python2ACOM bridge.
+"""Example: Using Calculator component through Python2ACOM bridge.
 
 This example demonstrates:
-1. How interfaces are defined using @interface and @method decorators
-2. How EcoSystem initializes the runtime (InterfaceBus, MemoryManager)
-3. How to load a component DLL and register it
-4. How to create component instances and call their methods
-5. How QueryInterface works to get different interfaces from a component
+1. Defining interfaces with @interface and @method decorators
+2. Inheritance from IEcoUnknown (QueryInterface, AddRef, Release)
+3. Using EcoSystem to bootstrap the runtime
+4. Using bus.QueryComponent to create typed component instances
+5. Direct interface instantiation for full IDE autocomplete
 
 Prerequisites:
-    - ECO_FRAMEWORK_RT environment variable set to runtime path
-    - Calculator component DLL
-
-Run:
-    python -m examples.example_calculator
+    - ECO_FRAMEWORK_RT environment variable set
+    - Calculator component DLL in the working directory
+      (or specify user_dll_path when creating EcoSystem)
 """
 
 from __future__ import annotations
 
 import sys
-from pathlib import Path
 
-from eco_python2acom.client.component import ComponentWrapper
 from eco_python2acom.core.errors import EcoError
 from eco_python2acom.core.guid import UGUID
+from eco_python2acom.core.types import ByRef, VoidPtr
 from eco_python2acom.runtime.system import EcoSystem
 from examples.calculator_interfaces import CID_EcoCalculator, IEcoCalculatorX, IEcoCalculatorY
+from examples.console import (
+    console,
+    logger,
+    print_error,
+    print_header,
+    print_info,
+    print_section,
+    print_success,
+)
+
+# Rich availability check for table output
+try:
+    from rich.table import Table
+
+    _RICH_AVAILABLE = True
+except ImportError:
+    _RICH_AVAILABLE = False
 
 
-def print_header(text: str) -> None:
-    """Print a formatted header."""
-    print(f"\n{'=' * 70}")
-    print(f"{text:^70}")
-    print(f"{'=' * 70}\n")
+def _build_op_table(calc_x: IEcoCalculatorX, op_name: str, op_symbol: str, op_func) -> None:
+    """Build and print a table of operation results (IEcoCalculatorX)."""
+    if _RICH_AVAILABLE and console:
+        table = Table(
+            title=f"IEcoCalculatorX — {op_name}",
+            show_header=True,
+            header_style="bold magenta",
+            border_style="blue",
+        )
+        table.add_column("a", justify="right", style="cyan")
+        table.add_column(op_symbol, justify="center", style="yellow")
+        table.add_column("b", justify="left", style="cyan")
+        table.add_column("=", justify="center")
+        table.add_column("result", justify="right", style="green")
+
+        pairs = (
+            [
+                (10, 20),
+                (100, 200),
+                (-50, 100),
+                (32767, 1),
+            ]
+            if op_name == "Addition"
+            else [(50, 30), (100, 200), (0, -100), (-50, -30)]
+        )
+
+        for a, b in pairs:
+            result = op_func(a, b)
+            table.add_row(str(a), op_symbol, str(b), "=", str(result))
+
+        console.print(table)
+    else:
+        print(f"  {op_name}:")
+        pairs = (
+            [
+                (10, 20),
+                (100, 200),
+                (-50, 100),
+                (32767, 1),
+            ]
+            if op_name == "Addition"
+            else [(50, 30), (100, 200), (0, -100), (-50, -30)]
+        )
+        for a, b in pairs:
+            result = op_func(a, b)
+            print(f"    {a:>6} {op_symbol} {b:<6} = {result}")
 
 
-def print_ok(text: str) -> None:
-    """Print success message."""
-    print(f"[OK] {text}")
+def _build_op_table_y(calc_y: IEcoCalculatorY, op_name: str, op_symbol: str, op_func) -> None:
+    """Build and print a table of operation results (IEcoCalculatorY)."""
+    if _RICH_AVAILABLE and console:
+        table = Table(
+            title=f"IEcoCalculatorY — {op_name}",
+            show_header=True,
+            header_style="bold magenta",
+            border_style="blue",
+        )
+        table.add_column("a", justify="right", style="cyan")
+        table.add_column(op_symbol, justify="center", style="yellow")
+        table.add_column("b", justify="left", style="cyan")
+        table.add_column("=", justify="center")
+        table.add_column("result", justify="right", style="green")
+
+        pairs = (
+            [(6, 7), (100, 100), (-10, 5), (256, 256)]
+            if op_name == "Multiplication"
+            else [
+                (100, 10),
+                (42, 7),
+                (-100, 5),
+                (1000, 3),
+            ]
+        )
+
+        for a, b in pairs:
+            result = op_func(a, b)
+            table.add_row(str(a), op_symbol, str(b), "=", str(result))
+
+        console.print(table)
+    else:
+        print(f"  {op_name}:")
+        pairs = (
+            [(6, 7), (100, 100), (-10, 5), (256, 256)]
+            if op_name == "Multiplication"
+            else [
+                (100, 10),
+                (42, 7),
+                (-100, 5),
+                (1000, 3),
+            ]
+        )
+        for a, b in pairs:
+            result = op_func(a, b)
+            print(f"    {a:>6} {op_symbol} {b:<6} = {result}")
 
 
-def print_err(text: str) -> None:
-    """Print error message."""
-    print(f"[ERROR] {text}")
+def demo_calculator_x(calc_x: IEcoCalculatorX) -> None:
+    """Demonstrate IEcoCalculatorX operations (Addition, Subtraction)."""
+    print_section("IEcoCalculatorX — Addition & Subtraction", "bold cyan")
+    _build_op_table(calc_x, "Addition", "+", calc_x.Addition)
+    console.print() if _RICH_AVAILABLE and console else print()
+    _build_op_table(calc_x, "Subtraction", "-", calc_x.Subtraction)
 
 
-def print_info(text: str) -> None:
-    """Print info message."""
-    print(f"> {text}")
-
-
-def print_result(operation: str, result: int) -> None:
-    """Print calculation result."""
-    print(f"  {operation} = {result}")
-
-
-def demo_calculator_x(calc_x: ComponentWrapper) -> None:
-    """Demonstrate IEcoCalculatorX operations (Addition, Subtraction).
-
-    Args:
-        calc_x: ComponentWrapper for IEcoCalculatorX interface.
-    """
-    print_info("Testing IEcoCalculatorX (Addition, Subtraction)")
-    print()
-
-    # Addition tests
-    for a, b in [(10, 20), (100, 200), (-50, 100), (32767, 1)]:
-        result = calc_x.Addition(a, b)
-        print_result(f"{a:>6} + {b:<6}", result)
-
-    print()
-
-    # Subtraction tests
-    for a, b in [(50, 30), (100, 200), (0, -100), (-50, -30)]:
-        result = calc_x.Subtraction(a, b)
-        print_result(f"{a:>6} - {b:<6}", result)
-
-
-def demo_calculator_y(calc_y: ComponentWrapper) -> None:
-    """Demonstrate IEcoCalculatorY operations (Multiplication, Division).
-
-    Args:
-        calc_y: ComponentWrapper for IEcoCalculatorY interface.
-    """
-    print_info("Testing IEcoCalculatorY (Multiplication, Division)")
-    print()
-
-    # Multiplication tests
-    for a, b in [(6, 7), (100, 100), (-10, 5), (256, 256)]:
-        result = calc_y.Multiplication(a, b)
-        print_result(f"{a:>6} * {b:<6}", result)
-
-    print()
-
-    # Division tests
-    for a, b in [(100, 10), (42, 7), (-100, 5), (1000, 3)]:
-        result = calc_y.Division(a, b)
-        print_result(f"{a:>6} / {b:<6}", result)
+def demo_calculator_y(calc_y: IEcoCalculatorY) -> None:
+    """Demonstrate IEcoCalculatorY operations (Multiplication, Division)."""
+    print_section("IEcoCalculatorY — Multiplication & Division", "bold cyan")
+    _build_op_table_y(calc_y, "Multiplication", "*", calc_y.Multiplication)
+    console.print() if _RICH_AVAILABLE and console else print()
+    _build_op_table_y(calc_y, "Division", "/", calc_y.Division)
 
 
 def main() -> int:
-    """Main example function.
+    """Main example function."""
+    print_header(
+        "Eco.Python2ACOM — Calculator Demo",
+        "ACOM component via Python bridge",
+    )
+    console.print() if _RICH_AVAILABLE and console else print()
 
-    Returns:
-        Exit code (0 for success, 1 for failure).
-    """
-
-    print_header("Eco.Python2ACOM Example: Calculator Component")
-
-    # Show interface information
-    print_info(f"IEcoCalculatorX IID: {IEcoCalculatorX._iid_.to_string()}")
-    print_info(f"IEcoCalculatorY IID: {IEcoCalculatorY._iid_.to_string()}")
-    print_info(f"CID_EcoCalculator: {CID_EcoCalculator}")
-    print()
+    # Interface info (compact)
+    logger.info("IEcoCalculatorX IID: %s", IEcoCalculatorX._iid_.to_string())
+    logger.info("IEcoCalculatorY IID: %s", IEcoCalculatorY._iid_.to_string())
+    logger.info("CID_EcoCalculator:   %s", CID_EcoCalculator)
+    console.print() if _RICH_AVAILABLE and console else print()
 
     try:
-        # Step 1: Find the DLL
-        dll_path = Path(
-            r"C:\Users\Sergei\Desktop\Diploma Files\eco_components\Eco.CalculatorC\BuildFiles\Windows\amd64\DynamicRelease\4828F6552E4540E78121EBD220DC360E.dll"
-        )
-        print_ok(f"Found DLL: {dll_path}")
-
-        # Step 2: Initialize EcoSystem
-        # EcoSystem creates:
-        # - InterfaceBus for component registration and querying
-        # - MemoryManager for dynamic memory allocation
         print_info("Initializing EcoSystem runtime...")
 
         with EcoSystem() as eco:
-            print_ok("EcoSystem initialized")
+            print_success("EcoSystem initialized")
+            console.print() if _RICH_AVAILABLE and console else print()
 
-            # Step 3: Load and register the calculator component
-            # This:
-            # - Loads the DLL
-            # - Gets the component factory via GetIEcoComponentFactoryPtr()
-            # - Registers the factory with InterfaceBus
-            print_info(f"Loading component: {dll_path.name}")
-            cid = UGUID.from_string(CID_EcoCalculator)
-            eco.load_component(cid, dll_path)
-            print_ok("Component loaded and registered")
+            cid = UGUID(CID_EcoCalculator)
 
-            # Step 4: Query component instance with IEcoCalculatorX interface
-            # This:
-            # - Calls InterfaceBus.QueryComponent(CID, IID)
-            # - Creates a new component instance
-            # - Returns the requested interface
-            print_info("Creating calculator instance (IEcoCalculatorX)...")
-            calc_x = eco.query_component(cid, IEcoCalculatorX._iid_, IEcoCalculatorX)
-            print_ok(f"Got IEcoCalculatorX: {calc_x}")
+            # --- IEcoCalculatorX via bus.QueryComponent ---
+            print_info("Querying IEcoCalculatorX from bus...")
+            ppv_x = VoidPtr()
+            result = eco.bus.QueryComponent(
+                ByRef(cid),
+                None,
+                ByRef(IEcoCalculatorX._iid_),
+                ByRef(ppv_x),
+            )
+            if result != 0 or not ppv_x.value:
+                print_error(f"QueryComponent failed for IEcoCalculatorX (code={result})")
+                return 1
 
-            # Step 5: Demo IEcoCalculatorX
-            print_header("IEcoCalculatorX Operations")
+            print_success("Got IEcoCalculatorX instance")
+            calc_x = IEcoCalculatorX(ppv_x)
+
             demo_calculator_x(calc_x)
+            console.print() if _RICH_AVAILABLE and console else print()
 
-            # Step 6: QueryInterface to get IEcoCalculatorY
-            # This demonstrates that a single component can implement
-            # multiple interfaces, and you can switch between them
-            print_header("QueryInterface Demo")
-            print_info("Querying IEcoCalculatorY from IEcoCalculatorX...")
-            calc_y = calc_x.query_interface(IEcoCalculatorY)
-            print_ok(f"Got IEcoCalculatorY: {calc_y}")
+            # --- QueryInterface -> IEcoCalculatorY ---
+            print_section("QueryInterface Demo", "bold yellow")
+            print_info("Querying IEcoCalculatorY via QueryInterface...")
+            ppv_y = VoidPtr()
+            result = calc_x.QueryInterface(
+                ByRef(IEcoCalculatorY._iid_),
+                ByRef(ppv_y),
+            )
 
-            # Step 7: Demo IEcoCalculatorY
-            print_header("IEcoCalculatorY Operations")
-            demo_calculator_y(calc_y)
+            if result == 0 and ppv_y.value:
+                calc_y = IEcoCalculatorY(ppv_y)
+                print_success("Got IEcoCalculatorY instance")
+                console.print() if _RICH_AVAILABLE and console else print()
 
-            # Step 8: Release interfaces
-            print_header("Cleanup")
-            calc_y.release()
-            print_ok("Released IEcoCalculatorY")
+                demo_calculator_y(calc_y)
 
-            calc_x.release()
-            print_ok("Released IEcoCalculatorX")
+                calc_y.Release()
+                print_success("Released IEcoCalculatorY")
+            else:
+                print_error(f"QueryInterface failed (code={result})")
 
-        # EcoSystem context manager automatically calls release()
-        print_ok("EcoSystem released")
+            # Cleanup
+            print_section("Cleanup", "bold yellow")
+            calc_x.Release()
+            print_success("Released IEcoCalculatorX")
 
-        print_header("Test Completed Successfully!")
+        console.print() if _RICH_AVAILABLE and console else print()
+        print_header("Done", "EcoSystem released successfully")
         return 0
 
     except FileNotFoundError as err:
-        print_err(f"File not found: {err}")
+        print_error(str(err))
+        print_info("Set ECO_FRAMEWORK_RT and ensure calculator DLL is in CWD")
         return 1
 
     except EcoError as err:
-        print_err(f"ACOM Error: {err}")
-        print_info("Make sure ECO_FRAMEWORK_RT is set correctly")
+        print_error(str(err))
         return 1
 
     except Exception as err:
-        print_err(f"Unexpected error: {err}")
-        import traceback
-
-        traceback.print_exc()
+        logger.exception("Unexpected error: %s", err)
         return 1
 
 

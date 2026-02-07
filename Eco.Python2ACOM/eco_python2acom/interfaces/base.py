@@ -1,352 +1,182 @@
-"""Base ACOM interfaces for EcoOS.
+"""Base ACOM interface definitions.
 
-This module provides ctypes structures for the fundamental ACOM interfaces:
-- IEcoUnknown: Base interface for all components
-- IEcoComponentFactory: Factory for creating component instances
-- IEcoInterfaceBus1: Interface bus for component registration/querying
-- IEcoInterfaceBus1MemExt: Memory extension for the interface bus
-- IEcoMemoryManager1: Memory management interface
+This module provides the foundational IEcoUnknown interface that all
+ACOM interfaces inherit from, defined using our declarative approach.
+
+After decoration, classes are directly instantiable from VoidPtr:
+    >>> obj = IEcoUnknown(ptr)
+    >>> obj.Release()
+
+The IEcoUnknown interface provides three fundamental methods:
+    - QueryInterface: Get a different interface from a component.
+    - AddRef: Increment reference count.
+    - Release: Decrement reference count (free when zero).
 """
 
 from __future__ import annotations
 
-import ctypes
-from typing import ClassVar, Optional
+from ctypes import _Pointer
+from typing import TYPE_CHECKING, Optional
 
-from eco_python2acom.core.guid import UGUID, UGUIDPtr
-from eco_python2acom.core.types import FUNCTYPE, CharPtr, Int16, UInt32, VoidPtr, VoidPtrPtr
-
-# =============================================================================
-# Well-known GUIDs
-# =============================================================================
-
-# IID_IEcoUnknown = {00000000-0000-0000-0000-0000000000AA}
-IID_IEcoUnknown = UGUID.from_string("00000000-0000-0000-0000-0000000000AA")
-
-# IID_IEcoComponentFactory = {00000000-0000-0000-0000-000000000055}
-IID_IEcoComponentFactory = UGUID.from_string("00000000-0000-0000-0000-000000000055")
-
-# CID_EcoInterfaceBus1 = {00000000-0000-0000-0000-000042757331}
-CID_EcoInterfaceBus1 = UGUID.from_string("00000000-0000-0000-0000-000042757331")
-
-# IID_IEcoInterfaceBus1 = {00000000-0000-0000-0000-A00000000101}
-IID_IEcoInterfaceBus1 = UGUID.from_string("00000000-0000-0000-0000-A00000000101")
-
-# IID_IEcoInterfaceBus1MemExt = {00000000-0000-0000-0000-A00100000101}
-IID_IEcoInterfaceBus1MemExt = UGUID.from_string("00000000-0000-0000-0000-A00100000101")
-
-# CID_EcoMemoryManager1 = {00000000-0000-0000-0000-00004D656D31}
-CID_EcoMemoryManager1 = UGUID.from_string("00000000-0000-0000-0000-00004D656D31")
-
-# IID_IEcoMemoryManager1 = {00000000-0000-0000-0000-00014D656D31}
-IID_IEcoMemoryManager1 = UGUID.from_string("00000000-0000-0000-0000-00014D656D31")
-
-# GID_IEcoSystem_x86_64 = {00000000-0000-0000-0000-000086640300}
-GID_IEcoSystem_x64 = UGUID.from_string("00000000-0000-0000-0000-000086640300")
-
-# GID_IEcoSystem_x86_32 = {00000000-0000-0000-0000-000014C00200}
-GID_IEcoSystem_x86 = UGUID.from_string("00000000-0000-0000-0000-000014C00200")
-
+from eco_python2acom.core.guid import UGUIDPtr
+from eco_python2acom.core.types import CharPtr, EcoResult, UInt32, VoidPtr, VoidPtrPtr
+from eco_python2acom.interfaces.decorators import interface, method
+from eco_python2acom.interfaces.guids.iid import IID_IEcoComponentFactory, IID_IEcoUnknown
 
 # =============================================================================
-# Forward Declarations
+# IEcoUnknown - Base interface for all ACOM components
 # =============================================================================
 
 
-class IEcoUnknown(ctypes.Structure):
+@interface(iid=IID_IEcoUnknown)
+class IEcoUnknown:
     """Base interface for all ACOM components.
 
-    All ACOM interfaces inherit from IEcoUnknown, which provides
-    reference counting and interface querying capabilities.
+    Every ACOM interface inherits from IEcoUnknown and must implement
+    these three methods. The @interface decorator automatically adds
+    them to the VTbl in the correct order.
 
-    Attributes:
-        pVTbl: Pointer to the virtual table containing method implementations.
+    Instantiate from a raw pointer:
+        >>> unknown = IEcoUnknown(ptr)
+        >>> unknown.AddRef()
+        >>> unknown.Release()
 
     Note:
-        This corresponds to IEcoUnknown in IEcoBase1.h.
+        When defining a new interface, inherit from IEcoUnknown.
+        The decorator will automatically include these methods.
     """
 
-    pass  # Fields defined after VTbl
+    def __init__(self, ptr: VoidPtr) -> None:
+        """Initialize from a raw interface pointer.
+
+        Args:
+            ptr: VoidPtr to the ACOM interface.
+
+        Raises:
+            ValueError: If ptr is NULL.
+        """
+        ...
+
+    @property
+    def ptr(self) -> VoidPtr:
+        """Raw interface pointer."""
+        return self._ptr  # type: ignore
+
+    @method
+    def QueryInterface(self, riid: UGUIDPtr, ppv: VoidPtrPtr) -> EcoResult:
+        """Query for another interface on this component.
+
+        Args:
+            riid: Pointer to the requested interface ID.
+            ppv: Output pointer to receive the interface.
+
+        Returns:
+            0 on success, error code otherwise.
+        """
+        ...
+
+    @method
+    def AddRef(self) -> UInt32:
+        """Increment the reference count.
+
+        Returns:
+            The new reference count.
+        """
+        ...
+
+    @method
+    def Release(self) -> UInt32:
+        """Decrement the reference count.
+
+        When the count reaches zero, the component is freed.
+
+        Returns:
+            The new reference count.
+        """
+        ...
 
 
-class IEcoComponentFactory(ctypes.Structure):
+# =============================================================================
+# IEcoComponentFactory - Factory for creating component instances
+# =============================================================================
+
+
+@interface(iid=IID_IEcoComponentFactory)
+class IEcoComponentFactory(IEcoUnknown):
     """Factory interface for creating ACOM component instances.
 
-    The component factory is obtained by calling GetIEcoComponentFactoryPtr()
-    from a component DLL.
+    Each component DLL exports GetIEcoComponentFactoryPtr() that returns
+    a pointer to this interface.
 
-    Attributes:
-        pVTbl: Pointer to the virtual table containing method implementations.
-
-    Note:
-        This corresponds to IEcoComponentFactory in IEcoBase1.h.
+    Inherits:
+        IEcoUnknown: QueryInterface, AddRef, Release
     """
 
-    pass  # Fields defined after VTbl
-
-
-class IEcoInterfaceBus1(ctypes.Structure):
-    """Interface bus for component registration and querying.
-
-    Attributes:
-        pVTbl: Pointer to the virtual table containing method implementations.
-
-    Note:
-        This corresponds to IEcoInterfaceBus1 in IdEcoInterfaceBus1.h.
-    """
-
-    pass  # Fields defined after VTbl
-
-
-class IEcoInterfaceBus1MemExt(ctypes.Structure):
-    """Memory extension interface for the interface bus.
-
-    Attributes:
-        pVTbl: Pointer to the virtual table containing method implementations.
-    """
-
-    pass  # Fields defined after VTbl
-
-
-class IEcoMemoryManager1(ctypes.Structure):
-    """Memory manager interface.
-
-    Attributes:
-        pVTbl: Pointer to the virtual table containing method implementations.
-    """
-
-    pass  # Fields defined after VTbl
-
-
-# Pointer types
-IEcoUnknownPtr = ctypes.POINTER(IEcoUnknown)
-IEcoComponentFactoryPtr = ctypes.POINTER(IEcoComponentFactory)
-IEcoInterfaceBus1Ptr = ctypes.POINTER(IEcoInterfaceBus1)
-IEcoInterfaceBus1MemExtPtr = ctypes.POINTER(IEcoInterfaceBus1MemExt)
-IEcoMemoryManager1Ptr = ctypes.POINTER(IEcoMemoryManager1)
-
-# Double pointer for out parameters
-IEcoUnknownPtrPtr = ctypes.POINTER(IEcoUnknownPtr)
-
-
-# =============================================================================
-# IEcoUnknown Virtual Table
-# =============================================================================
-
-
-class IEcoUnknownVTbl(ctypes.Structure):
-    """Virtual table for IEcoUnknown interface.
-
-    Contains function pointers for the three fundamental methods:
-    QueryInterface, AddRef, and Release.
-
-    Note:
-        All pointer arguments use VoidPtr for compatibility with c_void_p
-        values passed from Python code.
-    """
-
-    _fields_: ClassVar[list[tuple[str, type]]] = [
-        # int16_t QueryInterface(me, riid, ppv)
-        ("QueryInterface", FUNCTYPE(Int16, VoidPtr, UGUIDPtr, VoidPtrPtr)),
-        # uint32_t AddRef(me)
-        ("AddRef", FUNCTYPE(UInt32, VoidPtr)),
-        # uint32_t Release(me)
-        ("Release", FUNCTYPE(UInt32, VoidPtr)),
-    ]
-
-
-# Now define IEcoUnknown fields
-IEcoUnknown._fields_ = [("pVTbl", ctypes.POINTER(IEcoUnknownVTbl))]
-
-
-# =============================================================================
-# IEcoComponentFactory Virtual Table
-# =============================================================================
-
-
-class IEcoComponentFactoryVTbl(ctypes.Structure):
-    """Virtual table for IEcoComponentFactory interface.
-
-    Contains function pointers for factory methods including
-    IEcoUnknown methods and factory-specific methods.
-
-    Note:
-        All pointer arguments use VoidPtr for compatibility with c_void_p
-        values passed from Python code.
-    """
-
-    _fields_: ClassVar[list[tuple[str, type]]] = [
-        # IEcoUnknown methods
-        ("QueryInterface", FUNCTYPE(Int16, VoidPtr, UGUIDPtr, VoidPtrPtr)),
-        ("AddRef", FUNCTYPE(UInt32, VoidPtr)),
-        ("Release", FUNCTYPE(UInt32, VoidPtr)),
-        # IEcoComponentFactory methods
-        # int16_t Alloc(me, pISystem, pIUnknownOuter, riid, ppv)
-        ("Alloc", FUNCTYPE(Int16, VoidPtr, VoidPtr, VoidPtr, UGUIDPtr, VoidPtrPtr)),
-        # int16_t Init(me, pISystem, pv)
-        ("Init", FUNCTYPE(Int16, VoidPtr, VoidPtr, VoidPtr)),
-        # char_t* get_Name(me)
-        ("get_Name", FUNCTYPE(CharPtr, VoidPtr)),
-        # char_t* get_Version(me)
-        ("get_Version", FUNCTYPE(CharPtr, VoidPtr)),
-        # char_t* get_Manufacturer(me)
-        ("get_Manufacturer", FUNCTYPE(CharPtr, VoidPtr)),
-    ]
-
-
-# Now define IEcoComponentFactory fields
-IEcoComponentFactory._fields_ = [("pVTbl", ctypes.POINTER(IEcoComponentFactoryVTbl))]
-
-
-# =============================================================================
-# IEcoInterfaceBus1 Virtual Table
-# =============================================================================
-
-
-class IEcoInterfaceBus1VTbl(ctypes.Structure):
-    """Virtual table for IEcoInterfaceBus1 interface.
-
-    Provides methods for component registration and querying.
-    """
-
-    _fields_: ClassVar[list[tuple[str, type]]] = [
-        # IEcoUnknown methods
-        ("QueryInterface", FUNCTYPE(Int16, VoidPtr, UGUIDPtr, VoidPtrPtr)),
-        ("AddRef", FUNCTYPE(UInt32, VoidPtr)),
-        ("Release", FUNCTYPE(UInt32, VoidPtr)),
-        # IEcoInterfaceBus1 methods
-        ("Init", FUNCTYPE(Int16, VoidPtr)),
-        ("InitWith", FUNCTYPE(Int16, VoidPtr, VoidPtr, UInt32)),
-        ("RegisterComponent", FUNCTYPE(Int16, VoidPtr, UGUIDPtr, VoidPtr)),
-        ("UnRegisterComponent", FUNCTYPE(Int16, VoidPtr, UGUIDPtr)),
-        (
-            "QueryComponent",
-            FUNCTYPE(Int16, VoidPtr, UGUIDPtr, VoidPtr, UGUIDPtr, VoidPtrPtr),
-        ),
-    ]
-
-
-# Now define IEcoInterfaceBus1 fields
-IEcoInterfaceBus1._fields_ = [("pVTbl", ctypes.POINTER(IEcoInterfaceBus1VTbl))]
-
-
-# =============================================================================
-# IEcoInterfaceBus1MemExt Virtual Table
-# =============================================================================
-
-
-class IEcoInterfaceBus1MemExtVTbl(ctypes.Structure):
-    """Virtual table for IEcoInterfaceBus1MemExt interface.
-
-    Provides methods for memory manager configuration.
-    """
-
-    _fields_: ClassVar[list[tuple[str, type]]] = [
-        # IEcoUnknown methods
-        ("QueryInterface", FUNCTYPE(Int16, VoidPtr, UGUIDPtr, VoidPtrPtr)),
-        ("AddRef", FUNCTYPE(UInt32, VoidPtr)),
-        ("Release", FUNCTYPE(UInt32, VoidPtr)),
-        # IEcoInterfaceBus1MemExt methods
-        ("set_Manager", FUNCTYPE(Int16, VoidPtr, UGUIDPtr)),
-        ("get_Manager", FUNCTYPE(UGUIDPtr, VoidPtr)),
-        ("set_ExpandPool", FUNCTYPE(Int16, VoidPtr, Int16)),
-    ]
-
-
-# Now define IEcoInterfaceBus1MemExt fields
-IEcoInterfaceBus1MemExt._fields_ = [("pVTbl", ctypes.POINTER(IEcoInterfaceBus1MemExtVTbl))]
-
-
-# =============================================================================
-# IEcoMemoryManager1 Virtual Table
-# =============================================================================
-
-
-class IEcoMemoryManager1VTbl(ctypes.Structure):
-    """Virtual table for IEcoMemoryManager1 interface.
-
-    Provides methods for memory initialization and status.
-    """
-
-    _fields_: ClassVar[list[tuple[str, type]]] = [
-        # IEcoUnknown methods
-        ("QueryInterface", FUNCTYPE(Int16, VoidPtr, UGUIDPtr, VoidPtrPtr)),
-        ("AddRef", FUNCTYPE(UInt32, VoidPtr)),
-        ("Release", FUNCTYPE(UInt32, VoidPtr)),
-        # IEcoMemoryManager1 methods
-        ("Init", FUNCTYPE(Int16, VoidPtr, VoidPtr, UInt32)),
-        ("get_Status", FUNCTYPE(Int16, VoidPtr, VoidPtr)),
-    ]
-
-
-# Now define IEcoMemoryManager1 fields
-IEcoMemoryManager1._fields_ = [("pVTbl", ctypes.POINTER(IEcoMemoryManager1VTbl))]
-
-
-# =============================================================================
-# Helper Functions
-# =============================================================================
-
-
-def create_vtbl_type(
-    name: str,
-    methods: list[tuple[str, type]],
-    base_methods: Optional[list[tuple[str, type]]] = None,
-) -> type[ctypes.Structure]:
-    """Create a new VTbl structure type dynamically.
-
-    This is useful for creating VTbl types for custom interfaces
-    that inherit from IEcoUnknown.
-
-    Args:
-        name: The name of the VTbl structure.
-        methods: List of (method_name, FUNCTYPE) tuples for interface methods.
-        base_methods: List of base interface methods. Defaults to IEcoUnknown.
-
-    Returns:
-        A new ctypes Structure class for the VTbl.
-
-    Example:
-        >>> IEcoCalculatorXVTbl = create_vtbl_type(
-        ...     "IEcoCalculatorXVTbl",
-        ...     [
-        ...         ("Addition", FUNCTYPE(Int32, IEcoCalculatorXPtr, Int16, Int16)),
-        ...         ("Subtraction", FUNCTYPE(Int16, IEcoCalculatorXPtr, Int16, Int16)),
-        ...     ]
-        ... )
-    """
-    if base_methods is None:
-        base_methods = IEcoUnknownVTbl._fields_
-
-    all_methods = list(base_methods) + list(methods)
-
-    class NewVTbl(ctypes.Structure):
-        _fields_ = all_methods
-
-    NewVTbl.__name__ = name
-    NewVTbl.__qualname__ = name
-
-    return NewVTbl
-
-
-def create_interface_type(name: str, vtbl_type: type[ctypes.Structure]) -> type[ctypes.Structure]:
-    """Create a new interface structure type dynamically.
-
-    Args:
-        name: The name of the interface structure.
-        vtbl_type: The VTbl structure type for this interface.
-
-    Returns:
-        A new ctypes Structure class for the interface.
-
-    Example:
-        >>> IEcoCalculatorX = create_interface_type("IEcoCalculatorX", IEcoCalculatorXVTbl)
-    """
-
-    class NewInterface(ctypes.Structure):
-        _fields_ = [("pVTbl", ctypes.POINTER(vtbl_type))]
-
-    NewInterface.__name__ = name
-    NewInterface.__qualname__ = name
-
-    return NewInterface
+    @method
+    def Alloc(
+        self,
+        pISystem: Optional[VoidPtr],
+        pIUnknownOuter: Optional[VoidPtr],
+        riid: UGUIDPtr,
+        ppv: VoidPtrPtr,
+    ) -> EcoResult:
+        """Allocate a new component instance.
+
+        Args:
+            pISystem: Pointer to system interface (can be NULL).
+            pIUnknownOuter: Outer unknown for aggregation (can be NULL).
+            riid: Requested interface ID.
+            ppv: Output pointer for the interface.
+
+        Returns:
+            0 on success, error code otherwise.
+        """
+        ...
+
+    @method
+    def Init(self, pISystem: Optional[VoidPtr], pv: VoidPtr) -> EcoResult:
+        """Initialize the factory with system context.
+
+        Args:
+            pISystem: Pointer to system interface (can be NULL).
+            pv: Additional context (e.g., bus pointer).
+
+        Returns:
+            0 on success, error code otherwise.
+        """
+        ...
+
+    @method
+    def get_Name(self) -> CharPtr:
+        """Get the component name.
+
+        Returns:
+            Pointer to null-terminated string.
+        """
+        ...
+
+    @method
+    def get_Version(self) -> CharPtr:
+        """Get the component version.
+
+        Returns:
+            Pointer to null-terminated string.
+        """
+        ...
+
+    @method
+    def get_Manufacturer(self) -> CharPtr:
+        """Get the component manufacturer.
+
+        Returns:
+            Pointer to null-terminated string.
+        """
+        ...
+
+
+if TYPE_CHECKING:
+    IEcoUnknownPtr = _Pointer[IEcoUnknown]
+    IEcoComponentFactoryPtr = _Pointer[IEcoComponentFactory]
+else:
+    IEcoUnknownPtr = IEcoUnknown._interface_ptr_
+    IEcoComponentFactoryPtr = IEcoComponentFactory._interface_ptr_

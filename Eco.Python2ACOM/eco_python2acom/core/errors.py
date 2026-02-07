@@ -9,7 +9,7 @@ Note:
 """
 
 from enum import IntEnum
-from typing import Optional
+from typing import Optional, Union
 
 
 class EcoErrorCode(IntEnum):
@@ -68,26 +68,27 @@ _ERROR_MESSAGES: dict[EcoErrorCode, str] = {
 
 
 class EcoError(Exception):
-    """Exception raised for ACOM/EcoOS errors.
-
-    Args:
-        code: The error code returned by an ACOM operation.
-        message: Additional context about the error.
-        operation: The name of the operation that failed.
-
-    Attributes:
-        code: The error code.
-        message: The error message.
-        operation: The operation that caused the error.
-    """
+    """Exception raised for ACOM/EcoOS errors."""
 
     def __init__(
         self,
-        code: int | EcoErrorCode,
+        code: Union[int, EcoErrorCode],
         message: Optional[str] = None,
         operation: Optional[str] = None,
     ) -> None:
-        self.code = EcoErrorCode(code) if isinstance(code, int) else code
+        """Initialize the EcoError exception.
+
+        Args:
+            code: The error code returned by an ACOM operation.
+            message: Additional context about the error.
+            operation: The name of the operation that failed.
+        """
+        try:
+            self.code = EcoErrorCode(code) if isinstance(code, int) else code
+        except ValueError:
+            # Unknown error code, default to FAIL
+            self.code = EcoErrorCode.FAIL
+
         self.operation = operation
 
         # Build error message
@@ -100,13 +101,6 @@ class EcoError(Exception):
             full_msg += f" (during {operation})"
 
         super().__init__(full_msg)
-
-    def __repr__(self) -> str:
-        """Return a detailed representation of the error."""
-        return (
-            f"EcoError(code=EcoErrorCode.{self.code.name}, "
-            f"message={self.message!r}, operation={self.operation!r})"
-        )
 
 
 def check_result(

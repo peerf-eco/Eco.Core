@@ -1,47 +1,18 @@
-"""Eco.Python2ACOM - Python to ACOM Bridge Library.
+"""eco_python2acom - Python bridge for ACOM component technology (EcoOS).
 
-This library provides a bridge between Python and ACOM (Eco Component Object Model),
-enabling Python applications to load and interact with EcoOS components.
+This library provides Python bindings for interacting with ACOM
+components from EcoOS.
 
-Package Structure:
-    eco_python2acom/
-    ├── core/           # Fundamental types and utilities
-    │   ├── types       # ctypes aliases (Int16, Int32, VoidPtr, etc.)
-    │   ├── guid        # UGUID structure for identifiers
-    │   └── errors      # EcoError exception and error codes
-    ├── interfaces/     # Interface definitions and decorators
-    │   ├── base        # IEcoUnknown, IEcoComponentFactory, IEcoInterfaceBus1
-    │   └── decorators  # @interface, @method decorators
-    ├── client/         # Client-side component wrappers
-    │   └── component   # ComponentWrapper class
-    └── runtime/        # EcoOS runtime initialization
-        └── system      # EcoSystem container (Unikernel Bridge)
-
-Usage:
-    Import from submodules explicitly for better clarity:
-
-    >>> from eco_python2acom.core.types import Int16, Int32, VoidPtr
-    >>> from eco_python2acom.core.guid import UGUID
-    >>> from eco_python2acom.core.errors import EcoError, check_result
-    >>> from eco_python2acom.interfaces.decorators import interface, method
-    >>> from eco_python2acom.client.component import ComponentWrapper
-    >>> from eco_python2acom.runtime.system import EcoSystem
-
-Example:
-    >>> from eco_python2acom.core.types import Int16, Int32
-    >>> from eco_python2acom.interfaces.decorators import interface, method
-    >>>
-    >>> @interface(iid="93221116-2248-4742-AE06-82819447843D")
-    ... class IEcoCalculatorX:
-    ...     @method
-    ...     def Addition(self, a: Int16, b: Int16) -> Int32: ...
-
-Notes:
-    - This library is part of the EcoOS ecosystem.
-    - Requires ECO_FRAMEWORK_RT environment variable for runtime DLLs.
-    - For more information, see: https://docs.ecoos.dev/
+Environment Variables:
+    ECO_FRAMEWORK_RT: Path to EcoOS runtime DLLs (required).
 """
 
-__version__ = "0.4.0"
+__version__ = "0.5.0"
+__author__ = "Sergei Vdovenkov"
+__email__ = "vdovenkov2000@gmail.com"
 
-__all__: list[str] = ["__version__"]
+__all__ = [
+    "__version__",
+    "__author__",
+    "__email__",
+]
