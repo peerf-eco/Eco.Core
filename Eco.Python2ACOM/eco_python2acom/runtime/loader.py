@@ -17,7 +17,7 @@ from eco_python2acom.core.errors import EcoError, EcoErrorCode
 from eco_python2acom.core.guid import UGUID
 from eco_python2acom.core.types import DLL, VoidPtr
 from eco_python2acom.interfaces.base import IEcoComponentFactory
-from eco_python2acom.runtime.helpers import guid_to_filename
+from eco_python2acom.runtime.utils import guid_to_filename
 
 
 @dataclass

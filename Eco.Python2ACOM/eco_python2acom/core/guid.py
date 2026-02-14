@@ -114,24 +114,26 @@ class UGUID(EcoStructure):
         """
         return bytes(self.Data)
 
-    def to_string(self, with_braces: bool = False) -> str:
+    def to_string(self, with_hyphens: bool = True) -> str:
         """Convert to standard GUID string format.
 
         Args:
-            with_braces: If True, wrap the GUID in curly braces.
+            with_hyphens: If True, add hyphens between the parts of the GUID.
 
         Returns:
-            GUID string in format "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX".
+            GUID string in format "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
+            or "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" if with_hyphens is False.
         """
         data = self.to_bytes()
-        guid_str = (
-            f"{data[0:4].hex().upper()}-"
-            f"{data[4:6].hex().upper()}-"
-            f"{data[6:8].hex().upper()}-"
-            f"{data[8:10].hex().upper()}-"
-            f"{data[10:16].hex().upper()}"
-        )
-        return f"{{{guid_str}}}" if with_braces else guid_str
+        if with_hyphens:
+            return (
+                f"{data[0:4].hex().upper()}-"
+                f"{data[4:6].hex().upper()}-"
+                f"{data[6:8].hex().upper()}-"
+                f"{data[8:10].hex().upper()}-"
+                f"{data[10:16].hex().upper()}"
+            )
+        return data.hex().upper()
 
     def __eq__(self, other: object) -> bool:
         """Compare two UGUIDs for equality.

@@ -33,7 +33,7 @@ lint-fix: ## Auto-fix linter errors
 	$(POETRY) run ruff check . --fix
 
 typecheck: ## Check types with Mypy
-	$(POETRY) run mypy $(PACKAGE)
+	$(POETRY) run mypy .
 
 test: ## Run tests
 	$(POETRY) run pytest
