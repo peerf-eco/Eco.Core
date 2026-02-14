@@ -20,7 +20,7 @@ classifiers = [
 
 [tool.poetry.dependencies]
 python = "^3.11"
-rich = {version = "^13.0.0", optional = true}
+rich = {version = "^13.0.0"}
 
 [tool.poetry.group.dev.dependencies]
 black = "^23.0.0"

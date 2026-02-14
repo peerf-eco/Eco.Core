@@ -231,7 +231,7 @@ def interface(iid: Union[str, UGUID], preamble: int = 0x01, length: int = 0x10) 
         class_name = cls.__name__
 
         def __init__(self, ptr: VoidPtr) -> None:
-            if not ptr:
+            if not ptr.value:
                 raise ValueError(f"{class_name}: NULL pointer")
             self._ptr = ptr
             self._vtbl = CastPtr(ptr, descriptor.interface_ptr).contents.pVTbl.contents  # type: ignore
@@ -239,16 +239,16 @@ def interface(iid: Union[str, UGUID], preamble: int = 0x01, length: int = 0x10) 
         cls.__init__ = __init__  # type: ignore
 
         # Replace each @method stub with a real VTbl dispatcher
-        def _make_dispatch(name: str, doc: Optional[str]) -> Callable[..., Any]:
+        def _make_dispatch(name: str, doc: Optional[str], to_type: type) -> Callable[..., Any]:
             def dispatch(self, *args: Any) -> Any:
-                return getattr(self._vtbl, name)(self._ptr, *args)
+                return to_type(getattr(self._vtbl, name)(self._ptr, *args))
 
             dispatch.__name__ = name
             dispatch.__doc__ = doc
             return dispatch
 
         for method in all_methods:
-            setattr(cls, method.name, _make_dispatch(method.name, method.doc))
+            setattr(cls, method.name, _make_dispatch(method.name, method.doc, method.return_type))
 
         def __repr__(self) -> str:
             addr = self._ptr.value if self._ptr else 0

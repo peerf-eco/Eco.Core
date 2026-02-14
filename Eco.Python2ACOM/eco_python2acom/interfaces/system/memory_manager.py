@@ -16,15 +16,7 @@ from __future__ import annotations
 from ctypes import _Pointer
 from typing import TYPE_CHECKING, Optional
 
-from eco_python2acom.core.types import (
-    Char,
-    EcoResult,
-    EcoStructure,
-    Ptr,
-    UInt32,
-    UInt32Ptr,
-    VoidPtr,
-)
+from eco_python2acom.core.types import Char, EcoStructure, Int16, Ptr, UInt32, UInt32Ptr, VoidPtr
 from eco_python2acom.interfaces.base import IEcoUnknown
 from eco_python2acom.interfaces.decorators import interface, method
 from eco_python2acom.interfaces.guids.iid import IID_IEcoMemoryAllocator1, IID_IEcoMemoryManager1
@@ -73,7 +65,7 @@ class IEcoMemoryManager1(IEcoUnknown):
     """
 
     @method
-    def Init(self, startAddress: Optional[VoidPtr], size: UInt32) -> EcoResult:
+    def Init(self, startAddress: Optional[VoidPtr], size: UInt32) -> Int16:
         """Initialize the memory manager with heap.
 
         Args:
@@ -86,7 +78,7 @@ class IEcoMemoryManager1(IEcoUnknown):
         ...
 
     @method
-    def get_Status(self, status: EcoMemoryManager1StatusPtr) -> EcoResult:
+    def get_Status(self, status: EcoMemoryManager1StatusPtr) -> Int16:
         """Get memory status information.
 
         Args:
@@ -98,9 +90,7 @@ class IEcoMemoryManager1(IEcoUnknown):
         ...
 
     @method
-    def get_UsedBlocks(
-        self, blocks: EcoMemoryManager1BlockPtr, size_in_blocks: UInt32Ptr
-    ) -> EcoResult:
+    def get_UsedBlocks(self, blocks: EcoMemoryManager1BlockPtr, size_in_blocks: UInt32Ptr) -> Int16:
         """Get information about a used memory block.
 
         Args:
@@ -191,7 +181,7 @@ class IEcoMemoryAllocator1(IEcoUnknown):
         ...
 
     @method
-    def Compare(self, ptr1: VoidPtr, ptr2: VoidPtr, size: UInt32) -> EcoResult:
+    def Compare(self, ptr1: VoidPtr, ptr2: VoidPtr, size: UInt32) -> Int16:
         """Compare two memory blocks.
 
         Args:

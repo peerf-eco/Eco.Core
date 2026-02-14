@@ -2,10 +2,9 @@
 # Usage: make <command>
 # List all commands: make help
 
-.PHONY: help install format lint lint-fix typecheck test test-cov check clean build pre-commit all
+.PHONY: help install format lint test test-cov style clean build pre-commit all
 
 # Variables
-PYTHON := poetry run python
 POETRY := poetry
 PACKAGE := eco_python2acom
 
@@ -28,11 +27,6 @@ format: ## Format code with Black and isort
 
 lint: ## Check code with Ruff
 	$(POETRY) run ruff check .
-
-lint-fix: ## Auto-fix linter errors
-	$(POETRY) run ruff check . --fix
-
-typecheck: ## Check types with Mypy
 	$(POETRY) run mypy .
 
 test: ## Run tests
@@ -41,7 +35,7 @@ test: ## Run tests
 test-cov: ## Run tests with coverage
 	$(POETRY) run pytest --cov=$(PACKAGE) --cov-report=term-missing
 
-check: format lint typecheck test ## Run all checks (format, lint, typecheck, test)
+style: format lint ## Run all style checks (format, lint)
 
 pre-commit: ## Run pre-commit hooks on all files
 	$(POETRY) run pre-commit run --all-files
@@ -57,4 +51,4 @@ clean: ## Clean cache files and temporary directories
 build: clean ## Build library for publishing
 	$(POETRY) build
 
-all: clean check build ## Clean, check and build (full cycle)
+all: clean style build ## Clean, style and build (full cycle)

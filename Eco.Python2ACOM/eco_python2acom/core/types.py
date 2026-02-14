@@ -142,8 +142,6 @@ WCharPtr: TypeAlias = c_wchar_p
 # Structure Base Class
 # =============================================================================
 
-EcoResult: TypeAlias = int
-
 
 class EcoStructure(Structure):
     """Base class for EcoOS structures."""

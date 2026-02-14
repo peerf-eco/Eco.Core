@@ -19,7 +19,7 @@ from ctypes import _Pointer
 from typing import TYPE_CHECKING, Optional
 
 from eco_python2acom.core.guid import UGUIDPtr
-from eco_python2acom.core.types import Bool, CharPtr, EcoResult, UInt32, VoidPtr, VoidPtrPtr
+from eco_python2acom.core.types import Bool, CharPtr, Int16, UInt32, VoidPtr, VoidPtrPtr
 from eco_python2acom.interfaces.base import IEcoUnknown, IEcoUnknownPtr
 from eco_python2acom.interfaces.decorators import interface, method
 from eco_python2acom.interfaces.guids.iid import (
@@ -46,7 +46,7 @@ class IEcoInterfaceBus1(IEcoUnknown):
     """
 
     @method
-    def Init(self) -> EcoResult:
+    def Init(self) -> Int16:
         """Initialize the bus (no heap).
 
         Returns:
@@ -55,7 +55,7 @@ class IEcoInterfaceBus1(IEcoUnknown):
         ...
 
     @method
-    def InitWith(self, pHeap: VoidPtr, size: UInt32) -> EcoResult:
+    def InitWith(self, pHeap: VoidPtr, size: UInt32) -> Int16:
         """Initialize the bus with custom heap.
 
         Args:
@@ -68,7 +68,7 @@ class IEcoInterfaceBus1(IEcoUnknown):
         ...
 
     @method
-    def RegisterComponent(self, cid: UGUIDPtr, pIFactory: IEcoUnknownPtr) -> EcoResult:
+    def RegisterComponent(self, cid: UGUIDPtr, pIFactory: IEcoUnknownPtr) -> Int16:
         """Register a component factory by CID.
 
         Args:
@@ -81,7 +81,7 @@ class IEcoInterfaceBus1(IEcoUnknown):
         ...
 
     @method
-    def UnRegisterComponent(self, cid: UGUIDPtr) -> EcoResult:
+    def UnRegisterComponent(self, cid: UGUIDPtr) -> Int16:
         """Unregister a component by CID.
 
         Args:
@@ -99,7 +99,7 @@ class IEcoInterfaceBus1(IEcoUnknown):
         pIUnknownOuter: Optional[IEcoUnknownPtr],
         iid: UGUIDPtr,
         ppv: VoidPtrPtr,
-    ) -> EcoResult:
+    ) -> Int16:
         """Create component instance and get interface.
 
         Args:
@@ -131,7 +131,7 @@ class IEcoInterfaceBus1MemExt(IEcoUnknown):
     """
 
     @method
-    def set_Manager(self, cid: UGUIDPtr) -> EcoResult:
+    def set_Manager(self, cid: UGUIDPtr) -> Int16:
         """Set the memory manager CID.
 
         Args:
@@ -152,7 +152,7 @@ class IEcoInterfaceBus1MemExt(IEcoUnknown):
         ...
 
     @method
-    def set_ExpandPool(self, enable: Bool) -> EcoResult:
+    def set_ExpandPool(self, enable: Bool) -> Int16:
         """Enable/disable pool expansion.
 
         Args:
@@ -181,7 +181,7 @@ class IEcoInterfaceBus1FileExt(IEcoUnknown):
     """
 
     @method
-    def set_Manager(self, cid: UGUIDPtr) -> EcoResult:
+    def set_Manager(self, cid: UGUIDPtr) -> Int16:
         """Set the file system manager CID.
 
         Args:
@@ -202,7 +202,7 @@ class IEcoInterfaceBus1FileExt(IEcoUnknown):
         ...
 
     @method
-    def set_SearchPath(self, path: CharPtr) -> EcoResult:
+    def set_SearchPath(self, path: CharPtr) -> Int16:
         """Set path for component DLL search.
 
         Args:
@@ -223,7 +223,7 @@ class IEcoInterfaceBus1FileExt(IEcoUnknown):
         ...
 
     @method
-    def RegisterComponent(self, cid: UGUIDPtr, filename: CharPtr) -> EcoResult:
+    def RegisterComponent(self, cid: UGUIDPtr, filename: CharPtr) -> Int16:
         """Register component from file by CID.
 
         Args:
@@ -243,7 +243,7 @@ class IEcoInterfaceBus1FileExt(IEcoUnknown):
         pIUnknownOuter: Optional[IEcoUnknownPtr],
         iid: UGUIDPtr,
         ppv: VoidPtrPtr,
-    ) -> EcoResult:
+    ) -> Int16:
         """Query component from file directly.
 
         Args:
@@ -276,7 +276,7 @@ class IEcoInterfaceBus1NetExt(IEcoUnknown):
     """
 
     @method
-    def set_Manager(self, cid: UGUIDPtr) -> EcoResult:
+    def set_Manager(self, cid: UGUIDPtr) -> Int16:
         """Set the network manager CID.
 
         Args:
@@ -304,7 +304,7 @@ class IEcoInterfaceBus1NetExt(IEcoUnknown):
         pIUnknownOuter: Optional[IEcoUnknownPtr],
         iid: UGUIDPtr,
         ppv: VoidPtrPtr,
-    ) -> EcoResult:
+    ) -> Int16:
         """Query remote component over network.
 
         Args:

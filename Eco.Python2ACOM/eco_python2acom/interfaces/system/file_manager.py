@@ -19,7 +19,7 @@ from ctypes import _Pointer
 from typing import TYPE_CHECKING
 
 from eco_python2acom.core.guid import UGUIDPtr
-from eco_python2acom.core.types import CharPtr, EcoResult, Int32, UInt32, UInt32Ptr, Void, VoidPtr
+from eco_python2acom.core.types import CharPtr, Int16, Int32, UInt32, UInt32Ptr, Void, VoidPtr
 from eco_python2acom.interfaces.base import IEcoUnknown
 from eco_python2acom.interfaces.decorators import interface, method
 from eco_python2acom.interfaces.guids.iid import (
@@ -124,7 +124,7 @@ class IEcoFile1(IEcoUnknown):
         ...
 
     @method
-    def Read(self, buffer: VoidPtr, size: UInt32Ptr) -> EcoResult:
+    def Read(self, buffer: VoidPtr, size: UInt32Ptr) -> Int16:
         """Read data from the file into a buffer.
 
         Args:
@@ -137,7 +137,7 @@ class IEcoFile1(IEcoUnknown):
         ...
 
     @method
-    def Write(self, buffer: VoidPtr, size: UInt32Ptr) -> EcoResult:
+    def Write(self, buffer: VoidPtr, size: UInt32Ptr) -> Int16:
         """Write data from a buffer to the file.
 
         Args:
@@ -150,7 +150,7 @@ class IEcoFile1(IEcoUnknown):
         ...
 
     @method
-    def Close(self) -> EcoResult:
+    def Close(self) -> Int16:
         """Close the file.
 
         Returns:
@@ -294,7 +294,7 @@ class IEcoDirectoryManager1(IEcoUnknown):
         ...
 
     @method
-    def Delete(self, name: CharPtr) -> EcoResult:
+    def Delete(self, name: CharPtr) -> Int16:
         """Delete an existing directory.
 
         Args:
@@ -351,7 +351,7 @@ class IEcoFileManager1(IEcoUnknown):
         ...
 
     @method
-    def Close(self, pFile: IEcoFile1Ptr) -> EcoResult:
+    def Close(self, pFile: IEcoFile1Ptr) -> Int16:
         """Close a file.
 
         Args:

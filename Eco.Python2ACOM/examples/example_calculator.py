@@ -186,8 +186,8 @@ def main() -> int:
                 ByRef(IEcoCalculatorX._iid_),
                 ByRef(ppv_x),
             )
-            if result != 0 or not ppv_x.value:
-                print_error(f"QueryComponent failed for IEcoCalculatorX (code={result})")
+            if result.value != 0 or not ppv_x.value:
+                print_error(f"QueryComponent failed for IEcoCalculatorX (code = {result.value})")
                 return 1
 
             print_success("Got IEcoCalculatorX instance")
@@ -205,7 +205,7 @@ def main() -> int:
                 ByRef(ppv_y),
             )
 
-            if result == 0 and ppv_y.value:
+            if result.value == 0 and ppv_y.value:
                 calc_y = IEcoCalculatorY(ppv_y)
                 print_success("Got IEcoCalculatorY instance")
                 console.print() if _RICH_AVAILABLE and console else print()
@@ -215,7 +215,7 @@ def main() -> int:
                 calc_y.Release()
                 print_success("Released IEcoCalculatorY")
             else:
-                print_error(f"QueryInterface failed (code={result})")
+                print_error(f"QueryInterface failed (code = {result.value})")
 
             # Cleanup
             print_section("Cleanup", "bold yellow")

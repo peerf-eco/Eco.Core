@@ -252,8 +252,8 @@ class EcoSystem:
 
         bus_ptr = VoidPtr()
         result = self._bus_factory.Alloc(None, None, ByRef(IID_IEcoInterfaceBus1), ByRef(bus_ptr))
-        if result != 0 or not bus_ptr.value:
-            raise EcoError(result, "Failed to create InterfaceBus instance")
+        if result.value != 0 or not bus_ptr.value:
+            raise EcoError(result.value, "Failed to create InterfaceBus instance")
 
         self._bus = IEcoInterfaceBus1(bus_ptr)
 
@@ -266,14 +266,14 @@ class EcoSystem:
             ByRef(CID_EcoMemoryManager1),
             CastPtr(loaded.factory._ptr, IEcoUnknownPtr),
         )
-        if result != 0:
-            raise EcoError(result, "Failed to register MemoryManager")
+        if result.value != 0:
+            raise EcoError(result.value, "Failed to register MemoryManager")
 
     def _configure_mem_ext(self) -> None:
         """Configure InterfaceBus memory extension."""
         mem_ext_ptr = VoidPtr()
         result = self._bus.QueryInterface(ByRef(IID_IEcoInterfaceBus1MemExt), ByRef(mem_ext_ptr))
-        if result == 0 and mem_ext_ptr.value:
+        if result.value == 0 and mem_ext_ptr.value:
             mem_ext = IEcoInterfaceBus1MemExt(mem_ext_ptr)
             mem_ext.set_Manager(ByRef(CID_EcoMemoryManager1))
             mem_ext.set_ExpandPool(Bool(True))
@@ -288,8 +288,8 @@ class EcoSystem:
             ByRef(IID_IEcoMemoryManager1),
             ByRef(mgr_ptr),
         )
-        if result != 0 or not mgr_ptr.value:
-            raise EcoError(result, "Failed to get MemoryManager interface")
+        if result.value != 0 or not mgr_ptr.value:
+            raise EcoError(result.value, "Failed to get MemoryManager interface")
 
         self._mem_manager = IEcoMemoryManager1(mgr_ptr)
         self._mem_manager.Init(None, self._heap_size)
@@ -302,8 +302,8 @@ class EcoSystem:
             ByRef(IID_IEcoMemoryAllocator1),
             ByRef(alloc_ptr),
         )
-        if result != 0 or not alloc_ptr.value:
-            raise EcoError(result, "Failed to get MemoryAllocator interface")
+        if result.value != 0 or not alloc_ptr.value:
+            raise EcoError(result.value, "Failed to get MemoryAllocator interface")
 
         self._mem_allocator = IEcoMemoryAllocator1(alloc_ptr)
 
@@ -316,14 +316,14 @@ class EcoSystem:
             ByRef(CID_EcoFileSystemManagement1),
             CastPtr(loaded.factory._ptr, IEcoUnknownPtr),
         )
-        if result != 0:
-            raise EcoError(result, "Failed to register FileSystemManagement")
+        if result.value != 0:
+            raise EcoError(result.value, "Failed to register FileSystemManagement")
 
     def _configure_file_ext(self) -> None:
         """Configure InterfaceBus file extension."""
         file_ext_ptr = VoidPtr()
         result = self._bus.QueryInterface(ByRef(IID_IEcoInterfaceBus1FileExt), ByRef(file_ext_ptr))
-        if result == 0 and file_ext_ptr.value:
+        if result.value == 0 and file_ext_ptr.value:
             file_ext = IEcoInterfaceBus1FileExt(file_ext_ptr)
             file_ext.set_Manager(ByRef(CID_EcoFileSystemManagement1))
             file_ext.Release()
@@ -357,16 +357,15 @@ class EcoSystem:
             if bytes(cid.Data) in self._system_cids:
                 continue
 
-            try:
-                loaded = self._loader.load(dll_file)
-                self._loaded_dlls.append(loaded)
+            loaded = self._loader.load(dll_file)
+            self._loaded_dlls.append(loaded)
 
-                self._bus.RegisterComponent(
-                    ByRef(cid),
-                    CastPtr(loaded.factory._ptr, IEcoUnknownPtr),
-                )
-            except Exception:
-                continue
+            result = self._bus.RegisterComponent(
+                ByRef(cid),
+                CastPtr(loaded.factory._ptr, IEcoUnknownPtr),
+            )
+            if result.value != 0:
+                raise EcoError(result.value, f"Failed to register component: '{dll_file.name}'")
 
     # =========================================================================
     # Cleanup

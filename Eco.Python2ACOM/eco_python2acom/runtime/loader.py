@@ -58,24 +58,26 @@ class DllLoader:
         # Verify file exists
         path = path.resolve()
         if not path.exists():
-            raise FileNotFoundError(f"DLL not found: {path}")
+            raise FileNotFoundError(f"DLL not found: '{path}'")
 
         # Load DLL
         try:
             handle = DLL(str(path))
         except OSError as err:
-            raise EcoError(EcoErrorCode.FAIL, f"Failed to load DLL: {path}. Error: {err}") from err
+            raise EcoError(
+                EcoErrorCode.FAIL, f"Failed to load DLL: '{path.name}': incompatible architecture"
+            ) from err
 
         # Get factory pointer
         try:
             get_factory = handle.GetIEcoComponentFactoryPtr
             get_factory.restype = VoidPtr
             get_factory.argtypes = []
-            factory_ptr: VoidPtr = get_factory()
+            factory_ptr = VoidPtr(get_factory())
         except AttributeError as err:
             raise EcoError(
                 EcoErrorCode.COMPONENT_NOTFOUND,
-                f"DLL does not export GetIEcoComponentFactoryPtr: {path}",
+                f"DLL does not export GetIEcoComponentFactoryPtr: '{path.name}'",
             ) from err
         return LoadedDll(
             path=path,

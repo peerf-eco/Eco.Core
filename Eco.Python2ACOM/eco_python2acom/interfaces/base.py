@@ -19,7 +19,7 @@ from ctypes import _Pointer
 from typing import TYPE_CHECKING, Optional
 
 from eco_python2acom.core.guid import UGUIDPtr
-from eco_python2acom.core.types import CharPtr, EcoResult, UInt32, VoidPtr, VoidPtrPtr
+from eco_python2acom.core.types import CharPtr, Int16, UInt32, VoidPtr, VoidPtrPtr
 from eco_python2acom.interfaces.decorators import interface, method
 from eco_python2acom.interfaces.guids.iid import IID_IEcoComponentFactory, IID_IEcoUnknown
 
@@ -63,7 +63,7 @@ class IEcoUnknown:
         return self._ptr  # type: ignore
 
     @method
-    def QueryInterface(self, riid: UGUIDPtr, ppv: VoidPtrPtr) -> EcoResult:
+    def QueryInterface(self, riid: UGUIDPtr, ppv: VoidPtrPtr) -> Int16:
         """Query for another interface on this component.
 
         Args:
@@ -119,7 +119,7 @@ class IEcoComponentFactory(IEcoUnknown):
         pIUnknownOuter: Optional[VoidPtr],
         riid: UGUIDPtr,
         ppv: VoidPtrPtr,
-    ) -> EcoResult:
+    ) -> Int16:
         """Allocate a new component instance.
 
         Args:
@@ -134,7 +134,7 @@ class IEcoComponentFactory(IEcoUnknown):
         ...
 
     @method
-    def Init(self, pISystem: Optional[VoidPtr], pv: VoidPtr) -> EcoResult:
+    def Init(self, pISystem: Optional[VoidPtr], pv: VoidPtr) -> Int16:
         """Initialize the factory with system context.
 
         Args:
