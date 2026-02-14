@@ -77,6 +77,23 @@ IID_IEcoDirectoryManager1 = UGUID.from_string("00000000-0000-0000-0000-C00000000
 IID_IEcoDirectoryInfo1 = UGUID.from_string("00000000-0000-0000-0000-C00000000108")
 
 
+# =============================================================================
+# Connection Point Interfaces
+# =============================================================================
+
+# IEcoEnumConnections IID = {00000002-0000-0000-C000-000000000046}
+IID_IEcoEnumConnections = UGUID.from_string("00000002-0000-0000-C000-000000000046")
+
+# IEcoConnectionPoint IID = {00000003-0000-0000-C000-000000000046}
+IID_IEcoConnectionPoint = UGUID.from_string("00000003-0000-0000-C000-000000000046")
+
+# IEcoEnumConnectionPoints IID = {00000004-0000-0000-C000-000000000046}
+IID_IEcoEnumConnectionPoints = UGUID.from_string("00000004-0000-0000-C000-000000000046")
+
+# IEcoConnectionPointContainer IID = {00000005-0000-0000-C000-000000000046}
+IID_IEcoConnectionPointContainer = UGUID.from_string("00000005-0000-0000-C000-000000000046")
+
+
 # Mapping of IIDs to human-readable names
 IID_NAMES: dict[UGUID, str] = {
     IID_IEcoUnknown: "IEcoUnknown",
@@ -94,6 +111,10 @@ IID_NAMES: dict[UGUID, str] = {
     IID_IEcoDriveInfo1: "IEcoDriveInfo1",
     IID_IEcoDirectoryInfo1: "IEcoDirectoryInfo1",
     IID_IEcoDriveManager1: "IEcoDriveManager1",
+    IID_IEcoEnumConnections: "IEcoEnumConnections",
+    IID_IEcoConnectionPoint: "IEcoConnectionPoint",
+    IID_IEcoEnumConnectionPoints: "IEcoEnumConnectionPoints",
+    IID_IEcoConnectionPointContainer: "IEcoConnectionPointContainer",
 }
 
 
