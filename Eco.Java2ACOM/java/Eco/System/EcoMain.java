@@ -1,12 +1,12 @@
 package Eco.System;
 
-import Eco.Core.IEcoSystem;
+import Eco.Core.IEcoSystem_Client;
 
 import java.util.ServiceLoader;
 
 public class EcoMain {
     public static void main(String[] args) {
-        IEcoSystem iSys = new IEcoSystem();
+        IEcoSystem_Client iSys = new IEcoSystem_Client();
         int result = CEcoSystem.createCEcoSystem(args, iSys);
         if (result != 0) {
             System.exit(result);

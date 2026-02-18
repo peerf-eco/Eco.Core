@@ -12,25 +12,39 @@ void* getPointerToInterface(JNIEnv* env, jobject iUnk) {
     return (void*)(*env)->GetLongField(env, iUnk, field);
 }
 
-UGUID getUGUID(JNIEnv* env, jobject uguidObj) {
+void getUGUID(JNIEnv* env, jobject uguidObj, UGUID* result) {
     jclass clazz = (*env)->GetObjectClass(env, uguidObj);
     jfieldID field = 0;
     jobject obj = 0;
     jbyte* bytes;
     uint16_t i = 0;
-    UGUID result = {0};
     field = (*env)->GetFieldID(env, clazz, "Preamble", "B");
-    result.Preamble = (*env)->GetByteField(env, uguidObj, field);
+    result->Preamble = (*env)->GetByteField(env, uguidObj, field);
     field = (*env)->GetFieldID(env, clazz, "Length", "B");
-    result.Length = (*env)->GetByteField(env, uguidObj, field);
+    result->Length = (*env)->GetByteField(env, uguidObj, field);
     field = (*env)->GetFieldID(env, clazz, "Data", "[B");
     obj = (*env)->GetObjectField(env, uguidObj, field);
     bytes = (*env)->GetByteArrayElements(env, obj, 0);
-    for (i = 0; i < result.Length; i++) {
-        result.Data[i] = *(bytes + i);
+    for (i = 0; i < result->Length; i++) {
+        result->Data[i] = *(bytes + i);
     }
     (*env)->ReleaseByteArrayElements(env, obj, bytes, JNI_ABORT);
-    return result;
+}
+
+void setUGUID(JNIEnv* env, jobject uguidObj, UGUID* uguid) {
+    jclass clazz = (*env)->GetObjectClass(env, uguidObj);
+    jfieldID field = 0;
+    jobject obj = 0;
+    uint16_t i = 0;
+    field = (*env)->GetFieldID(env, clazz, "Preamble", "B");
+    (*env)->SetByteField(env, uguidObj, field, uguid->Preamble);
+    field = (*env)->GetFieldID(env, clazz, "Length", "B");
+    (*env)->SetByteField(env, uguidObj, field, uguid->Length);
+    field = (*env)->GetFieldID(env, clazz, "Data", "[B");
+    obj = (*env)->GetObjectField(env, uguidObj, field);
+    for (i = 0; i < uguid->Length; i++) {
+        (*env)->SetObjectArrayElement(env, obj, i, uguid->Data[i]);
+    }
 }
 
 void getCharArray(JNIEnv* env, jstring str, char_t** result) {

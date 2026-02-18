@@ -5,6 +5,8 @@ public class UGUID {
     byte Length;
     byte[] Data;
 
+    public UGUID() {}
+
     public UGUID(byte Preamble, byte Length, byte... Data) {
         this.Preamble = Preamble;
         this.Length = Length;

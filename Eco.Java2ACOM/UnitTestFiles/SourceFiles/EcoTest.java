@@ -1,3 +1,4 @@
+import Eco.Calculator.*;
 import Eco.System.EcoApp;
 import Eco.Core.IEcoSystem;
 import Eco.Core.IEcoUnknown;
@@ -6,17 +7,19 @@ import Eco.MemoryManager.IEcoMemoryManager;
 import Eco.MemoryManager.IEcoMemoryAllocator;
 import Eco.FileSystemManagement.IEcoFileManager;
 import Eco.FileSystemManagement.IEcoFileSystemManagement;
-import Eco.Calculator.IdEcoCalculatorC;
-import Eco.Calculator.IEcoCalculatorX;
-import Eco.Calculator.IEcoCalculatorY;
+import Eco.Core.IEcoSystem_Client;
+import Eco.Core.IEcoUnknown_Client;
+import Eco.InterfaceBus.IEcoInterfaceBus_Client;
+import Eco.MemoryManager.IEcoMemoryAllocator_Client;
+import Eco.FileSystemManagement.IEcoFileManager_Client;
 
 public class EcoTest implements EcoApp {
-    private static IEcoSystem iSys = new IEcoSystem();
-    private static IEcoInterfaceBus iBus = new IEcoInterfaceBus();
-    private static IEcoMemoryAllocator iMem = new IEcoMemoryAllocator();
-    private static IEcoFileManager iFileMgr = new IEcoFileManager();
-    private static IEcoCalculatorX iCalcX = new IEcoCalculatorX();
-    private static IEcoCalculatorY iCalcY = new IEcoCalculatorY();
+    private static IEcoSystem_Client iSys = new IEcoSystem_Client();
+    private static IEcoInterfaceBus_Client iBus = new IEcoInterfaceBus_Client();
+    private static IEcoMemoryAllocator_Client iMem = new IEcoMemoryAllocator_Client();
+    private static IEcoFileManager_Client iFileMgr = new IEcoFileManager_Client();
+    private static IEcoCalculatorX_Client iCalcX = new IEcoCalculatorX_Client();
+    private static IEcoCalculatorY_Client iCalcY = new IEcoCalculatorY_Client();
 
     @Override
     public void EcoMain(IEcoUnknown iUnk) {
@@ -37,13 +40,13 @@ public class EcoTest implements EcoApp {
         result = iSys.QueryInterface(IEcoInterfaceBus.IID, iBus);
         if (result != 0) return result;
 
-        result = iBus.QueryComponent(IEcoMemoryManager.CID, new IEcoUnknown(), IEcoMemoryAllocator.IID, iMem);
+        result = iBus.QueryComponent(IEcoMemoryManager.CID, new IEcoUnknown_Client(), IEcoMemoryAllocator.IID, iMem);
         if (result != 0) return result;
 
-        result = iBus.QueryComponent(IEcoFileSystemManagement.CID, new IEcoUnknown(), IEcoFileManager.IID, iFileMgr);
+        result = iBus.QueryComponent(IEcoFileSystemManagement.CID, new IEcoUnknown_Client(), IEcoFileManager.IID, iFileMgr);
         if (result != 0) return result;
 
-        result = iBus.QueryComponent(IdEcoCalculatorC.CID, new IEcoUnknown(), IEcoCalculatorX.IID, iCalcX);
+        result = iBus.QueryComponent(IdEcoCalculatorC.CID, new IEcoUnknown_Client(), IEcoCalculatorX.IID, iCalcX);
         if (result != 0) return result;
 
         result = iCalcX.QueryInterface(IEcoCalculatorY.IID, iCalcY);
