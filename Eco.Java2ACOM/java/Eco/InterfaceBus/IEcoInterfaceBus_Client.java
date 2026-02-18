@@ -2,7 +2,7 @@ package Eco.InterfaceBus;
 
 import Eco.Core.IEcoUnknown;
 import Eco.Core.IEcoUnknown_Client;
-import Eco.Core.OutPointer;
+import Eco.Core.IEcoUnknownPtr;
 import Eco.Core.UGUID;
 
 public class IEcoInterfaceBus_Client extends IEcoUnknown_Client implements IEcoInterfaceBus {
@@ -27,8 +27,7 @@ public class IEcoInterfaceBus_Client extends IEcoUnknown_Client implements IEcoI
     }
 
     @Override
-    public int QueryComponent(UGUID rcid, IEcoUnknown iUnkOuter, UGUID riid, IEcoUnknown iUnk) {
-        OutPointer pIUnk = new OutPointer(iUnk);
+    public int QueryComponent(UGUID rcid, IEcoUnknown iUnkOuter, UGUID riid, IEcoUnknownPtr pIUnk) {
         return (Integer) invokeNative(7, new Object[]{rcid, iUnkOuter, riid, pIUnk}, int.class);
     }
 }

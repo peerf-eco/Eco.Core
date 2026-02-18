@@ -3,7 +3,7 @@ package Eco.Core;
 public interface IEcoUnknown {
     UGUID IID = new UGUID((byte) 0x01, (byte) 0x10, new byte[]{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, (byte) 0xAA});
 
-    int QueryInterface(UGUID riid, IEcoUnknown iUnk);
+    int QueryInterface(UGUID riid, IEcoUnknownPtr pIUnk);
     int AddRef();
     int Release();
 }

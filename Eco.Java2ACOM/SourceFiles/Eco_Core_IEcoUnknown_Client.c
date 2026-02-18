@@ -65,7 +65,7 @@ JNIEXPORT jobject JNICALL Java_Eco_Core_IEcoUnknown_1Client_invokeNative(JNIEnv*
             values[i + 1] = value;
             pValuesAlloc[i + 1] = 1;
             ppValuesAlloc[i + 1] = 1;
-        } else if (strcmp(className, "Eco.Core.OutPointer") == 0) {
+        } else if (strcmp(className, "Eco.Core.IEcoUnknownPtr") == 0) {
             void*** value = malloc(sizeof(void**));
             *value = malloc(sizeof(void*));
             **value = 0;

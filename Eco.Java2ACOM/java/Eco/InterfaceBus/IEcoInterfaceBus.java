@@ -1,6 +1,7 @@
 package Eco.InterfaceBus;
 
 import Eco.Core.IEcoUnknown;
+import Eco.Core.IEcoUnknownPtr;
 import Eco.Core.UGUID;
 
 public interface IEcoInterfaceBus extends IEcoUnknown {
@@ -11,5 +12,5 @@ public interface IEcoInterfaceBus extends IEcoUnknown {
     int InitWith(long heapStartAddress, long size);
     int RegisterComponent(UGUID rcid, IEcoUnknown iFactory);
     int UnRegisterComponent(UGUID rcid);
-    int QueryComponent(UGUID rcid, IEcoUnknown iUnkOuter, UGUID riid, IEcoUnknown iUnk);
+    int QueryComponent(UGUID rcid, IEcoUnknown iUnkOuter, UGUID riid, IEcoUnknownPtr pIUnk);
 }
