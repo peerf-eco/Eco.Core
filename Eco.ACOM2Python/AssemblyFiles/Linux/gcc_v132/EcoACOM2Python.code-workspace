@@ -1,0 +1,247 @@
+{
+	"folders": [
+		{ "path": ".", "name": "AssemblyFiles" },
+		{ "path": "../../../BuildFiles", "name": "BuildFiles" },
+		{ "path": "../../../DesignFiles" },
+		{ "path": "../../../HeaderFiles" },
+		{ "path": "../../../SharedFiles" },
+		{ "path": "../../../SourceFiles" },
+		{ "path": "../../../UnitTestFiles" }
+	],
+	"settings": {
+		"C_Cpp.default.configurationProvider": "ms-vscode.makefile-tools",
+		"C_Cpp.default.cStandard": "c89",
+		"C_Cpp.default.includePath": [
+			"${workspaceFolder}/**",
+			"**/../../HeaderFiles",
+			"**/../../SharedFiles",
+			"${ECO_FRAMEWORK}/Eco.Core1/SharedFiles",
+			"${ECO_FRAMEWORK}/Eco.System1/SharedFiles",			
+			"${ECO_FRAMEWORK}/Eco.InterfaceBus1/SharedFiles",
+			"${ECO_FRAMEWORK}/Eco.MemoryManager1/SharedFiles",
+			"${ECO_FRAMEWORK}/Eco.FileSystemManagement1/SharedFiles"
+		],
+		"makefile.configurations": [
+			{ "name": "EcoACOM2Python Static|x86 Debug", "makeArgs": ["TARGET=1", "ARCH=x86", "DEBUG=1"] },
+			{ "name": "EcoACOM2Python Static|x86 Release", "makeArgs": ["TARGET=1", "ARCH=x86", "DEBUG=0"] },
+			{ "name": "EcoACOM2Python Static|x64 Debug", "makeArgs": ["TARGET=1", "ARCH=x64", "DEBUG=1"] },
+			{ "name": "EcoACOM2Python Static|x64 Release", "makeArgs": ["TARGET=1", "ARCH=x64", "DEBUG=0"] },
+			{ "name": "EcoACOM2Python Dynamic|x86 Debug", "makeArgs": ["TARGET=0", "ARCH=x86", "DEBUG=1"] },
+			{ "name": "EcoACOM2Python Dynamic|x86 Release", "makeArgs": ["TARGET=0", "ARCH=x86", "DEBUG=0"] },
+			{ "name": "EcoACOM2Python Dynamic|x64 Debug", "makeArgs": ["TARGET=0", "ARCH=x64", "DEBUG=1"] },
+			{ "name": "EcoACOM2Python Dynamic|x64 Release", "makeArgs": ["TARGET=0", "ARCH=x64", "DEBUG=0"] },
+			{ "name": "EcoACOM2PythonUnitTest Static|x86 Debug", "makeArgs": ["-f", "MakefileExe", "TARGET=1", "ARCH=x86", "DEBUG=1"] },
+			{ "name": "EcoACOM2PythonUnitTest Static|x64 Debug", "makeArgs": ["-f", "MakefileExe", "TARGET=1", "ARCH=x64", "DEBUG=1"] }
+			{ "name": "EcoACOM2PythonUnitTest Dynamic|x86 Debug", "makeArgs": ["-f", "MakefileExe", "TARGET=0", "ARCH=x86", "DEBUG=1"] },
+			{ "name": "EcoACOM2PythonUnitTest Dynamic|x64 Debug", "makeArgs": ["-f", "MakefileExe", "TARGET=0", "ARCH=x64", "DEBUG=1"] }
+		]
+	},
+	"launch": {
+		"version": "0.2.0",
+		"configurations": [
+			{
+				"name": "DEBUG: EcoACOM2PythonUnitTest Static|x86",
+				"type": "cppdbg",
+				"request": "launch",
+				"program": "${workspaceFolder:BuildFiles}/Linux/x86/StaticDebug/EcoACOM2Python.exe",
+				"cwd": "${workspaceFolder:BuildFiles}/Linux/x86/StaticDebug",
+				"preLaunchTask": "build EcoACOM2PythonUnitTest StaticDebug|x86",
+				"MIMode": "gdb",
+				"miDebuggerPath": "${env:ECO_TOOLCHAIN}/eco-i686-win-dwarf-gcc-13.2.0-win-x86_64/bin/gdb.exe"
+			},
+			{
+				"name": "DEBUG: EcoACOM2PythonUnitTest Static|x64",
+				"type": "cppdbg",
+				"request": "launch",
+				"program": "${workspaceFolder:BuildFiles}/Linux/x64/StaticDebug/EcoACOM2Python.exe",
+				"cwd": "${workspaceFolder:BuildFiles}/Linux/x64/StaticDebug",
+				"preLaunchTask": "build EcoACOM2PythonUnitTest StaticDebug|x64",
+				"MIMode": "gdb",
+				"miDebuggerPath": "${env:ECO_TOOLCHAIN}/eco-x86_64-win-dwarf-gcc-13.2.0-win-x86_64/bin/gdb.exe"
+			},
+			{
+				"name": "DEBUG: EcoACOM2PythonUnitTest Dynamic|x86",
+				"type": "cppdbg",
+				"request": "launch",
+				"program": "${workspaceFolder:BuildFiles}/Linux/x86/DynamicDebug/EcoACOM2Python.exe",
+				"cwd": "${workspaceFolder:BuildFiles}/Linux/x86/DynamicDebug",
+				"preLaunchTask": "build EcoACOM2PythonUnitTest DynamicDebug|x86",
+				"MIMode": "gdb",
+				"miDebuggerPath": "${env:ECO_TOOLCHAIN}/eco-i686-win-dwarf-gcc-13.2.0-win-x86_64/bin/gdb.exe"
+			},
+			{
+				"name": "DEBUG: EcoACOM2PythonUnitTest Dynamic|x64",
+				"type": "cppdbg",
+				"request": "launch",
+				"program": "${workspaceFolder:BuildFiles}/Linux/x64/DynamicDebug/EcoACOM2Python.exe",
+				"cwd": "${workspaceFolder:BuildFiles}/Linux/x64/DynamicDebug",
+				"preLaunchTask": "build EcoACOM2PythonUnitTest DynamicDebug|x64",
+				"MIMode": "gdb",
+				"miDebuggerPath": "gdb"
+			}
+		]
+	},
+	"tasks": {
+		"version": "2.0.0",
+		"tasks": [
+			{
+				"label": "build all configurations",
+				"type": "shell",
+				"command": "${workspaceFolder:AssemblyFiles}/build.bat",
+				"group": { "kind": "build", "isDefault": true },
+				"presentation": { "echo": true, "reveal": "always", "focus": false, "panel": "shared" },
+				"problemMatcher": []
+			},
+			{
+				"label": "build EcoACOM2Python StaticDebug|x86",
+				"type": "shell",
+				"command": "make",
+				"args": [ "-f", "Makefile", "TARGET=1", "DEBUG=1", "ARCH=x86" ],
+				"group": "build",
+				"presentation": { "echo": true, "reveal": "silent", "focus": false, "panel": "shared" },
+				"problemMatcher": [ "$gcc" ]
+			},
+			{
+				"label": "build EcoACOM2Python StaticRelease|x86",
+				"type": "shell",
+				"command": "make",
+				"args": [ "-f", "Makefile", "TARGET=1", "DEBUG=0", "ARCH=x86" ],
+				"group": "build",
+				"presentation": { "echo": true, "reveal": "silent", "focus": false, "panel": "shared" },			
+				"problemMatcher": [ "$gcc" ]
+			},
+			{
+				"label": "build EcoACOM2Python DynamicDebug|x86",
+				"type": "shell",
+				"command": "make",
+				"args": [ "-f", "Makefile", "TARGET=0", "DEBUG=1", "ARCH=x86" ],
+				"group": "build",
+				"presentation": { "echo": true, "reveal": "silent", "focus": false, "panel": "shared" },			
+				"problemMatcher": [ "$gcc" ]
+			},
+			{
+				"label": "build EcoACOM2Python DynamicRelease|x86",
+				"type": "shell",
+				"command": "make",
+				"args": [ "-f", "Makefile", "TARGET=0", "DEBUG=0", "ARCH=x86" ],
+				"group": "build",
+				"presentation": { "echo": true, "reveal": "silent", "focus": false, "panel": "shared" },			
+				"problemMatcher": [ "$gcc" ]
+			},
+			{
+				"label": "build EcoACOM2Python StaticDebug|x64",
+				"type": "shell",
+				"command": "make",
+				"args": [ "-f", "Makefile", "TARGET=1", "DEBUG=1", "ARCH=x64" ],
+				"group": "build",
+				"presentation": { "echo": true, "reveal": "silent", "focus": false, "panel": "shared" },		
+				"problemMatcher": [ "$gcc" ]
+			},
+			{
+				"label": "build EcoACOM2Python StaticRelease|x64",
+				"type": "shell",
+				"command": "make",
+				"args": [ "-f", "Makefile", "TARGET=1", "DEBUG=0", "ARCH=x64" ],
+				"group": "build",
+				"presentation": { "echo": true, "reveal": "silent", "focus": false, "panel": "shared" },			
+				"problemMatcher": [ "$gcc" ]
+			},
+			{
+				"label": "build EcoACOM2Python DynamicDebug|x64",
+				"type": "shell",
+				"command": "make",
+				"args": [ "-f", "Makefile", "TARGET=0", "DEBUG=1", "ARCH=x64" ],
+				"group": "build",
+				"presentation": { "echo": true, "reveal": "silent", "focus": false, "panel": "shared" },		
+				"problemMatcher": [ "$gcc" ]
+			},
+			{
+				"label": "build EcoACOM2Python DynamicRelease|x64",
+				"type": "shell",
+				"command": "make",
+				"args": [ "-f", "Makefile", "TARGET=0", "DEBUG=0", "ARCH=x64" ],
+				"group": "build",
+				"presentation": { "echo": true, "reveal": "silent", "focus": false, "panel": "shared" },			
+				"problemMatcher": [ "$gcc" ]
+			},
+			{
+				"label": "build EcoACOM2PythonUnitTest StaticDebug|x86",
+				"type": "shell",
+				"command": "make",
+				"args": [ "-f", "MakefileExe", "TARGET=1", "DEBUG=1", "ARCH=x86" ],
+				"group": "build",
+				"dependsOn": ["build EcoACOM2Python StaticDebug|x86"],			
+				"problemMatcher": [ "$gcc" ]
+			},
+			{
+				"label": "build EcoACOM2PythonUnitTest StaticRelease|x86",
+				"type": "shell",
+				"command": "make",
+				"args": [ "-f", "MakefileExe", "TARGET=1", "DEBUG=0", "ARCH=x86" ],
+				"group": "build",
+				"dependsOn": ["build EcoACOM2Python StaticRelease|x86"],			
+				"problemMatcher": [ "$gcc" ]
+			},
+			{
+				"label": "build EcoACOM2PythonUnitTest DynamicDebug|x86",
+				"type": "shell",
+				"command": "make",
+				"args": ["-f", "MakefileExe", "TARGET=0", "DEBUG=1", "ARCH=x86" ],
+				"group": "build",
+				"dependsOn": ["build EcoACOM2Python DynamicDebug|x86"],			
+				"problemMatcher": [ "$gcc" ]
+			},
+			{
+				"label": "build EcoACOM2PythonUnitTest DynamicRelease|x86",
+				"type": "shell",
+				"command": "make",
+				"args": [ "-f", "MakefileExe", "TARGET=0", "DEBUG=0", "ARCH=x86" ],
+				"group": "build",
+				"dependsOn": ["build EcoACOM2Python DynamicRelease|x86"],			
+				"problemMatcher": [ "$gcc" ]
+			},
+			{
+				"label": "build EcoACOM2PythonUnitTest StaticDebug|x64",
+				"type": "shell",
+				"command": "make",
+				"args": [ "-f", "MakefileExe", "TARGET=1", "DEBUG=1", "ARCH=x64" ],
+				"group": "build",
+				"dependsOn": ["build EcoACOM2Python StaticDebug|x64"],				
+				"problemMatcher": [ "$gcc" ]
+			},
+			{
+				"label": "build EcoACOM2PythonUnitTest StaticRelease|x64",
+				"type": "shell",
+				"command": "make",
+				"args": [ "-f", "MakefileExe", "TARGET=1", "DEBUG=0", "ARCH=x64" ],
+				"group": "build",
+				"dependsOn": ["build EcoACOM2Python StaticRelease|x64"],			
+				"problemMatcher": [ "$gcc" ]
+			},
+			{
+				"label": "build EcoACOM2PythonUnitTest DynamicDebug|x64",
+				"type": "shell",
+				"command": "make",
+				"args": [ "-f", "MakefileExe", "TARGET=0", "DEBUG=1", "ARCH=x64" ],
+				"group": "build",
+				"dependsOn": ["build EcoACOM2Python DynamicDebug|x64"],			
+				"problemMatcher": [ "$gcc" ]
+			},
+			{
+				"label": "build EcoACOM2PythonUnitTest DynamicRelease|x64",
+				"type": "shell",
+				"command": "make",
+				"args": [ "-f", "MakefileExe", "TARGET=0", "DEBUG=0", "ARCH=x64" ],
+				"group": "build",
+				"dependsOn": ["build EcoACOM2Python DynamicRelease|x64"],			
+				"problemMatcher": [ "$gcc" ]
+			},
+			{
+				"label": "Clean All",
+				"type": "shell",
+				"command": "make clean",
+				"options": { "cwd": "${workspaceFolder:AssemblyFiles}" }
+			}
+		]
+	}
+}
