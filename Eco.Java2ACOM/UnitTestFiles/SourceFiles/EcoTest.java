@@ -6,15 +6,15 @@ import Eco.MemoryManager.IEcoMemoryManager;
 import Eco.MemoryManager.IEcoMemoryAllocator;
 import Eco.FileSystemManagement.IEcoFileManager;
 import Eco.FileSystemManagement.IEcoFileSystemManagement;
-import Eco.InterfaceBus.IEcoInterfaceBus_Client;
-import Eco.MemoryManager.IEcoMemoryAllocator_Client;
-import Eco.FileSystemManagement.IEcoFileManager_Client;
+import Eco.InterfaceBus.IEcoInterfaceBusNative;
+import Eco.MemoryManager.IEcoMemoryAllocatorNative;
+import Eco.FileSystemManagement.IEcoFileManagerNative;
 
 public class EcoTest implements EcoApp {
-    private static IEcoSystem_Client iSys;
-    private static IEcoInterfaceBus_Client iBus;
-    private static IEcoMemoryAllocator_Client iMem;
-    private static IEcoFileManager_Client iFileMgr;
+    private static IEcoSystemNative iSys;
+    private static IEcoInterfaceBusNative iBus;
+    private static IEcoMemoryAllocatorNative iMem;
+    private static IEcoFileManagerNative iFileMgr;
     private static IEcoCalculatorX iCalcX;
     private static IEcoCalculatorY iCalcY;
 
@@ -37,12 +37,12 @@ public class EcoTest implements EcoApp {
     }
 
     private int InitJNI(IEcoUnknown iUnk) {
-        iSys = new IEcoSystem_Client();
-        iBus = new IEcoInterfaceBus_Client();
-        iMem = new IEcoMemoryAllocator_Client();
-        iFileMgr = new IEcoFileManager_Client();
-        iCalcX = new IEcoCalculatorX_Client();
-        iCalcY = new IEcoCalculatorY_Client();
+        iSys = new IEcoSystemNative();
+        iBus = new IEcoInterfaceBusNative();
+        iMem = new IEcoMemoryAllocatorNative();
+        iFileMgr = new IEcoFileManagerNative();
+        iCalcX = new IEcoCalculatorXNative();
+        iCalcY = new IEcoCalculatorYNative();
 
         int result = iUnk.QueryInterface(IEcoSystem.GID, new IEcoUnknownPtr(iSys));
         if (result != 0) return result;
@@ -50,13 +50,13 @@ public class EcoTest implements EcoApp {
         result = iSys.QueryInterface(IEcoInterfaceBus.IID, new IEcoUnknownPtr(iBus));
         if (result != 0) return result;
 
-        result = iBus.QueryComponent(IEcoMemoryManager.CID, new IEcoUnknown_Client(), IEcoMemoryAllocator.IID, new IEcoUnknownPtr(iMem));
+        result = iBus.QueryComponent(IEcoMemoryManager.CID, new IEcoUnknownNative(), IEcoMemoryAllocator.IID, new IEcoUnknownPtr(iMem));
         if (result != 0) return result;
 
-        result = iBus.QueryComponent(IEcoFileSystemManagement.CID, new IEcoUnknown_Client(), IEcoFileManager.IID, new IEcoUnknownPtr(iFileMgr));
+        result = iBus.QueryComponent(IEcoFileSystemManagement.CID, new IEcoUnknownNative(), IEcoFileManager.IID, new IEcoUnknownPtr(iFileMgr));
         if (result != 0) return result;
 
-        result = iBus.QueryComponent(IdEcoCalculatorC.CID, new IEcoUnknown_Client(), IEcoCalculatorX.IID, new IEcoUnknownPtr(iCalcX));
+        result = iBus.QueryComponent(IdEcoCalculatorC.CID, new IEcoUnknownNative(), IEcoCalculatorX.IID, new IEcoUnknownPtr(iCalcX));
         if (result != 0) return result;
 
         result = iCalcX.QueryInterface(IEcoCalculatorY.IID, new IEcoUnknownPtr(iCalcY));
@@ -64,8 +64,8 @@ public class EcoTest implements EcoApp {
     }
 
     private void ReleaseJNI() {
-        if (!((IEcoCalculatorY_Client) iCalcY).isNull()) iCalcY.Release();
-        if (!((IEcoCalculatorX_Client) iCalcX).isNull()) iCalcX.Release();
+        if (!((IEcoCalculatorYNative) iCalcY).isNull()) iCalcY.Release();
+        if (!((IEcoCalculatorXNative) iCalcX).isNull()) iCalcX.Release();
         if (!iFileMgr.isNull()) iFileMgr.Release();
         if (!iMem.isNull()) iMem.Release();
         if (!iBus.isNull()) iBus.Release();

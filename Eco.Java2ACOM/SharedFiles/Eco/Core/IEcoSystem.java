@@ -1,0 +1,11 @@
+package Eco.Core;
+
+import Eco.Annotations.EcoNative;
+
+@EcoNative
+public interface IEcoSystem extends IEcoUnknown {
+    UGUID GID = new UGUID((byte) 0x01, (byte) 0x10, new byte[]{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x14, (byte) 0xC0, 0x02, 0x00});  // GID_IEcoSystem_x86_32
+
+    void set_Data(long pv);
+    long get_Data();
+}
