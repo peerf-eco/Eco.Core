@@ -64,8 +64,7 @@ public class EcoNativeProcessor extends AbstractProcessor {
             }
             out.println("import Eco.Core." + BASE_CLASS + ";");
             out.println();
-            out.println("public class " + generatedClassName + " extends " + BASE_CLASS +
-                    " implements " + interfaceName + " {");
+            out.println("public class " + generatedClassName + " extends " + BASE_CLASS + " implements " + interfaceName + " {");
             out.println();
             List<? extends Element> members = interfaceElement.getEnclosedElements();
             int methodIndex = 3;

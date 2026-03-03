@@ -4,6 +4,7 @@
     <annotationProcessing>
       <profile name="EcoNativeProcessor" enabled="true">
         <module name="Eco.Java2ACOM" />
+        <module name="UnitTestFiles" />
       </profile>
     </annotationProcessing>
   </component>

@@ -12,6 +12,7 @@
 - Build and run unit test
   - Open project in **IntelliJ IDEA**
   - Add configuration `Application`
+    - Module: `UnitTestFiles`
     - Main class: `Eco.System.EcoMain`
     - Add VM option: `-Djava.library.path=BuildFiles`
     - Working directory: `path/to/Eco.Java2ACOM`
