@@ -23,6 +23,8 @@
 #include "IEcoACOM2Java.h"
 #include "IEcoSystem1.h"
 #include "IdEcoMemoryManager1.h"
+#include "IEcoList1.h"
+#include <jni.h>
 
 typedef struct CEcoACOM2Java_3F41E2AA* CEcoACOM2Java_3F41E2AAPtr_t;
 
@@ -50,7 +52,9 @@ typedef struct CEcoACOM2Java_3F41E2AA {
     IEcoSystem1* m_pISys;
 
     /* Instance data */
-    char_t* m_Name;
+    JavaVM* m_JVM;
+    JNIEnv* m_JNIEnv;
+    IEcoList1* m_pIListComponents;
 
 } CEcoACOM2Java_3F41E2AA;
 

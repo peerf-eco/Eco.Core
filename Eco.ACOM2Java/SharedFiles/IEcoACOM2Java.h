@@ -41,7 +41,7 @@ typedef struct IEcoACOM2JavaVTbl {
     uint32_t (ECOCALLMETHOD *Release)(/* in */ IEcoACOM2JavaPtr_t me);
 
     /* IEcoACOM2Java */
-    int16_t (ECOCALLMETHOD *RegisterComponent) (/*in*/ IEcoACOM2JavaPtr_t me, /*in*/ char_t* pathname, /*in*/ const UGUID* rcid, /*in*/ IEcoUnknownPtr_t pIFactory);
+    int16_t (ECOCALLMETHOD *RegisterComponent) (/*in*/ IEcoACOM2JavaPtr_t me, /*in*/ char_t* classpath, /*in*/ char_t* classname, /*in*/ const UGUID* rcid, /*in*/ IEcoUnknownPtr_t pIFactory);
     int16_t (ECOCALLMETHOD *UnRegisterComponent) (/*in*/ IEcoACOM2JavaPtr_t me, /*in*/ const UGUID* rcid);
     int16_t (ECOCALLMETHOD *QueryComponent) (/*in*/ IEcoACOM2JavaPtr_t me, /*in*/ const UGUID* rcid, /*in*/ IEcoUnknownPtr_t pIUnkOuter, /*in*/ const UGUID* riid, /*out*/ voidptr_t* ppv);
 
