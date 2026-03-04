@@ -4,7 +4,7 @@ import Eco.Core.IEcoSystemNative;
 
 import java.util.ServiceLoader;
 
-public class EcoMain {
+class EcoMain {
     public static void main(String[] args) {
         IEcoSystemNative iSys = new IEcoSystemNative();
         int result = CEcoSystem.createCEcoSystem(args, iSys);

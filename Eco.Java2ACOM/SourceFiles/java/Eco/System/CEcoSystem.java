@@ -2,7 +2,7 @@ package Eco.System;
 
 import Eco.Core.IEcoSystem;
 
-public class CEcoSystem {
+class CEcoSystem {
     static {
         System.loadLibrary("Java2ACOM");
     }
