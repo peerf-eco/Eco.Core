@@ -10,6 +10,14 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="Eco.Java2ACOM" />
+    <orderEntry type="module-library">
+      <library name="Eco.Java2ACOM">
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../BuildFiles/artifacts/Eco_Java2ACOM_jar/Eco.Java2ACOM.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
   </component>
 </module>
