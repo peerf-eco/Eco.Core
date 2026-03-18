@@ -26,6 +26,7 @@
 #include "IdEcoACOM2Java.h"
 #include "IdEcoList1.h"
 #include "IEcoCalculatorX.h"
+#include "IEcoCalculatorY.h"
 
 /*
  *
@@ -49,6 +50,7 @@ int16_t EcoMain(IEcoUnknown* pIUnk) {
     /* Pointer to the tested interface */
     IEcoACOM2Java* pIEcoACOM2Java = 0;
     IEcoCalculatorX* pIX = 0;
+    IEcoCalculatorY* pIY = 0;
     UGUID CID_EcoCalculatorJ = {0x01, 0x10, {0x0A, 0x7B, 0x93, 0x7E, 0xD5, 0x0A, 0xC6, 0xC9, 0x4D, 0xFD, 0xA1, 0x28, 0x6B, 0xFD, 0xA9, 0xDC}};
 
     /* System interface check and creation */
@@ -96,7 +98,7 @@ int16_t EcoMain(IEcoUnknown* pIUnk) {
         goto Release;
     }
 
-    result = pIEcoACOM2Java->pVTbl->RegisterComponent(pIEcoACOM2Java, "C:\\Programming\\Eco.Core\\Eco.Java2ACOM\\BuildFiles\\production\\UnitTestFiles", "Eco/Calculator/CEcoCalculatorJ", &CID_EcoCalculatorJ, 0);
+    result = pIEcoACOM2Java->pVTbl->RegisterComponent(pIEcoACOM2Java, "C:\\Programming\\Eco.Core\\Eco.Java2ACOM\\BuildFiles\\production\\UnitTestFiles", "Eco/Calculator/CEcoCalculatorJ", &CID_EcoCalculatorJ);
     if (result != 0) {
         goto Release;
     }
@@ -105,6 +107,16 @@ int16_t EcoMain(IEcoUnknown* pIUnk) {
     if (result != 0) {
         goto Release;
     }
+
+    result = pIX->pVTbl->QueryInterface(pIX, &IID_IEcoCalculatorY, (void**) &pIY);
+    if (result != 0) {
+        goto Release;
+    }
+
+    printf("9 + 10 = %d\n", pIX->pVTbl->Addition(pIX, 9, 10));
+    printf("67 - 13 = %d\n", pIX->pVTbl->Subtraction(pIX, 67, 13));
+    printf("6 * 8 = %d\n", pIY->pVTbl->Multiplication(pIY, 6, 8));
+    printf("42 / 7 = %d\n", pIY->pVTbl->Division(pIY, 42, 7));
 
 Release:
 
@@ -118,11 +130,16 @@ Release:
         pIMem->pVTbl->Release(pIMem);
     }
 
-    /* Free the tested interface */
+    /* Free the tested interfaces */
+    if (pIX != 0) {
+        pIX->pVTbl->Release(pIX);
+    }
+    if (pIY != 0) {
+        pIY->pVTbl->Release(pIY);
+    }
     if (pIEcoACOM2Java != 0) {
         pIEcoACOM2Java->pVTbl->Release(pIEcoACOM2Java);
     }
-
 
     /* Free the system interface */
     if (pISys != 0) {
