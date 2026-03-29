@@ -14,27 +14,29 @@ Note:
 from __future__ import annotations
 
 import re
-from ctypes import _Pointer
-from typing import TYPE_CHECKING, ClassVar, Optional
+from typing import ClassVar, Optional
 
-from eco_python2acom.core.types import EcoStructure, Ptr, UInt8
+from eco_python2acom.decorators.model import model
+from eco_python2acom.types.array import Array
+from eco_python2acom.types.core import UInt8
+
+__all__ = ["UGUID"]
 
 
-class UGUID(EcoStructure):
+@model
+class UGUID:
     """ACOM Universal GUID structure.
 
     An 18-byte structure used for component and interface identification
     in the EcoOS/ACOM system.
     """
 
-    _fields_: ClassVar[list[tuple[str, type]]] = [
-        ("Preamble", UInt8),
-        ("Length", UInt8),
-        ("Data", UInt8 * 16),
-    ]
+    Preamble: UInt8
+    Length: UInt8
+    Data: Array[UInt8, 0x10]
 
     # Regex pattern for GUID string validation
-    _GUID_PATTERN: ClassVar[re.Pattern[str]] = re.compile(
+    GUID_PATTERN: ClassVar[re.Pattern[str]] = re.compile(
         r"^[{(]?"
         r"([0-9A-Fa-f]{8})-?"
         r"([0-9A-Fa-f]{4})-?"
@@ -63,7 +65,8 @@ class UGUID(EcoStructure):
             ValueError: If both guid_string and data are provided, or if the
                 provided data is not 16 bytes long.
         """
-        super().__init__(Preamble=preamble, Length=length)
+        self.Preamble = UInt8(preamble)
+        self.Length = UInt8(length)
 
         if guid_string is not None and data is not None:
             raise ValueError("Provide either 'guid_string' or 'data', not both.")
@@ -82,7 +85,7 @@ class UGUID(EcoStructure):
         Raises:
             ValueError: If the string format is invalid.
         """
-        match = self._GUID_PATTERN.match(guid_string)
+        match = self.GUID_PATTERN.match(guid_string)
         if not match:
             raise ValueError(
                 f"Invalid GUID format: {guid_string!r}. "
@@ -90,7 +93,7 @@ class UGUID(EcoStructure):
             )
 
         hex_str = "".join(match.groups())
-        self.Data[:] = bytes.fromhex(hex_str)
+        self.Data[:] = [UInt8(b) for b in bytes.fromhex(hex_str)]
 
     def _from_bytes(self, data: bytes) -> None:
         """Initialize from raw bytes.
@@ -104,7 +107,7 @@ class UGUID(EcoStructure):
         if len(data) != 0x10:
             raise ValueError(f"GUID data must be 16 bytes, got {len(data)}")
 
-        self.Data[:] = data
+        self.Data[:] = [UInt8(b) for b in data]
 
     def to_bytes(self) -> bytes:
         """Convert the 'Data' field to bytes.
@@ -193,10 +196,3 @@ class UGUID(EcoStructure):
             A new UGUID instance.
         """
         return cls(guid_string=guid_string)
-
-
-# Create a pointer type for UGUID
-if TYPE_CHECKING:
-    UGUIDPtr = _Pointer[UGUID]
-else:
-    UGUIDPtr = Ptr(UGUID)

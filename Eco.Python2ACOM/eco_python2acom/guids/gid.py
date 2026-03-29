@@ -6,7 +6,7 @@ GIDs identify the target architecture/platform for runtime DLLs.
 import struct
 import sys
 
-from eco_python2acom.core.guid import UGUID
+from eco_python2acom.types.guid import UGUID
 
 # x86 32 bit GID = {00000000-0000-0000-0000-000014C00200}
 GID_IEcoSystem_x86_32 = UGUID.from_string("00000000-0000-0000-0000-000014C00200")

@@ -35,34 +35,33 @@ import os
 from pathlib import Path
 from typing import Any, Optional, Union
 
-from eco_python2acom.core.errors import EcoError
-from eco_python2acom.core.guid import UGUID
-from eco_python2acom.core.types import Bool, ByRef, CastPtr, UInt32, VoidPtr
-from eco_python2acom.interfaces.base import IEcoComponentFactory, IEcoUnknownPtr
-from eco_python2acom.interfaces.guids.cid import (
+from eco_python2acom.guids.cid import (
     CID_EcoFileSystemManagement1,
     CID_EcoInterfaceBus1,
     CID_EcoMemoryManager1,
 )
-from eco_python2acom.interfaces.guids.gid import GID_IEcoSystem
-from eco_python2acom.interfaces.guids.iid import (
+from eco_python2acom.guids.gid import GID_IEcoSystem
+from eco_python2acom.guids.iid import (
     IID_IEcoInterfaceBus1,
     IID_IEcoInterfaceBus1FileExt,
     IID_IEcoInterfaceBus1MemExt,
     IID_IEcoMemoryAllocator1,
     IID_IEcoMemoryManager1,
 )
-from eco_python2acom.interfaces.system.interface_bus import (
+from eco_python2acom.interfaces.base import IEcoComponentFactory, IEcoUnknown
+from eco_python2acom.interfaces.interface_bus import (
     IEcoInterfaceBus1,
     IEcoInterfaceBus1FileExt,
     IEcoInterfaceBus1MemExt,
 )
-from eco_python2acom.interfaces.system.memory_manager import (
-    IEcoMemoryAllocator1,
-    IEcoMemoryManager1,
-)
+from eco_python2acom.interfaces.memory_manager import IEcoMemoryAllocator1, IEcoMemoryManager1
 from eco_python2acom.runtime.loader import DllLoader, LoadedDll
 from eco_python2acom.runtime.utils import filename_to_guid, is_eco_dll
+from eco_python2acom.types.core import Bool, UInt32, Void
+from eco_python2acom.types.errors import EcoError
+from eco_python2acom.types.guid import UGUID
+from eco_python2acom.types.pointer import Ptr
+from eco_python2acom.types.utils import byref, cast
 
 
 class EcoSystem:
@@ -236,7 +235,7 @@ class EcoSystem:
 
         # Step 8: Finalize bus factory
         if self._bus_factory is not None and self._bus is not None:
-            self._bus_factory.Init(None, self._bus._ptr)
+            self._bus_factory.Init(None, self._bus.ptr)
 
         self._is_initialized = True
 
@@ -250,10 +249,10 @@ class EcoSystem:
         self._loaded_dlls.append(loaded)
         self._bus_factory = loaded.factory
 
-        bus_ptr = VoidPtr()
-        result = self._bus_factory.Alloc(None, None, ByRef(IID_IEcoInterfaceBus1), ByRef(bus_ptr))
+        bus_ptr = Ptr[Void]()
+        result = self._bus_factory.Alloc(None, None, byref(IID_IEcoInterfaceBus1), byref(bus_ptr))
         if result.value != 0 or not bus_ptr.value:
-            raise EcoError(result.value, "Failed to create InterfaceBus instance")
+            raise EcoError(result, "Failed to create InterfaceBus instance")
 
         self._bus = IEcoInterfaceBus1(bus_ptr)
 
@@ -263,47 +262,47 @@ class EcoSystem:
         self._loaded_dlls.append(loaded)
 
         result = self._bus.RegisterComponent(
-            ByRef(CID_EcoMemoryManager1),
-            CastPtr(loaded.factory._ptr, IEcoUnknownPtr),
+            byref(CID_EcoMemoryManager1),
+            cast(loaded.factory.ptr, Ptr[IEcoUnknown]),
         )
         if result.value != 0:
-            raise EcoError(result.value, "Failed to register MemoryManager")
+            raise EcoError(result, "Failed to register MemoryManager")
 
     def _configure_mem_ext(self) -> None:
         """Configure InterfaceBus memory extension."""
-        mem_ext_ptr = VoidPtr()
-        result = self._bus.QueryInterface(ByRef(IID_IEcoInterfaceBus1MemExt), ByRef(mem_ext_ptr))
+        mem_ext_ptr = Ptr[Void]()
+        result = self._bus.QueryInterface(byref(IID_IEcoInterfaceBus1MemExt), byref(mem_ext_ptr))
         if result.value == 0 and mem_ext_ptr.value:
             mem_ext = IEcoInterfaceBus1MemExt(mem_ext_ptr)
-            mem_ext.set_Manager(ByRef(CID_EcoMemoryManager1))
+            mem_ext.set_Manager(byref(CID_EcoMemoryManager1))
             mem_ext.set_ExpandPool(Bool(True))
             mem_ext.Release()
 
     def _init_memory_manager(self) -> None:
         """Query and initialize MemoryManager with heap."""
-        mgr_ptr = VoidPtr()
+        mgr_ptr = Ptr[Void]()
         result = self._bus.QueryComponent(
-            ByRef(CID_EcoMemoryManager1),
+            byref(CID_EcoMemoryManager1),
             None,
-            ByRef(IID_IEcoMemoryManager1),
-            ByRef(mgr_ptr),
+            byref(IID_IEcoMemoryManager1),
+            byref(mgr_ptr),
         )
         if result.value != 0 or not mgr_ptr.value:
-            raise EcoError(result.value, "Failed to get MemoryManager interface")
+            raise EcoError(result, "Failed to get MemoryManager interface")
 
         self._mem_manager = IEcoMemoryManager1(mgr_ptr)
         self._mem_manager.Init(None, self._heap_size)
 
         # Also get IEcoMemoryAllocator1 for convenience
-        alloc_ptr = VoidPtr()
+        alloc_ptr = Ptr[Void]()
         result = self._bus.QueryComponent(
-            ByRef(CID_EcoMemoryManager1),
+            byref(CID_EcoMemoryManager1),
             None,
-            ByRef(IID_IEcoMemoryAllocator1),
-            ByRef(alloc_ptr),
+            byref(IID_IEcoMemoryAllocator1),
+            byref(alloc_ptr),
         )
         if result.value != 0 or not alloc_ptr.value:
-            raise EcoError(result.value, "Failed to get MemoryAllocator interface")
+            raise EcoError(result, "Failed to get MemoryAllocator interface")
 
         self._mem_allocator = IEcoMemoryAllocator1(alloc_ptr)
 
@@ -313,19 +312,19 @@ class EcoSystem:
         self._loaded_dlls.append(loaded)
 
         result = self._bus.RegisterComponent(
-            ByRef(CID_EcoFileSystemManagement1),
-            CastPtr(loaded.factory._ptr, IEcoUnknownPtr),
+            byref(CID_EcoFileSystemManagement1),
+            cast(loaded.factory.ptr, Ptr[IEcoUnknown]),
         )
         if result.value != 0:
-            raise EcoError(result.value, "Failed to register FileSystemManagement")
+            raise EcoError(result, "Failed to register FileSystemManagement")
 
     def _configure_file_ext(self) -> None:
         """Configure InterfaceBus file extension."""
-        file_ext_ptr = VoidPtr()
-        result = self._bus.QueryInterface(ByRef(IID_IEcoInterfaceBus1FileExt), ByRef(file_ext_ptr))
+        file_ext_ptr = Ptr[Void]()
+        result = self._bus.QueryInterface(byref(IID_IEcoInterfaceBus1FileExt), byref(file_ext_ptr))
         if result.value == 0 and file_ext_ptr.value:
             file_ext = IEcoInterfaceBus1FileExt(file_ext_ptr)
-            file_ext.set_Manager(ByRef(CID_EcoFileSystemManagement1))
+            file_ext.set_Manager(byref(CID_EcoFileSystemManagement1))
             file_ext.Release()
 
     def _scan_and_register_user_dlls(self) -> None:
@@ -361,11 +360,11 @@ class EcoSystem:
             self._loaded_dlls.append(loaded)
 
             result = self._bus.RegisterComponent(
-                ByRef(cid),
-                CastPtr(loaded.factory._ptr, IEcoUnknownPtr),
+                byref(cid),
+                cast(loaded.factory.ptr, Ptr[IEcoUnknown]),
             )
             if result.value != 0:
-                raise EcoError(result.value, f"Failed to register component: '{dll_file.name}'")
+                raise EcoError(result, f"Failed to register component: '{dll_file.name}'")
 
     # =========================================================================
     # Cleanup

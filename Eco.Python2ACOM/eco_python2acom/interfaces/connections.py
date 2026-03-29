@@ -21,26 +21,26 @@ Reference:
 
 from __future__ import annotations
 
-from ctypes import _Pointer
-from typing import TYPE_CHECKING
-
-from eco_python2acom.core.guid import UGUIDPtr
-from eco_python2acom.core.types import EcoStructure, Int16, Ptr, UInt32, UInt32Ptr, VoidPtr
-from eco_python2acom.interfaces.base import IEcoUnknown
-from eco_python2acom.interfaces.decorators import interface, method
-from eco_python2acom.interfaces.guids.iid import (
+from eco_python2acom.decorators.interface import interface
+from eco_python2acom.decorators.model import model
+from eco_python2acom.guids.iid import (
     IID_IEcoConnectionPoint,
     IID_IEcoConnectionPointContainer,
     IID_IEcoEnumConnectionPoints,
     IID_IEcoEnumConnections,
 )
+from eco_python2acom.interfaces.base import IEcoUnknown
+from eco_python2acom.types.core import Int16, UInt32, Void
+from eco_python2acom.types.guid import UGUID
+from eco_python2acom.types.pointer import Ptr
 
 # =============================================================================
 # EcoConnectionData
 # =============================================================================
 
 
-class EcoConnectionData(EcoStructure):
+@model
+class EcoConnectionData:
     """Data for one active connection (sink + cookie).
 
     Used by IEcoEnumConnections.Next to return the list of
@@ -51,16 +51,8 @@ class EcoConnectionData(EcoStructure):
         cCookie: Connection cookie returned by Advise.
     """
 
-    _fields_ = [
-        ("pUnk", VoidPtr),
-        ("cCookie", UInt32),
-    ]
-
-
-if TYPE_CHECKING:
-    EcoConnectionDataPtr = _Pointer[EcoConnectionData]
-else:
-    EcoConnectionDataPtr = Ptr(EcoConnectionData)
+    pUnk: Ptr[Void]
+    cCookie: UInt32
 
 
 # =============================================================================
@@ -80,8 +72,7 @@ class IEcoConnectionPoint(IEcoUnknown):
         IEcoUnknown: QueryInterface, AddRef, Release
     """
 
-    @method
-    def GetConnectionInterface(self, pIID: UGUIDPtr) -> Int16:
+    def GetConnectionInterface(self, pIID: Ptr[UGUID]) -> Int16:
         """Get the IID of the outgoing interface supported by this point.
 
         Args:
@@ -92,8 +83,7 @@ class IEcoConnectionPoint(IEcoUnknown):
         """
         ...
 
-    @method
-    def GetConnectionPointContainer(self, ppCPC: IEcoConnectionPointContainerPtr) -> Int16:
+    def GetConnectionPointContainer(self, ppCPC: Ptr[Ptr[IEcoConnectionPointContainer]]) -> Int16:
         """Get the connection point container that owns this point.
 
         Args:
@@ -104,13 +94,11 @@ class IEcoConnectionPoint(IEcoUnknown):
         """
         ...
 
-    @method
-    def Advise(self, pUnkSink: VoidPtr, pcCookie: UInt32Ptr) -> Int16:
+    def Advise(self, pUnkSink: Ptr[IEcoUnknown], pcCookie: Ptr[UInt32]) -> Int16:
         """Establish a connection between this point and the client's sink.
 
         Args:
-            pUnkSink: Pointer to the client's sink (must QueryInterface to the
-                outgoing interface).
+            pUnkSink: Pointer to the client's sink.
             pcCookie: Output cookie identifying this connection; pass to
                 Unadvise to disconnect.
 
@@ -119,7 +107,6 @@ class IEcoConnectionPoint(IEcoUnknown):
         """
         ...
 
-    @method
     def Unadvise(self, cCookie: UInt32) -> Int16:
         """Terminate a connection previously established by Advise.
 
@@ -131,8 +118,7 @@ class IEcoConnectionPoint(IEcoUnknown):
         """
         ...
 
-    @method
-    def EnumConnections(self, ppEnum: IEcoEnumConnectionsPtr) -> Int16:
+    def EnumConnections(self, ppEnum: Ptr[Ptr[IEcoEnumConnections]]) -> Int16:
         """Create an enumerator over current connections.
 
         Args:
@@ -160,8 +146,7 @@ class IEcoConnectionPointContainer(IEcoUnknown):
         IEcoUnknown: QueryInterface, AddRef, Release
     """
 
-    @method
-    def EnumConnectionPoints(self, ppEnum: IEcoEnumConnectionPointsPtr) -> Int16:
+    def EnumConnectionPoints(self, ppEnum: Ptr[Ptr[IEcoEnumConnectionPoints]]) -> Int16:
         """Create an enumerator over all connection points.
 
         Args:
@@ -172,8 +157,7 @@ class IEcoConnectionPointContainer(IEcoUnknown):
         """
         ...
 
-    @method
-    def FindConnectionPoint(self, riid: UGUIDPtr, ppCP: IEcoConnectionPointPtr) -> Int16:
+    def FindConnectionPoint(self, riid: Ptr[UGUID], ppCP: Ptr[Ptr[IEcoConnectionPoint]]) -> Int16:
         """Find the connection point for a given outgoing interface IID.
 
         Args:
@@ -201,12 +185,11 @@ class IEcoEnumConnectionPoints(IEcoUnknown):
         IEcoUnknown: QueryInterface, AddRef, Release
     """
 
-    @method
     def Next(
         self,
         cConnections: UInt32,
-        ppCP: IEcoConnectionPointPtr,
-        pcFetched: UInt32Ptr,
+        ppCP: Ptr[Ptr[IEcoConnectionPoint]],
+        pcFetched: Ptr[UInt32],
     ) -> Int16:
         """Retrieve the next connection point(s).
 
@@ -220,7 +203,6 @@ class IEcoEnumConnectionPoints(IEcoUnknown):
         """
         ...
 
-    @method
     def Skip(self, cConnections: UInt32) -> Int16:
         """Skip the next cConnections elements in the enumeration.
 
@@ -232,7 +214,6 @@ class IEcoEnumConnectionPoints(IEcoUnknown):
         """
         ...
 
-    @method
     def Reset(self) -> Int16:
         """Reset the enumerator to the beginning.
 
@@ -241,8 +222,7 @@ class IEcoEnumConnectionPoints(IEcoUnknown):
         """
         ...
 
-    @method
-    def Clone(self, ppEnum: IEcoEnumConnectionPointsPtr) -> Int16:
+    def Clone(self, ppEnum: Ptr[Ptr[IEcoEnumConnectionPoints]]) -> Int16:
         """Create a copy of the enumerator with the same state.
 
         Args:
@@ -270,12 +250,11 @@ class IEcoEnumConnections(IEcoUnknown):
         IEcoUnknown: QueryInterface, AddRef, Release
     """
 
-    @method
     def Next(
         self,
         cConnections: UInt32,
-        rgcd: EcoConnectionDataPtr,
-        pcFetched: UInt32Ptr,
+        rgcd: Ptr[EcoConnectionData],
+        pcFetched: Ptr[UInt32],
     ) -> Int16:
         """Retrieve the next connection data element(s).
 
@@ -289,7 +268,6 @@ class IEcoEnumConnections(IEcoUnknown):
         """
         ...
 
-    @method
     def Skip(self, cConnections: UInt32) -> Int16:
         """Skip the next cConnections elements.
 
@@ -301,7 +279,6 @@ class IEcoEnumConnections(IEcoUnknown):
         """
         ...
 
-    @method
     def Reset(self) -> Int16:
         """Reset the enumerator to the beginning.
 
@@ -310,8 +287,7 @@ class IEcoEnumConnections(IEcoUnknown):
         """
         ...
 
-    @method
-    def Clone(self, ppEnum: IEcoEnumConnectionsPtr) -> Int16:
+    def Clone(self, ppEnum: Ptr[Ptr[IEcoEnumConnections]]) -> Int16:
         """Create a copy of the enumerator with the same state.
 
         Args:
@@ -321,15 +297,3 @@ class IEcoEnumConnections(IEcoUnknown):
             0 on success, error code otherwise.
         """
         ...
-
-
-if TYPE_CHECKING:
-    IEcoConnectionPointPtr = _Pointer[IEcoConnectionPoint]
-    IEcoConnectionPointContainerPtr = _Pointer[IEcoConnectionPointContainer]
-    IEcoEnumConnectionPointsPtr = _Pointer[IEcoEnumConnectionPoints]
-    IEcoEnumConnectionsPtr = _Pointer[IEcoEnumConnections]
-else:
-    IEcoConnectionPointPtr = IEcoConnectionPoint._interface_ptr_
-    IEcoConnectionPointContainerPtr = IEcoConnectionPointContainer._interface_ptr_
-    IEcoEnumConnectionPointsPtr = IEcoEnumConnectionPoints._interface_ptr_
-    IEcoEnumConnectionsPtr = IEcoEnumConnections._interface_ptr_

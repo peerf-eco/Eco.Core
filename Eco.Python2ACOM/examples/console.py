@@ -1,10 +1,19 @@
-"""Console output helpers for examples.
+"""Console and logging helpers for examples.
 
-Provides a pre-configured ``logging.Logger`` with colored output
-via rich (if available) or plain formatting as a fallback.
+This module provides a single place for all example output: a configured
+logger with rich formatting and helper functions for headers, sections,
+messages.
 
-Also exposes ``console`` and helper functions for rich output when
-the library is installed.
+Module-level attributes:
+    logger: Pre-configured ``logging.Logger`` (name ``eco.example``).
+    console: Rich ``Console`` instance for direct output.
+
+Helper functions:
+    print_header: Prominent panel with title and optional subtitle.
+    print_section: Section divider with styled title.
+    print_success: Green check and message.
+    print_error: Red cross and message.
+    print_info: Cyan arrow and message.
 """
 
 from __future__ import annotations
@@ -12,80 +21,87 @@ from __future__ import annotations
 import logging
 from typing import Optional
 
-# Logger for all examples
-logger = logging.getLogger("eco.example")
+from rich.console import Console
+from rich.logging import RichHandler
+from rich.panel import Panel
+from rich.text import Text
+
+# =============================================================================
+# Logger and Console
+# =============================================================================
+
+logger = logging.getLogger("Eco")
 logger.setLevel(logging.DEBUG)
 
-try:
-    from rich.console import Console
-    from rich.logging import RichHandler
-
-    console = Console()
-    _handler: logging.Handler = RichHandler(
-        show_time=False,
-        show_path=False,
-        markup=True,
-        rich_tracebacks=True,
-        console=console,
-    )
-    _handler.setLevel(logging.DEBUG)
-    _RICH_AVAILABLE = True
-
-except ImportError:
-    _handler = logging.StreamHandler()
-    _handler.setLevel(logging.DEBUG)
-    _handler.setFormatter(logging.Formatter("[%(levelname)s] %(message)s"))
-    _RICH_AVAILABLE = False
-
-logger.addHandler(_handler)
+console = Console()
+handler = RichHandler(
+    show_time=False,
+    show_path=False,
+    markup=True,
+    rich_tracebacks=True,
+    console=console,
+)
+handler.setLevel(logging.DEBUG)
+logger.addHandler(handler)
 logger.propagate = False
 
 
-def print_header(title: str, subtitle: Optional[str] = None) -> None:
-    """Print a prominent header with optional subtitle."""
-    if _RICH_AVAILABLE:
-        from rich.panel import Panel
-        from rich.text import Text
+# =============================================================================
+# Headers and sections
+# =============================================================================
 
-        text = Text(title, style="bold cyan")
-        if subtitle:
-            text.append("\n")
-            text.append(subtitle, style="dim")
-        console.print(Panel(text, border_style="blue", padding=(0, 2)))
-    else:
-        print(f"\n=== {title} ===")
-        if subtitle:
-            print(subtitle)
-        print()
+
+def print_header(title: str, subtitle: Optional[str] = None) -> None:
+    """Print a prominent header panel.
+
+    Args:
+        title: Main title text (bold cyan).
+        subtitle: Optional subtitle (dim), shown below title.
+    """
+    text = Text(title, style="bold cyan")
+    if subtitle:
+        text.append("\n")
+        text.append(subtitle, style="dim")
+    console.print(Panel(text, border_style="blue", padding=(0, 2)))
 
 
 def print_section(title: str, style: str = "bold yellow") -> None:
-    """Print a section divider."""
-    if _RICH_AVAILABLE:
-        console.print(f"\n[{style}]>>> {title}[/{style}]\n")
-    else:
-        print(f"\n>>> {title}\n")
+    """Print a section divider.
+
+    Args:
+        title: Section title.
+        style: Rich style string (default: bold yellow).
+    """
+    console.print(f"\n[{style}]>>> {title}[/{style}]\n")
+
+
+# =============================================================================
+# Status messages
+# =============================================================================
 
 
 def print_success(msg: str) -> None:
-    """Print a success message."""
-    if _RICH_AVAILABLE:
-        console.print(f"[green]✓[/green] {msg}")
-    else:
-        print(f"OK: {msg}")
+    """Print a success message with green check.
+
+    Args:
+        msg: Message text.
+    """
+    console.print(f"[green]✓[/green] {msg}")
 
 
 def print_error(msg: str) -> None:
-    """Print an error message."""
-    if _RICH_AVAILABLE:
-        console.print(f"[red]✗[/red] {msg}")
-    else:
-        print(f"ERROR: {msg}")
+    """Print an error message with red cross.
+
+    Args:
+        msg: Message text.
+    """
+    console.print(f"[red]✗[/red] {msg}")
 
 
 def print_info(msg: str) -> None:
-    """Print an info message."""
-    if _RICH_AVAILABLE:
-        console.print(f"[cyan]→[/cyan] {msg}")
-    else:
-        print(f"INFO: {msg}")
+    """Print an info message with cyan arrow.
+
+    Args:
+        msg: Message text.
+    """
+    console.print(f"[cyan]→[/cyan] {msg}")

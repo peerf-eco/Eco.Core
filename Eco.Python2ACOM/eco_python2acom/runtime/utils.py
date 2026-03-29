@@ -14,7 +14,7 @@ import re
 from pathlib import Path
 from typing import Optional
 
-from eco_python2acom.core.guid import UGUID
+from eco_python2acom.types.guid import UGUID
 
 # Pattern for EcoOS DLL filenames: 32 hex characters
 ECO_DLL_PATTERN = re.compile(r"^[0-9A-Fa-f]{32}\.dll$")

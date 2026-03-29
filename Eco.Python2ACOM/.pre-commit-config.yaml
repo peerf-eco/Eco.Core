@@ -15,7 +15,6 @@ repos:
       - id: check-case-conflict
       - id: detect-private-key
       - id: debug-statements
-      - id: check-docstring-first
 
   - repo: https://github.com/psf/black
     rev: 23.12.1

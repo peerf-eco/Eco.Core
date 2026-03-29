@@ -15,14 +15,8 @@ Reference:
 
 from __future__ import annotations
 
-from ctypes import _Pointer
-from typing import TYPE_CHECKING
-
-from eco_python2acom.core.guid import UGUIDPtr
-from eco_python2acom.core.types import CharPtr, Int16, Int32, UInt32, UInt32Ptr, Void, VoidPtr
-from eco_python2acom.interfaces.base import IEcoUnknown
-from eco_python2acom.interfaces.decorators import interface, method
-from eco_python2acom.interfaces.guids.iid import (
+from eco_python2acom.decorators.interface import interface
+from eco_python2acom.guids.iid import (
     IID_IEcoDirectoryInfo1,
     IID_IEcoDirectoryManager1,
     IID_IEcoDriveInfo1,
@@ -32,6 +26,10 @@ from eco_python2acom.interfaces.guids.iid import (
     IID_IEcoFileManager1,
     IID_IEcoFileSystemManagement1,
 )
+from eco_python2acom.interfaces.base import IEcoUnknown
+from eco_python2acom.types.core import CString, Int16, Int32, UInt32, Void
+from eco_python2acom.types.guid import UGUID
+from eco_python2acom.types.pointer import Ptr
 
 # =============================================================================
 # IEcoFileInfo1
@@ -48,8 +46,7 @@ class IEcoFileInfo1(IEcoUnknown):
         IEcoUnknown: QueryInterface, AddRef, Release
     """
 
-    @method
-    def get_Id(self) -> UGUIDPtr:
+    def get_Id(self) -> Ptr[UGUID]:
         """Get the file identifier.
 
         Returns:
@@ -57,11 +54,6 @@ class IEcoFileInfo1(IEcoUnknown):
         """
         ...
 
-
-if TYPE_CHECKING:
-    IEcoFileInfo1Ptr = _Pointer[IEcoFileInfo1]
-else:
-    IEcoFileInfo1Ptr = IEcoFileInfo1._interface_ptr_
 
 # =============================================================================
 # IEcoFile1
@@ -78,7 +70,6 @@ class IEcoFile1(IEcoUnknown):
         IEcoUnknown: QueryInterface, AddRef, Release
     """
 
-    @method
     def get_Size(self) -> Int32:
         """Get the size of the file.
 
@@ -87,8 +78,7 @@ class IEcoFile1(IEcoUnknown):
         """
         ...
 
-    @method
-    def get_Name(self) -> CharPtr:
+    def get_Name(self) -> CString:
         """Get the name of the file.
 
         Returns:
@@ -96,8 +86,7 @@ class IEcoFile1(IEcoUnknown):
         """
         ...
 
-    @method
-    def get_Info(self) -> IEcoFileInfo1Ptr:
+    def get_Info(self) -> Ptr[IEcoFileInfo1]:
         """Get the file information interface.
 
         Returns:
@@ -105,7 +94,6 @@ class IEcoFile1(IEcoUnknown):
         """
         ...
 
-    @method
     def get_Pointer(self) -> UInt32:
         """Get the current file pointer position.
 
@@ -114,7 +102,6 @@ class IEcoFile1(IEcoUnknown):
         """
         ...
 
-    @method
     def set_Pointer(self, position: UInt32) -> Void:
         """Set the file pointer to a specific position.
 
@@ -123,8 +110,7 @@ class IEcoFile1(IEcoUnknown):
         """
         ...
 
-    @method
-    def Read(self, buffer: VoidPtr, size: UInt32Ptr) -> Int16:
+    def Read(self, buffer: Ptr[Void], size: Ptr[UInt32]) -> Int16:
         """Read data from the file into a buffer.
 
         Args:
@@ -136,8 +122,7 @@ class IEcoFile1(IEcoUnknown):
         """
         ...
 
-    @method
-    def Write(self, buffer: VoidPtr, size: UInt32Ptr) -> Int16:
+    def Write(self, buffer: Ptr[Void], size: Ptr[UInt32]) -> Int16:
         """Write data from a buffer to the file.
 
         Args:
@@ -149,7 +134,6 @@ class IEcoFile1(IEcoUnknown):
         """
         ...
 
-    @method
     def Close(self) -> Int16:
         """Close the file.
 
@@ -158,7 +142,6 @@ class IEcoFile1(IEcoUnknown):
         """
         ...
 
-    @method
     def get_Descriptor(self) -> Int32:
         """Get the file descriptor.
 
@@ -167,11 +150,6 @@ class IEcoFile1(IEcoUnknown):
         """
         ...
 
-
-if TYPE_CHECKING:
-    IEcoFile1Ptr = _Pointer[IEcoFile1]
-else:
-    IEcoFile1Ptr = IEcoFile1._interface_ptr_
 
 # =============================================================================
 # IEcoDriveInfo1
@@ -188,8 +166,7 @@ class IEcoDriveInfo1(IEcoUnknown):
         IEcoUnknown: QueryInterface, AddRef, Release
     """
 
-    @method
-    def get_Id(self) -> UGUIDPtr:
+    def get_Id(self) -> Ptr[UGUID]:
         """Get the drive identifier.
 
         Returns:
@@ -197,11 +174,6 @@ class IEcoDriveInfo1(IEcoUnknown):
         """
         ...
 
-
-if TYPE_CHECKING:
-    IEcoDriveInfo1Ptr = _Pointer[IEcoDriveInfo1]
-else:
-    IEcoDriveInfo1Ptr = IEcoDriveInfo1._interface_ptr_
 
 # =============================================================================
 # IEcoDriveManager1
@@ -218,8 +190,7 @@ class IEcoDriveManager1(IEcoUnknown):
         IEcoUnknown: QueryInterface, AddRef, Release
     """
 
-    @method
-    def get_Drive(self, name: CharPtr) -> IEcoDriveInfo1Ptr:
+    def get_Drive(self, name: CString) -> Ptr[IEcoDriveInfo1]:
         """Get a drive by its name.
 
         Args:
@@ -230,11 +201,6 @@ class IEcoDriveManager1(IEcoUnknown):
         """
         ...
 
-
-if TYPE_CHECKING:
-    IEcoDriveManager1Ptr = _Pointer[IEcoDriveManager1]
-else:
-    IEcoDriveManager1Ptr = IEcoDriveManager1._interface_ptr_
 
 # =============================================================================
 # IEcoDirectoryInfo1
@@ -251,8 +217,7 @@ class IEcoDirectoryInfo1(IEcoUnknown):
         IEcoUnknown: QueryInterface, AddRef, Release
     """
 
-    @method
-    def get_Id(self) -> UGUIDPtr:
+    def get_Id(self) -> Ptr[UGUID]:
         """Get the directory identifier.
 
         Returns:
@@ -260,11 +225,6 @@ class IEcoDirectoryInfo1(IEcoUnknown):
         """
         ...
 
-
-if TYPE_CHECKING:
-    IEcoDirectoryInfo1Ptr = _Pointer[IEcoDirectoryInfo1]
-else:
-    IEcoDirectoryInfo1Ptr = IEcoDirectoryInfo1._interface_ptr_
 
 # =============================================================================
 # IEcoDirectoryManager1
@@ -281,8 +241,7 @@ class IEcoDirectoryManager1(IEcoUnknown):
         IEcoUnknown: QueryInterface, AddRef, Release
     """
 
-    @method
-    def Create(self, name: CharPtr) -> IEcoDirectoryInfo1Ptr:
+    def Create(self, name: CString) -> Ptr[IEcoDirectoryInfo1]:
         """Create a new directory.
 
         Args:
@@ -293,8 +252,7 @@ class IEcoDirectoryManager1(IEcoUnknown):
         """
         ...
 
-    @method
-    def Delete(self, name: CharPtr) -> Int16:
+    def Delete(self, name: CString) -> Int16:
         """Delete an existing directory.
 
         Args:
@@ -305,11 +263,6 @@ class IEcoDirectoryManager1(IEcoUnknown):
         """
         ...
 
-
-if TYPE_CHECKING:
-    IEcoDirectoryManager1Ptr = _Pointer[IEcoDirectoryManager1]
-else:
-    IEcoDirectoryManager1Ptr = IEcoDirectoryManager1._interface_ptr_
 
 # =============================================================================
 # IEcoFileManager1
@@ -326,8 +279,7 @@ class IEcoFileManager1(IEcoUnknown):
         IEcoUnknown: QueryInterface, AddRef, Release
     """
 
-    @method
-    def Create(self, name: CharPtr) -> IEcoFile1Ptr:
+    def Create(self, name: CString) -> Ptr[IEcoFile1]:
         """Create a new file.
 
         Args:
@@ -338,8 +290,7 @@ class IEcoFileManager1(IEcoUnknown):
         """
         ...
 
-    @method
-    def Open(self, name: CharPtr) -> IEcoFile1Ptr:
+    def Open(self, name: CString) -> Ptr[IEcoFile1]:
         """Open an existing file.
 
         Args:
@@ -350,8 +301,7 @@ class IEcoFileManager1(IEcoUnknown):
         """
         ...
 
-    @method
-    def Close(self, pFile: IEcoFile1Ptr) -> Int16:
+    def Close(self, pFile: Ptr[IEcoFile1]) -> Int16:
         """Close a file.
 
         Args:
@@ -362,11 +312,6 @@ class IEcoFileManager1(IEcoUnknown):
         """
         ...
 
-
-if TYPE_CHECKING:
-    IEcoFileManager1Ptr = _Pointer[IEcoFileManager1]
-else:
-    IEcoFileManager1Ptr = IEcoFileManager1._interface_ptr_
 
 # =============================================================================
 # IEcoFileSystemManagement1
@@ -383,8 +328,7 @@ class IEcoFileSystemManagement1(IEcoUnknown):
         IEcoUnknown: QueryInterface, AddRef, Release
     """
 
-    @method
-    def get_FileManager(self) -> IEcoFileManager1Ptr:
+    def get_FileManager(self) -> Ptr[IEcoFileManager1]:
         """Get the file manager.
 
         Returns:
@@ -392,8 +336,7 @@ class IEcoFileSystemManagement1(IEcoUnknown):
         """
         ...
 
-    @method
-    def get_DirectoryManager(self) -> IEcoDirectoryManager1Ptr:
+    def get_DirectoryManager(self) -> Ptr[IEcoDirectoryManager1]:
         """Get the directory manager.
 
         Returns:
@@ -401,17 +344,10 @@ class IEcoFileSystemManagement1(IEcoUnknown):
         """
         ...
 
-    @method
-    def get_DriveManager(self) -> IEcoDriveManager1Ptr:
+    def get_DriveManager(self) -> Ptr[IEcoDriveManager1]:
         """Get the drive manager.
 
         Returns:
             Pointer to IEcoDriveManager1.
         """
         ...
-
-
-if TYPE_CHECKING:
-    IEcoFileSystemManagement1Ptr = _Pointer[IEcoFileSystemManagement1]
-else:
-    IEcoFileSystemManagement1Ptr = IEcoFileSystemManagement1._interface_ptr_

@@ -7,7 +7,7 @@ Example:
     >>> from eco_python2acom.interfaces.guids.iid import IID_IEcoInterfaceBus1
 """
 
-from eco_python2acom.core.guid import UGUID
+from eco_python2acom.types.guid import UGUID
 
 # =============================================================================
 # Base Interfaces

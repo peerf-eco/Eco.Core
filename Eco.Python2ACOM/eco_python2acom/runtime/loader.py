@@ -13,11 +13,12 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
-from eco_python2acom.core.errors import EcoError, EcoErrorCode
-from eco_python2acom.core.guid import UGUID
-from eco_python2acom.core.types import DLL, VoidPtr
 from eco_python2acom.interfaces.base import IEcoComponentFactory
 from eco_python2acom.runtime.utils import guid_to_filename
+from eco_python2acom.types.core import CDLL, Void
+from eco_python2acom.types.errors import EcoError, EcoErrorCode
+from eco_python2acom.types.guid import UGUID
+from eco_python2acom.types.pointer import Ptr
 
 
 @dataclass
@@ -26,12 +27,12 @@ class LoadedDll:
 
     Attributes:
         path: Full path to the DLL file.
-        handle: ctypes DLL handle.
+        handle: DLL handle.
         factory: The component factory interface.
     """
 
     path: Path
-    handle: DLL
+    handle: CDLL
     factory: IEcoComponentFactory
 
 
@@ -62,7 +63,7 @@ class DllLoader:
 
         # Load DLL
         try:
-            handle = DLL(str(path))
+            handle = CDLL(str(path))
         except OSError as err:
             raise EcoError(
                 EcoErrorCode.FAIL, f"Failed to load DLL: '{path.name}': incompatible architecture"
@@ -71,9 +72,9 @@ class DllLoader:
         # Get factory pointer
         try:
             get_factory = handle.GetIEcoComponentFactoryPtr
-            get_factory.restype = VoidPtr
+            get_factory.restype = Ptr[Void]
             get_factory.argtypes = []
-            factory_ptr = VoidPtr(get_factory())
+            factory_ptr = get_factory()
         except AttributeError as err:
             raise EcoError(
                 EcoErrorCode.COMPONENT_NOTFOUND,

@@ -10,13 +10,11 @@ Reference:
 
 from __future__ import annotations
 
-from ctypes import _Pointer
-from typing import TYPE_CHECKING
-
-from eco_python2acom.core.types import Void, VoidPtr
+from eco_python2acom.decorators.interface import interface
+from eco_python2acom.guids.gid import GID_IEcoSystem
 from eco_python2acom.interfaces.base import IEcoUnknown
-from eco_python2acom.interfaces.decorators import interface, method
-from eco_python2acom.interfaces.guids.gid import GID_IEcoSystem
+from eco_python2acom.types.core import Void
+from eco_python2acom.types.pointer import Ptr
 
 
 @interface(iid=GID_IEcoSystem)
@@ -33,8 +31,7 @@ class IEcoSystem1(IEcoUnknown):
         IEcoUnknown: QueryInterface, AddRef, Release
     """
 
-    @method
-    def set_Data(self, pv: VoidPtr) -> Void:
+    def set_Data(self, pv: Ptr[Void]) -> Void:
         """Store arbitrary user data on the system object.
 
         Args:
@@ -42,17 +39,10 @@ class IEcoSystem1(IEcoUnknown):
         """
         ...
 
-    @method
-    def get_Data(self) -> VoidPtr:
+    def get_Data(self) -> Ptr[Void]:
         """Retrieve previously stored user data.
 
         Returns:
             Pointer to user data.
         """
         ...
-
-
-if TYPE_CHECKING:
-    IEcoSystem1Ptr = _Pointer[IEcoSystem1]
-else:
-    IEcoSystem1Ptr = IEcoSystem1._interface_ptr_

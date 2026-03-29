@@ -13,39 +13,54 @@ Reference:
 
 from __future__ import annotations
 
-from ctypes import _Pointer
-from typing import TYPE_CHECKING, Optional
+from typing import Optional
 
-from eco_python2acom.core.types import Char, EcoStructure, Int16, Ptr, UInt32, UInt32Ptr, VoidPtr
+from eco_python2acom.decorators.interface import interface
+from eco_python2acom.decorators.model import model
+from eco_python2acom.guids.iid import IID_IEcoMemoryAllocator1, IID_IEcoMemoryManager1
 from eco_python2acom.interfaces.base import IEcoUnknown
-from eco_python2acom.interfaces.decorators import interface, method
-from eco_python2acom.interfaces.guids.iid import IID_IEcoMemoryAllocator1, IID_IEcoMemoryManager1
+from eco_python2acom.types.core import Char, Int16, UInt32, Void
+from eco_python2acom.types.pointer import Ptr
 
 
-class EcoMemoryManager1Block(EcoStructure):
-    _fields_ = [
-        ("lowAddr", UInt32),
-        ("highAddr", UInt32),
-        ("size", UInt32),
-    ]
+@model
+class EcoMemoryManager1Block:
+    """Descriptor of a single memory block in the manager's heap.
+
+    Used by IEcoMemoryManager1.get_UsedBlocks to return information
+    about allocated blocks (address range and size).
+
+    Attributes:
+        lowAddr: Low (start) address of the block.
+        highAddr: High (end) address of the block.
+        size: Size of the block in bytes.
+    """
+
+    lowAddr: UInt32
+    highAddr: UInt32
+    size: UInt32
 
 
-class EcoMemoryManager1Status(EcoStructure):
-    _fields_ = [
-        ("lowAddr", UInt32),
-        ("highAddr", UInt32),
-        ("totalSize", UInt32),
-        ("freeSize", UInt32),
-        ("usedBlocks", UInt32),
-    ]
+@model
+class EcoMemoryManager1Status:
+    """Current status of the memory manager heap.
 
+    Filled by IEcoMemoryManager1.get_Status with aggregate information
+    about the heap: address range, total/free size, and number of used blocks.
 
-if TYPE_CHECKING:
-    EcoMemoryManager1BlockPtr = _Pointer[EcoMemoryManager1Block]
-    EcoMemoryManager1StatusPtr = _Pointer[EcoMemoryManager1Status]
-else:
-    EcoMemoryManager1BlockPtr = Ptr(EcoMemoryManager1Block)
-    EcoMemoryManager1StatusPtr = Ptr(EcoMemoryManager1Status)
+    Attributes:
+        lowAddr: Low (start) address of the heap.
+        highAddr: High (end) address of the heap.
+        totalSize: Total heap size in bytes.
+        freeSize: Free (unused) size in bytes.
+        usedBlocks: Number of allocated blocks.
+    """
+
+    lowAddr: UInt32
+    highAddr: UInt32
+    totalSize: UInt32
+    freeSize: UInt32
+    usedBlocks: UInt32
 
 
 # =============================================================================
@@ -64,8 +79,7 @@ class IEcoMemoryManager1(IEcoUnknown):
         IEcoUnknown: QueryInterface, AddRef, Release
     """
 
-    @method
-    def Init(self, startAddress: Optional[VoidPtr], size: UInt32) -> Int16:
+    def Init(self, startAddress: Optional[Ptr[Void]], size: UInt32) -> Int16:
         """Initialize the memory manager with heap.
 
         Args:
@@ -77,8 +91,7 @@ class IEcoMemoryManager1(IEcoUnknown):
         """
         ...
 
-    @method
-    def get_Status(self, status: EcoMemoryManager1StatusPtr) -> Int16:
+    def get_Status(self, status: Ptr[EcoMemoryManager1Status]) -> Int16:
         """Get memory status information.
 
         Args:
@@ -89,15 +102,17 @@ class IEcoMemoryManager1(IEcoUnknown):
         """
         ...
 
-    @method
-    def get_UsedBlocks(self, blocks: EcoMemoryManager1BlockPtr, size_in_blocks: UInt32Ptr) -> Int16:
-        """Get information about a used memory block.
+    def get_UsedBlocks(
+        self, blocks: Ptr[EcoMemoryManager1Block], size_in_blocks: Ptr[UInt32]
+    ) -> Int16:
+        """Get descriptors of used memory blocks.
 
         Args:
-            block: Pointer to a memory block structure.
+            blocks: Output array of EcoMemoryManager1Block structures.
+            size_in_blocks: Input size of the array; output number of blocks written.
 
         Returns:
-            0 if the block is used, non-zero if not.
+            0 on success, error code otherwise.
         """
         ...
 
@@ -118,8 +133,7 @@ class IEcoMemoryAllocator1(IEcoUnknown):
         IEcoUnknown: QueryInterface, AddRef, Release
     """
 
-    @method
-    def Alloc(self, size: UInt32) -> VoidPtr:
+    def Alloc(self, size: UInt32) -> Ptr[Void]:
         """Allocate memory block.
 
         Args:
@@ -130,8 +144,7 @@ class IEcoMemoryAllocator1(IEcoUnknown):
         """
         ...
 
-    @method
-    def Free(self, ptr: VoidPtr) -> None:
+    def Free(self, ptr: Ptr[Void]) -> None:
         """Free memory block.
 
         Args:
@@ -139,8 +152,7 @@ class IEcoMemoryAllocator1(IEcoUnknown):
         """
         ...
 
-    @method
-    def Realloc(self, ptr: VoidPtr, size: UInt32) -> VoidPtr:
+    def Realloc(self, ptr: Ptr[Void], size: UInt32) -> Ptr[Void]:
         """Reallocate memory block.
 
         Args:
@@ -152,8 +164,7 @@ class IEcoMemoryAllocator1(IEcoUnknown):
         """
         ...
 
-    @method
-    def Copy(self, dest: VoidPtr, src: VoidPtr, size: UInt32) -> VoidPtr:
+    def Copy(self, dest: Ptr[Void], src: Ptr[Void], size: UInt32) -> Ptr[Void]:
         """Copy memory from source to destination.
 
         Args:
@@ -166,8 +177,7 @@ class IEcoMemoryAllocator1(IEcoUnknown):
         """
         ...
 
-    @method
-    def Fill(self, dest: VoidPtr, value: Char, size: UInt32) -> VoidPtr:
+    def Fill(self, dest: Ptr[Void], value: Char, size: UInt32) -> Ptr[Void]:
         """Fill memory with a byte value.
 
         Args:
@@ -180,8 +190,7 @@ class IEcoMemoryAllocator1(IEcoUnknown):
         """
         ...
 
-    @method
-    def Compare(self, ptr1: VoidPtr, ptr2: VoidPtr, size: UInt32) -> Int16:
+    def Compare(self, ptr1: Ptr[Void], ptr2: Ptr[Void], size: UInt32) -> Int16:
         """Compare two memory blocks.
 
         Args:
@@ -194,8 +203,7 @@ class IEcoMemoryAllocator1(IEcoUnknown):
         """
         ...
 
-    @method
-    def RetrieveSize(self, ptr: VoidPtr) -> UInt32:
+    def RetrieveSize(self, ptr: Ptr[Void]) -> UInt32:
         """Get size of allocated block.
 
         Args:
@@ -205,11 +213,3 @@ class IEcoMemoryAllocator1(IEcoUnknown):
             Size of the block in bytes.
         """
         ...
-
-
-if TYPE_CHECKING:
-    IEcoMemoryManager1Ptr = _Pointer[IEcoMemoryManager1]
-    IEcoMemoryAllocator1Ptr = _Pointer[IEcoMemoryAllocator1]
-else:
-    IEcoMemoryManager1Ptr = IEcoMemoryManager1._interface_ptr_
-    IEcoMemoryAllocator1Ptr = IEcoMemoryAllocator1._interface_ptr_

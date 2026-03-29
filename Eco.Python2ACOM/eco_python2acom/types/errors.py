@@ -11,6 +11,8 @@ Note:
 from enum import IntEnum
 from typing import Optional, Union
 
+from eco_python2acom.types.core import Int16
+
 
 class EcoErrorCode(IntEnum):
     """ACOM/EcoOS error codes.
@@ -46,7 +48,7 @@ class EcoErrorCode(IntEnum):
 
 
 # Human-readable error messages
-_ERROR_MESSAGES: dict[EcoErrorCode, str] = {
+ERROR_MESSAGES: dict[EcoErrorCode, str] = {
     EcoErrorCode.SUCCESS: "Operation completed successfully",
     EcoErrorCode.UNEXPECTED: "Unexpected condition, catastrophic failure",
     EcoErrorCode.POINTER: "Invalid pointer value was passed",
@@ -72,7 +74,7 @@ class EcoError(Exception):
 
     def __init__(
         self,
-        code: Union[int, EcoErrorCode],
+        code: Union[Int16, int, EcoErrorCode],
         message: Optional[str] = None,
         operation: Optional[str] = None,
     ) -> None:
@@ -84,7 +86,12 @@ class EcoError(Exception):
             operation: The name of the operation that failed.
         """
         try:
-            self.code = EcoErrorCode(code) if isinstance(code, int) else code
+            if isinstance(code, EcoErrorCode):
+                self.code = code
+            elif isinstance(code, Int16):
+                self.code = EcoErrorCode(code.value)
+            else:
+                self.code = EcoErrorCode(code)
         except ValueError:
             # Unknown error code, default to FAIL
             self.code = EcoErrorCode.FAIL
@@ -92,7 +99,7 @@ class EcoError(Exception):
         self.operation = operation
 
         # Build error message
-        default_msg = _ERROR_MESSAGES.get(self.code, "Unknown error")
+        default_msg = ERROR_MESSAGES.get(self.code, "Unknown error")
         self.message = message if message else default_msg
 
         # Format full message
@@ -102,33 +109,26 @@ class EcoError(Exception):
 
         super().__init__(full_msg)
 
+    def __repr__(self) -> str:
+        """Return string representation of the EcoError exception."""
+        return f"EcoError(code={self.code}, message={self.message}, operation={self.operation})"
 
-def check_result(
-    result: int,
-    operation: Optional[str] = None,
-    message: Optional[str] = None,
-) -> None:
-    """Check an ACOM result code and raise EcoError if it indicates failure.
+    def __eq__(self, other: object) -> bool:
+        """Compare two EcoError exceptions.
 
-    Args:
-        result: The result code returned by an ACOM operation.
-        operation: The name of the operation for error context.
-        message: Additional error message.
+        Comparison is done on all three attributes: code, message, and operation.
+        """
+        if not isinstance(other, EcoError):
+            return NotImplemented
+        return (
+            self.code == other.code
+            and self.message == other.message
+            and self.operation == other.operation
+        )
 
-    Raises:
-        EcoError: If result is not SUCCESS (0).
-    """
-    if result != EcoErrorCode.SUCCESS:
-        raise EcoError(result, message=message, operation=operation)
+    def __hash__(self) -> int:
+        """Hash the EcoError exception."""
+        return hash((self.code, self.message, self.operation))
 
 
-def is_success(result: int) -> bool:
-    """Check if a result code indicates success.
-
-    Args:
-        result: The result code to check.
-
-    Returns:
-        True if the result indicates success.
-    """
-    return result == EcoErrorCode.SUCCESS
+__all__ = ["EcoErrorCode", "EcoError", "ERROR_MESSAGES"]

@@ -8,7 +8,7 @@ Note:
     CID format is UGUID: {XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX}
 """
 
-from eco_python2acom.core.guid import UGUID
+from eco_python2acom.types.guid import UGUID
 
 # =============================================================================
 # Core System Components

@@ -3,10 +3,6 @@
 This module provides the foundational IEcoUnknown interface that all
 ACOM interfaces inherit from, defined using our declarative approach.
 
-After decoration, classes are directly instantiable from VoidPtr:
-    >>> obj = IEcoUnknown(ptr)
-    >>> obj.Release()
-
 The IEcoUnknown interface provides three fundamental methods:
     - QueryInterface: Get a different interface from a component.
     - AddRef: Increment reference count.
@@ -15,13 +11,14 @@ The IEcoUnknown interface provides three fundamental methods:
 
 from __future__ import annotations
 
-from ctypes import _Pointer
-from typing import TYPE_CHECKING, Optional
+from typing import Optional, Union
 
-from eco_python2acom.core.guid import UGUIDPtr
-from eco_python2acom.core.types import CharPtr, Int16, UInt32, VoidPtr, VoidPtrPtr
-from eco_python2acom.interfaces.decorators import interface, method
-from eco_python2acom.interfaces.guids.iid import IID_IEcoComponentFactory, IID_IEcoUnknown
+from eco_python2acom.decorators.interface import interface
+from eco_python2acom.guids.iid import IID_IEcoComponentFactory, IID_IEcoUnknown
+from eco_python2acom.types.core import CString, Int16, UInt32, Void
+from eco_python2acom.types.guid import UGUID
+from eco_python2acom.types.pointer import Ptr
+from eco_python2acom.types.utils import cast
 
 # =============================================================================
 # IEcoUnknown - Base interface for all ACOM components
@@ -33,37 +30,42 @@ class IEcoUnknown:
     """Base interface for all ACOM components.
 
     Every ACOM interface inherits from IEcoUnknown and must implement
-    these three methods. The @interface decorator automatically adds
+    these three methods. The @eco_interface decorator automatically adds
     them to the VTbl in the correct order.
-
-    Instantiate from a raw pointer:
-        >>> unknown = IEcoUnknown(ptr)
-        >>> unknown.AddRef()
-        >>> unknown.Release()
 
     Note:
         When defining a new interface, inherit from IEcoUnknown.
         The decorator will automatically include these methods.
     """
 
-    def __init__(self, ptr: VoidPtr) -> None:
-        """Initialize from a raw interface pointer.
+    def __init__(self, ptr: Union[Ptr[Void], int]) -> None:
+        """Initialize interface wrapper from a pointer.
 
         Args:
-            ptr: VoidPtr to the ACOM interface.
+            ptr: Pointer to interface object.
 
         Raises:
-            ValueError: If ptr is NULL.
+            ValueError: If ptr is NULL or pVTbl is NULL.
         """
-        ...
+        if isinstance(ptr, int):
+            ptr = Ptr[Void](ptr)
+        if not ptr or not ptr.value:
+            raise ValueError(f"{self.__class__.__name__}: NULL pointer")
 
-    @property
-    def ptr(self) -> VoidPtr:
-        """Raw interface pointer."""
-        return self._ptr  # type: ignore
+        self.ptr = ptr
 
-    @method
-    def QueryInterface(self, riid: UGUIDPtr, ppv: VoidPtrPtr) -> Int16:
+        pVTbl = cast(ptr, Ptr[Ptr[Void]]).contents
+        if not pVTbl or not pVTbl.value:
+            raise ValueError(f"{self.__class__.__name__}: NULL pVTbl")
+
+        self.vtbl = cast(pVTbl, Ptr[type(self)]).contents  # type: ignore
+
+    def __repr__(self) -> str:
+        """Return string representation of interface instance."""
+        addr = self.ptr.value if self.ptr else 0
+        return f"<{self.__class__.__name__} at 0x{addr:X}>"
+
+    def QueryInterface(self, riid: Ptr[UGUID], ppv: Ptr[Ptr[Void]]) -> Int16:
         """Query for another interface on this component.
 
         Args:
@@ -75,7 +77,6 @@ class IEcoUnknown:
         """
         ...
 
-    @method
     def AddRef(self) -> UInt32:
         """Increment the reference count.
 
@@ -84,7 +85,6 @@ class IEcoUnknown:
         """
         ...
 
-    @method
     def Release(self) -> UInt32:
         """Decrement the reference count.
 
@@ -112,13 +112,12 @@ class IEcoComponentFactory(IEcoUnknown):
         IEcoUnknown: QueryInterface, AddRef, Release
     """
 
-    @method
     def Alloc(
         self,
-        pISystem: Optional[VoidPtr],
-        pIUnknownOuter: Optional[VoidPtr],
-        riid: UGUIDPtr,
-        ppv: VoidPtrPtr,
+        pISystem: Optional[Ptr[Void]],
+        pIUnknownOuter: Optional[Ptr[Void]],
+        riid: Ptr[UGUID],
+        ppv: Ptr[Ptr[Void]],
     ) -> Int16:
         """Allocate a new component instance.
 
@@ -133,8 +132,7 @@ class IEcoComponentFactory(IEcoUnknown):
         """
         ...
 
-    @method
-    def Init(self, pISystem: Optional[VoidPtr], pv: VoidPtr) -> Int16:
+    def Init(self, pISystem: Optional[Ptr[Void]], pv: Ptr[Void]) -> Int16:
         """Initialize the factory with system context.
 
         Args:
@@ -146,8 +144,7 @@ class IEcoComponentFactory(IEcoUnknown):
         """
         ...
 
-    @method
-    def get_Name(self) -> CharPtr:
+    def get_Name(self) -> CString:
         """Get the component name.
 
         Returns:
@@ -155,8 +152,7 @@ class IEcoComponentFactory(IEcoUnknown):
         """
         ...
 
-    @method
-    def get_Version(self) -> CharPtr:
+    def get_Version(self) -> CString:
         """Get the component version.
 
         Returns:
@@ -164,19 +160,10 @@ class IEcoComponentFactory(IEcoUnknown):
         """
         ...
 
-    @method
-    def get_Manufacturer(self) -> CharPtr:
+    def get_Manufacturer(self) -> CString:
         """Get the component manufacturer.
 
         Returns:
             Pointer to null-terminated string.
         """
         ...
-
-
-if TYPE_CHECKING:
-    IEcoUnknownPtr = _Pointer[IEcoUnknown]
-    IEcoComponentFactoryPtr = _Pointer[IEcoComponentFactory]
-else:
-    IEcoUnknownPtr = IEcoUnknown._interface_ptr_
-    IEcoComponentFactoryPtr = IEcoComponentFactory._interface_ptr_
