@@ -1,55 +1,42 @@
+default_stages: [commit]
+files: ^Eco\.Python2ACOM/
+
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.6.0
+    rev: v6.0.0
     hooks:
       - id: trailing-whitespace
-        args: [--markdown-linebreak-ext=md]
-        files: ^Eco\.Python2ACOM/
       - id: end-of-file-fixer
-        files: ^Eco\.Python2ACOM/
       - id: check-yaml
-        files: ^Eco\.Python2ACOM/.*\.ya?ml$
-      - id: check-added-large-files
-        files: ^Eco\.Python2ACOM/
       - id: check-json
-        files: ^Eco\.Python2ACOM/.*\.json$
       - id: check-toml
-        files: ^Eco\.Python2ACOM/.*\.toml$
+      - id: check-added-large-files
       - id: check-merge-conflict
-        files: ^Eco\.Python2ACOM/
+      - id: check-case-conflict
+      - id: detect-private-key
       - id: debug-statements
-        files: ^Eco\.Python2ACOM/.*\.py$
-      - id: check-docstring-first
-        files: ^Eco\.Python2ACOM/.*\.py$
 
   - repo: https://github.com/psf/black
-    rev: 24.8.0
+    rev: 23.12.1
     hooks:
       - id: black
+        args: [--config=Eco.Python2ACOM/pyproject.toml]
         language_version: python3.11
-        args: [--line-length=100]
-        files: ^Eco\.Python2ACOM/.*\.py$
 
   - repo: https://github.com/pycqa/isort
     rev: 5.13.2
     hooks:
       - id: isort
-        args: ["--profile", "black", "--line-length=100"]
-        files: ^Eco\.Python2ACOM/.*\.py$
+        args: [--settings-path=Eco.Python2ACOM/pyproject.toml]
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.6.9
+    rev: v0.1.15
     hooks:
       - id: ruff
-        args: [--fix, --exit-non-zero-on-fix]
-        files: ^Eco\.Python2ACOM/.*\.py$
-      - id: ruff-format
-        files: ^Eco\.Python2ACOM/.*\.py$
+        args: [--config=Eco.Python2ACOM/pyproject.toml]
 
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.11.2
+    rev: v1.19.1
     hooks:
       - id: mypy
-        args: [--ignore-missing-imports]
-        additional_dependencies: []
-        files: ^Eco\.Python2ACOM/.*\.py$
+        args: [--config=Eco.Python2ACOM/pyproject.toml]
