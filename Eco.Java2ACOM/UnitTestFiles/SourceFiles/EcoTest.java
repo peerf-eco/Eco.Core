@@ -1,20 +1,20 @@
 import Eco.Core.*;
 import Eco.Calculator.*;
 import Eco.System.EcoApp;
-import Eco.InterfaceBus.IEcoInterfaceBus;
-import Eco.MemoryManager.IEcoMemoryAllocator;
-import Eco.FileSystemManagement.IEcoFileManager;
-import Eco.InterfaceBus.IEcoInterfaceBusNative;
-import Eco.MemoryManager.IEcoMemoryAllocatorNative;
-import Eco.FileSystemManagement.IEcoFileManagerNative;
-import Eco.MemoryManager.IdEcoMemoryManager;
-import Eco.FileSystemManagement.IdEcoFileSystemManagement;
+import Eco.InterfaceBus.IEcoInterfaceBus1;
+import Eco.MemoryManager.IEcoMemoryAllocator1;
+import Eco.FileSystemManagement.IEcoFileManager1;
+import Eco.InterfaceBus.IEcoInterfaceBus1Native;
+import Eco.MemoryManager.IEcoMemoryAllocator1Native;
+import Eco.FileSystemManagement.IEcoFileManager1Native;
+import Eco.MemoryManager.IdEcoMemoryManager1;
+import Eco.FileSystemManagement.IdEcoFileSystemManagement1;
 
 public class EcoTest implements EcoApp {
-    private static IEcoSystemNative iSys;
-    private static IEcoInterfaceBusNative iBus;
-    private static IEcoMemoryAllocatorNative iMem;
-    private static IEcoFileManagerNative iFileMgr;
+    private static IEcoSystem1Native iSys;
+    private static IEcoInterfaceBus1Native iBus;
+    private static IEcoMemoryAllocator1Native iMem;
+    private static IEcoFileManager1Native iFileMgr;
     private static IEcoCalculatorX iCalcX;
     private static IEcoCalculatorY iCalcY;
 
@@ -37,23 +37,23 @@ public class EcoTest implements EcoApp {
     }
 
     private int InitJNI(IEcoUnknown iUnk) {
-        iSys = new IEcoSystemNative();
-        iBus = new IEcoInterfaceBusNative();
-        iMem = new IEcoMemoryAllocatorNative();
-        iFileMgr = new IEcoFileManagerNative();
+        iSys = new IEcoSystem1Native();
+        iBus = new IEcoInterfaceBus1Native();
+        iMem = new IEcoMemoryAllocator1Native();
+        iFileMgr = new IEcoFileManager1Native();
         iCalcX = new IEcoCalculatorXNative();
         iCalcY = new IEcoCalculatorYNative();
 
-        int result = iUnk.QueryInterface(IEcoSystem.GID, new IEcoUnknownPtr(iSys));
+        int result = iUnk.QueryInterface(IEcoSystem1.GID_x86_32, new IEcoUnknownPtr(iSys));
         if (result != 0) return result;
 
-        result = iSys.QueryInterface(IEcoInterfaceBus.IID, new IEcoUnknownPtr(iBus));
+        result = iSys.QueryInterface(IEcoInterfaceBus1.IID, new IEcoUnknownPtr(iBus));
         if (result != 0) return result;
 
-        result = iBus.QueryComponent(IdEcoMemoryManager.CID, new IEcoUnknownNative(), IEcoMemoryAllocator.IID, new IEcoUnknownPtr(iMem));
+        result = iBus.QueryComponent(IdEcoMemoryManager1.CID, new IEcoUnknownNative(), IEcoMemoryAllocator1.IID, new IEcoUnknownPtr(iMem));
         if (result != 0) return result;
 
-        result = iBus.QueryComponent(IdEcoFileSystemManagement.CID, new IEcoUnknownNative(), IEcoFileManager.IID, new IEcoUnknownPtr(iFileMgr));
+        result = iBus.QueryComponent(IdEcoFileSystemManagement1.CID, new IEcoUnknownNative(), IEcoFileManager1.IID, new IEcoUnknownPtr(iFileMgr));
         if (result != 0) return result;
 
         result = iBus.QueryComponent(IdEcoCalculatorC.CID, new IEcoUnknownNative(), IEcoCalculatorX.IID, new IEcoUnknownPtr(iCalcX));

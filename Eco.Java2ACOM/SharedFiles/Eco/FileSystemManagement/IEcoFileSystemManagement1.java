@@ -5,10 +5,10 @@ import Eco.Core.UGUID;
 import Eco.Annotations.EcoNative;
 
 @EcoNative
-public interface IEcoFileSystemManagement extends IEcoUnknown {
+public interface IEcoFileSystemManagement1 extends IEcoUnknown {
     UGUID IID = new UGUID((byte) 0x01, (byte) 0x10, new byte[]{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, (byte) 0xC0, 0x00, 0x00, 0x00, 0x01, 0x01});
 
-    IEcoFileManager get_FileManager();
-    IEcoDirectoryManager get_DirectoryManager();
-    IEcoDriveManager get_DriveManager1();
+    IEcoFileManager1 get_FileManager();
+    IEcoDirectoryManager1 get_DirectoryManager();
+    IEcoDriveManager1 get_DriveManager1();
 }

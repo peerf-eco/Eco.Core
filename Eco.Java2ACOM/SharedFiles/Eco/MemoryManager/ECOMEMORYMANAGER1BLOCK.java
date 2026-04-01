@@ -1,6 +1,6 @@
 package Eco.MemoryManager;
 
-public class EcoMemoryManagerBlock {
+public class ECOMEMORYMANAGER1BLOCK {
     long lowAddr;
     long highAddr;
     long size;
