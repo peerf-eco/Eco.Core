@@ -1,0 +1,127 @@
+# --- Host Platform Detection ---
+ifeq ($(OS), Windows_NT)
+    RM = -del /q /f
+    SLASH = /
+    FRAMEWORK := $(subst \,/,$(ECO_FRAMEWORK))
+    TOOLCHAIN := $(subst \,/,$(ECO_TOOLCHAIN))
+
+else
+    RM = rm -f
+    SLASH = /
+    FRAMEWORK := $(ECO_FRAMEWORK)
+    TOOLCHAIN := $(ECO_TOOLCHAIN)
+endif
+
+# --- Project Configuration ---
+TARGET ?= 1
+DEVICE ?= D1
+DEBUG ?= 0
+
+# --- Architecture & Toolchain Selection ---
+ifeq ($(ARCH),)
+    ifeq ($(OS), Windows_NT)
+        ARCH = x64
+    else
+        UNAME_M := $(shell uname -m)
+        ifeq ($(UNAME_M), x86_64)
+            ARCH = x64
+        else ifneq ($(filter arm%,$(UNAME_M)),)
+            ARCH = aarch64
+        else ifneq ($(filter riscv64%,$(UNAME_M)),)
+            ARCH = rv64
+        else
+            ARCH = x64
+        endif
+    endif
+endif
+
+ifeq ($(ARCH), x64)
+    CCFLAGS_ARCH = -DECO_X86_64
+    ARCH_NAME = amd64
+
+else ifeq ($(ARCH), rv64)
+    ARCH_NAME = rv64gc
+    ifeq ($(DEVICE), D1)
+        # Allwinner D1 (T-Head C906 CPU) optimizations
+        CCFLAGS_ARCH = -march=rv64gc -mabi=lp64d -mcmodel=medany -mcpu=ant-906
+        LDS_SCRIPT = 
+        # Set flag for D1 post-processing
+        IS_D1 = 1
+    else
+        CCFLAGS_ARCH = 
+        LDS_SCRIPT = 
+    endif
+    CCFLAGS_ARCH += -DECO_RISCV_64
+
+else ifeq ($(ARCH), aarch64)
+    CCFLAGS_ARCH = -mcpu=cortex-a53 -mlittle-endian -DECO_AARCH64
+    ARCH_NAME = armv8
+    LDS_SCRIPT = 
+    
+else
+    $(error Unknown ARCH: $(ARCH). Please check your ARCH variable)
+endif
+
+# --- Output Path Settings ---
+CONFIG_DIR = $(if $(filter 1,$(DEBUG)),StaticDebug,StaticRelease)
+OUT_DIR = ..$(SLASH)..$(SLASH)..$(SLASH)BuildFiles$(SLASH)$(PLATFORM_TARGET)$(SLASH)$(ARCH_NAME)$(SLASH)$(DEVICE)$(SLASH)$(CONFIG_DIR)
+OUT_NAME = EcoTypeLib1
+
+# --- Compilation Flags ---
+# Includes
+INC =  \
+-I ..$(SLASH)..$(SLASH)..$(SLASH)SharedFiles$(SLASH) \
+-I ..$(SLASH)..$(SLASH)..$(SLASH)HeaderFiles$(SLASH) \
+-I ..$(SLASH)..$(SLASH)..$(SLASH)HeaderFiles$(SLASH)$(ARCH) \
+-I "$(FRAMEWORK)$(SLASH)Eco.Core1$(SLASH)SharedFiles" \
+-I "$(FRAMEWORK)$(SLASH)Eco.System1$(SLASH)SharedFiles" \
+-I "$(FRAMEWORK)$(SLASH)Eco.InterfaceBus1$(SLASH)SharedFiles" \
+-I "$(FRAMEWORK)$(SLASH)Eco.MemoryManager1$(SLASH)SharedFiles" \
+-I "$(FRAMEWORK)$(SLASH)Eco.FileSystemManagement1$(SLASH)SharedFiles"
+
+CCFLAGS = -g -Os -DECO_LIB -DECO_OS $(CCFLAGS_ARCH) $(INC)
+
+# --- Linker Configuration ---
+LIB_DIR = \
+-L "..$(SLASH)..$(SLASH)..$(SLASH)BuildFiles$(SLASH)$(PLATFORM)$(SLASH)$(ARCH_TARGET)$(SLASH)$(CONFIG_TARGET)" \
+-L "$(FRAMEWORK)$(SLASH)Eco.System1$(SLASH)BuildFiles$(SLASH)$(PLATFORM)$(SLASH)$(ARCH_TARGET)$(SLASH)StaticRelease" \
+-L "$(FRAMEWORK)$(SLASH)Eco.InterfaceBus1$(SLASH)BuildFiles$(SLASH)$(PLATFORM)$(SLASH)$(ARCH_TARGET)$(SLASH)StaticRelease" \
+-L "$(FRAMEWORK)$(SLASH)Eco.MemoryManager1$(SLASH)BuildFiles$(SLASH)$(PLATFORM)$(SLASH)$(ARCH_TARGET)$(SLASH)StaticRelease" \
+-L "$(FRAMEWORK)$(SLASH)Eco.FileSystemManagement1$(SLASH)BuildFiles$(SLASH)$(PLATFORM)$(SLASH)$(ARCH_TARGET)$(SLASH)StaticRelease"
+
+LIBS = $(LIB_DIR) -lB40E129B56624BD7B5F8339C025F3EF0 -lgcc
+LDFLAGS = --gc-sections -g $(LDFLAGS_ARCH)
+
+# --- Tools ---
+CC = $(TOOL)gcc
+LD = $(TOOL)ld
+OC = $(TOOL)objcopy
+
+# --- Source Files ---
+SRC_C = ..$(SLASH)..$(SLASH)..$(SLASH)SourceFiles$(SLASH)$(ARCH)$(SLASH)EcoHead.c \
+        ..$(SLASH)..$(SLASH)..$(SLASH)SourceFiles$(SLASH)$(ARCH)$(SLASH)EcoTypeLib1.c
+SRC_S = ..$(SLASH)..$(SLASH)..$(SLASH)SourceFiles$(SLASH)$(ARCH)$(SLASH)EcoEntry.S
+
+OBJ = $(SRC_C:.c=.o)
+OBJS = $(SRC_S:.S=.o)
+
+# --- Build Rules ---
+.PHONY: all clean
+
+all: $(OUT_DIR)$(SLASH)$(OUT_NAME).elf
+
+.c.o:
+	@mkdir -p $(OUT_DIR)
+	$(CC) $(CCFLAGS) -c $< -o $@
+
+.S.o:
+	@mkdir -p $(OUT_DIR)
+	$(CC) $(CCFLAGS) -D__ASSEMBLY__ -c $< -o $@
+
+$(OUT_DIR)$(SLASH)$(OUT_NAME).elf: $(OBJ) $(OBJS)
+	$(LD) $(LDFLAGS) $(if $(LDS_SCRIPT),-T$(LDS_SCRIPT),) -o $@ $(OBJ) $(OBJS) -Map $(@:.elf=.map) $(LIBS)
+	@$(RM) $(OBJ) $(OBJS)
+
+clean:
+	$(RM) $(OBJ) $(OBJS)
+	$(RM) $(OUT_DIR)$(SLASH)$(OUT_NAME).*
