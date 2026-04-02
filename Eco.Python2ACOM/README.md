@@ -1,31 +1,26 @@
-# Eco.Python2ACOM
+# eco-python2acom
 
-Библиотека для работы с ACOM в Python.
+**Python bridge for ACOM component technology**
 
-## Установка
+[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+
+## Overview
+
+`eco-python2acom` is a Python library for interacting with ACOM (Adaptive Component Object Model) components from EcoOS. It provides a Pythonic interface for:
+
+- Loading and registering ACOM component DLLs (automatic scan)
+- Creating component instances via the interface bus
+- Calling component methods through virtual tables
+- Managing component lifecycles with reference counting
+
+## Installation
 
 ```bash
+# Using poetry
 poetry add eco-python2acom
-```
 
-## Разработка
-
-### Использование Makefile
-
-Проект включает `Makefile` для удобной работы с инструментами разработки.
-
-```bash
-make help          # Показать все доступные команды
-make install       # Установить зависимости
-make format        # Форматировать код
-make lint          # Проверить код линтером
-make lint-fix      # Автоисправить ошибки линтера
-make typecheck     # Проверить типы
-make test          # Запустить тесты
-make test-cov      # Запустить тесты с покрытием
-make check         # Запустить все проверки
-make pre-commit    # Запустить pre-commit hooks на всех файлах
-make clean         # Очистить кэш-файлы
-make build         # Собрать библиотеку
-make all           # Полный цикл: очистка, проверка, сборка
+# Using pip
+pip install eco-python2acom
 ```
