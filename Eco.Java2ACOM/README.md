@@ -11,7 +11,9 @@
   - Run `build.bat`
 - Build and run unit test
   - Open project in **IntelliJ IDEA**
+  - Build - Build Artifacts - Eco.Java2ACOM.jar
   - Add configuration `Application`
+    - Module: `UnitTestFiles`
     - Main class: `Eco.System.EcoMain`
     - Add VM option: `-Djava.library.path=BuildFiles`
     - Working directory: `path/to/Eco.Java2ACOM`

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/SharedFiles" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/SourceFiles" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/ResourceFiles" type="java-resource" />
+      <sourceFolder url="file://$MODULE_DIR$/../BuildFiles/production/UnitTestFiles/generated" isTestSource="false" generated="true" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module-library">
+      <library name="Eco.Java2ACOM">
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../BuildFiles/artifacts/Eco_Java2ACOM_jar/Eco.Java2ACOM.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+  </component>
+</module>

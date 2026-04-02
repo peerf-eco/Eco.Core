@@ -1,20 +1,20 @@
 import Eco.Core.*;
 import Eco.Calculator.*;
 import Eco.System.EcoApp;
-import Eco.InterfaceBus.IEcoInterfaceBus;
-import Eco.MemoryManager.IEcoMemoryManager;
-import Eco.MemoryManager.IEcoMemoryAllocator;
-import Eco.FileSystemManagement.IEcoFileManager;
-import Eco.FileSystemManagement.IEcoFileSystemManagement;
-import Eco.InterfaceBus.IEcoInterfaceBus_Client;
-import Eco.MemoryManager.IEcoMemoryAllocator_Client;
-import Eco.FileSystemManagement.IEcoFileManager_Client;
+import Eco.InterfaceBus.IEcoInterfaceBus1;
+import Eco.MemoryManager.IEcoMemoryAllocator1;
+import Eco.FileSystemManagement.IEcoFileManager1;
+import Eco.InterfaceBus.IEcoInterfaceBus1Native;
+import Eco.MemoryManager.IEcoMemoryAllocator1Native;
+import Eco.FileSystemManagement.IEcoFileManager1Native;
+import Eco.MemoryManager.IdEcoMemoryManager1;
+import Eco.FileSystemManagement.IdEcoFileSystemManagement1;
 
 public class EcoTest implements EcoApp {
-    private static IEcoSystem_Client iSys;
-    private static IEcoInterfaceBus_Client iBus;
-    private static IEcoMemoryAllocator_Client iMem;
-    private static IEcoFileManager_Client iFileMgr;
+    private static IEcoSystem1Native iSys;
+    private static IEcoInterfaceBus1Native iBus;
+    private static IEcoMemoryAllocator1Native iMem;
+    private static IEcoFileManager1Native iFileMgr;
     private static IEcoCalculatorX iCalcX;
     private static IEcoCalculatorY iCalcY;
 
@@ -37,26 +37,26 @@ public class EcoTest implements EcoApp {
     }
 
     private int InitJNI(IEcoUnknown iUnk) {
-        iSys = new IEcoSystem_Client();
-        iBus = new IEcoInterfaceBus_Client();
-        iMem = new IEcoMemoryAllocator_Client();
-        iFileMgr = new IEcoFileManager_Client();
-        iCalcX = new IEcoCalculatorX_Client();
-        iCalcY = new IEcoCalculatorY_Client();
+        iSys = new IEcoSystem1Native();
+        iBus = new IEcoInterfaceBus1Native();
+        iMem = new IEcoMemoryAllocator1Native();
+        iFileMgr = new IEcoFileManager1Native();
+        iCalcX = new IEcoCalculatorXNative();
+        iCalcY = new IEcoCalculatorYNative();
 
-        int result = iUnk.QueryInterface(IEcoSystem.GID, new IEcoUnknownPtr(iSys));
+        int result = iUnk.QueryInterface(IEcoSystem1.GID_x86_32, new IEcoUnknownPtr(iSys));
         if (result != 0) return result;
 
-        result = iSys.QueryInterface(IEcoInterfaceBus.IID, new IEcoUnknownPtr(iBus));
+        result = iSys.QueryInterface(IEcoInterfaceBus1.IID, new IEcoUnknownPtr(iBus));
         if (result != 0) return result;
 
-        result = iBus.QueryComponent(IEcoMemoryManager.CID, new IEcoUnknown_Client(), IEcoMemoryAllocator.IID, new IEcoUnknownPtr(iMem));
+        result = iBus.QueryComponent(IdEcoMemoryManager1.CID, new IEcoUnknownNative(), IEcoMemoryAllocator1.IID, new IEcoUnknownPtr(iMem));
         if (result != 0) return result;
 
-        result = iBus.QueryComponent(IEcoFileSystemManagement.CID, new IEcoUnknown_Client(), IEcoFileManager.IID, new IEcoUnknownPtr(iFileMgr));
+        result = iBus.QueryComponent(IdEcoFileSystemManagement1.CID, new IEcoUnknownNative(), IEcoFileManager1.IID, new IEcoUnknownPtr(iFileMgr));
         if (result != 0) return result;
 
-        result = iBus.QueryComponent(IdEcoCalculatorC.CID, new IEcoUnknown_Client(), IEcoCalculatorX.IID, new IEcoUnknownPtr(iCalcX));
+        result = iBus.QueryComponent(IdEcoCalculatorC.CID, new IEcoUnknownNative(), IEcoCalculatorX.IID, new IEcoUnknownPtr(iCalcX));
         if (result != 0) return result;
 
         result = iCalcX.QueryInterface(IEcoCalculatorY.IID, new IEcoUnknownPtr(iCalcY));
@@ -64,8 +64,8 @@ public class EcoTest implements EcoApp {
     }
 
     private void ReleaseJNI() {
-        if (!((IEcoCalculatorY_Client) iCalcY).isNull()) iCalcY.Release();
-        if (!((IEcoCalculatorX_Client) iCalcX).isNull()) iCalcX.Release();
+        if (!((IEcoCalculatorYNative) iCalcY).isNull()) iCalcY.Release();
+        if (!((IEcoCalculatorXNative) iCalcX).isNull()) iCalcX.Release();
         if (!iFileMgr.isNull()) iFileMgr.Release();
         if (!iMem.isNull()) iMem.Release();
         if (!iBus.isNull()) iBus.Release();

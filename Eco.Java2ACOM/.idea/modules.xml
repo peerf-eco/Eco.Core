@@ -3,6 +3,8 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/Eco.Java2ACOM.iml" filepath="$PROJECT_DIR$/Eco.Java2ACOM.iml" />
+      <module fileurl="file://$PROJECT_DIR$/SourceFiles/annotations/annotations.iml" filepath="$PROJECT_DIR$/SourceFiles/annotations/annotations.iml" />
+      <module fileurl="file://$PROJECT_DIR$/UnitTestFiles/UnitTestFiles.iml" filepath="$PROJECT_DIR$/UnitTestFiles/UnitTestFiles.iml" />
     </modules>
   </component>
 </project>

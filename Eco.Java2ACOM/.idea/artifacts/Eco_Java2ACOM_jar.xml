@@ -1,0 +1,9 @@
+<component name="ArtifactManager">
+  <artifact type="jar" build-on-make="true" name="Eco.Java2ACOM:jar">
+    <output-path>$PROJECT_DIR$/BuildFiles/artifacts/Eco_Java2ACOM_jar</output-path>
+    <root id="archive" name="Eco.Java2ACOM.jar">
+      <element id="module-output" name="Eco.Java2ACOM" />
+      <element id="module-output" name="annotations" />
+    </root>
+  </artifact>
+</component>

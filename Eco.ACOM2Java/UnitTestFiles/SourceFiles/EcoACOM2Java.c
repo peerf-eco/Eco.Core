@@ -24,6 +24,9 @@
 #include "IdEcoInterfaceBus1.h"
 #include "IdEcoFileSystemManagement1.h"
 #include "IdEcoACOM2Java.h"
+#include "IdEcoList1.h"
+#include "IEcoCalculatorX.h"
+#include "IEcoCalculatorY.h"
 
 /*
  *
@@ -44,10 +47,11 @@ int16_t EcoMain(IEcoUnknown* pIUnk) {
     IEcoInterfaceBus1* pIBus = 0;
     /* Pointer to the memory management interface */
     IEcoMemoryAllocator1* pIMem = 0;
-    char_t* name = 0;
-    char_t* copyName = 0;
     /* Pointer to the tested interface */
     IEcoACOM2Java* pIEcoACOM2Java = 0;
+    IEcoCalculatorX* pIX = 0;
+    IEcoCalculatorY* pIY = 0;
+    UGUID CID_EcoCalculatorJ = {0x01, 0x10, {0x0A, 0x7B, 0x93, 0x7E, 0xD5, 0x0A, 0xC6, 0xC9, 0x4D, 0xFD, 0xA1, 0x28, 0x6B, 0xFD, 0xA9, 0xDC}};
 
     /* System interface check and creation */
     if (pISys == 0) {
@@ -71,6 +75,12 @@ int16_t EcoMain(IEcoUnknown* pIUnk) {
         /* Free in case of an error */
         goto Release;
     }
+    /* Registration of a static component for working with the list */
+    result = pIBus->pVTbl->RegisterComponent(pIBus, &CID_EcoList1, (IEcoUnknown*)GetIEcoComponentFactoryPtr_53884AFC93C448ECAA929C8D3A562281);
+    if (result != 0 ) {
+        /* Free in case of an error */
+        goto Release;
+    }
 #endif
     /* Getting the memory management interface */
     result = pIBus->pVTbl->QueryComponent(pIBus, &CID_EcoMemoryManager1, 0, &IID_IEcoMemoryAllocator1, (void**) &pIMem);
@@ -81,13 +91,6 @@ int16_t EcoMain(IEcoUnknown* pIUnk) {
         goto Release;
     }
 
-    /* Memory block allocation */
-    name = (char_t *)pIMem->pVTbl->Alloc(pIMem, 10);
-
-    /* Fill the memory block */
-    pIMem->pVTbl->Fill(pIMem, name, 'a', 9);
-
-
     /* Getting the tested interface */
     result = pIBus->pVTbl->QueryComponent(pIBus, &CID_EcoACOM2Java, 0, &IID_IEcoACOM2Java, (void**) &pIEcoACOM2Java);
     if (result != 0 || pIEcoACOM2Java == 0) {
@@ -95,12 +98,25 @@ int16_t EcoMain(IEcoUnknown* pIUnk) {
         goto Release;
     }
 
+    result = pIEcoACOM2Java->pVTbl->RegisterComponent(pIEcoACOM2Java, "C:\\Programming\\Eco.Core\\Eco.Java2ACOM\\BuildFiles\\production\\UnitTestFiles", "Eco/Calculator/CEcoCalculatorJ", &CID_EcoCalculatorJ);
+    if (result != 0) {
+        goto Release;
+    }
 
-    result = pIEcoACOM2Java->pVTbl->MyFunction(pIEcoACOM2Java, name, &copyName);
+    result = pIEcoACOM2Java->pVTbl->QueryComponent(pIEcoACOM2Java, &CID_EcoCalculatorJ, 0, &IID_IEcoCalculatorX, (void**) &pIX);
+    if (result != 0) {
+        goto Release;
+    }
 
+    result = pIX->pVTbl->QueryInterface(pIX, &IID_IEcoCalculatorY, (void**) &pIY);
+    if (result != 0) {
+        goto Release;
+    }
 
-    /* Free the memory block */
-    pIMem->pVTbl->Free(pIMem, name);
+    printf("9 + 10 = %d\n", pIX->pVTbl->Addition(pIX, 9, 10));
+    printf("67 - 13 = %d\n", pIX->pVTbl->Subtraction(pIX, 67, 13));
+    printf("6 * 8 = %d\n", pIY->pVTbl->Multiplication(pIY, 6, 8));
+    printf("42 / 7 = %d\n", pIY->pVTbl->Division(pIY, 42, 7));
 
 Release:
 
@@ -114,11 +130,16 @@ Release:
         pIMem->pVTbl->Release(pIMem);
     }
 
-    /* Free the tested interface */
+    /* Free the tested interfaces */
+    if (pIX != 0) {
+        pIX->pVTbl->Release(pIX);
+    }
+    if (pIY != 0) {
+        pIY->pVTbl->Release(pIY);
+    }
     if (pIEcoACOM2Java != 0) {
         pIEcoACOM2Java->pVTbl->Release(pIEcoACOM2Java);
     }
-
 
     /* Free the system interface */
     if (pISys != 0) {
