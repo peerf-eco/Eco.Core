@@ -1,7 +1,6 @@
 """Generic smart pointer implementation for EcoOS/ACOM.
 
-This module provides the Ptr[T] generic type for type-safe pointer operations
-with ctypes.
+This module provides the Ptr[T] generic type for type-safe pointer operations.
 """
 
 from __future__ import annotations
@@ -20,6 +19,9 @@ if TYPE_CHECKING:
 
     class Ptr(Generic[T]):
         """Generic smart pointer type.
+
+        - For `Ptr[Void]`, the primary way to access the pointer is property `value`.
+        - For other types, use property `contents` instead.
 
         Type Parameters:
             T: The type being pointed to.
@@ -64,9 +66,6 @@ if TYPE_CHECKING:
         def value(self) -> int | None:
             """Get raw pointer address.
 
-            For Ptr[Void], this is the primary way to access the pointer.
-            For other types, use .contents instead.
-
             Returns:
                 Integer address or None for NULL.
             """
@@ -103,8 +102,8 @@ else:
         """Metaclass that enables Ptr[T] subscript syntax.
 
         Handles special cases:
-            - Ptr[Void]: Returns wrapper over c_void_p (no .contents)
-            - Ptr[T]: Returns wrapper over POINTER(T) (with .contents)
+            - Ptr[Void]: Returns wrapper for void pointers (with `.value`)
+            - Ptr[T]: Returns wrapper for pointers to T (with `.contents`)
             - Ptr[Ptr[T]]: Recursive pointers work correctly
 
         Attributes:
@@ -124,9 +123,6 @@ else:
 
             Raises:
                 TypeError: If item cannot be made into a pointer.
-
-            Note:
-                Results are cached for performance.
             """
             # Check cache first
             if item in cls._cache:
@@ -139,7 +135,7 @@ else:
                     """Smart void pointer wrapper (no `.contents` - void has no size)."""
 
                     def __repr__(self) -> str:
-                        """String representation."""
+                        """String representation with address."""
                         if self.value is not None:
                             return f"<Ptr[Void] 0x{self.value:X}>"
                         return "<Ptr[Void] NULL>"
@@ -166,18 +162,15 @@ else:
             # Get display name
             type_name = TYPE_NAMES.get(item, getattr(item, "__name__", str(item)))
 
-            # Create ctypes pointer type
+            # Create pointer type
             try:
-                ctypes_ptr = pointer_type(item)
+                ptr_type = pointer_type(item)
             except TypeError as err:
                 raise TypeError(f"Cannot create pointer to {item}: {err}") from err
 
             # Create smart pointer wrapper class
-            class SmartPtr(ctypes_ptr):
-                """Runtime smart pointer implementation.
-
-                This class wraps a ctypes pointer type.
-                """
+            class SmartPtr(ptr_type):
+                """Runtime smart pointer implementation."""
 
                 _type_ = item
 
@@ -194,7 +187,7 @@ else:
                             super().__init__()
 
                 def __repr__(self) -> str:
-                    """String representation."""
+                    """String representation with address."""
                     try:
                         addr = addressof(self.contents)
                         return f"<Ptr[{type_name}] 0x{addr:X}>"

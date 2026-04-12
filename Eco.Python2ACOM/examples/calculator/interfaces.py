@@ -1,11 +1,10 @@
-"""Calculator interface definitions for Eco.Calculator component.
+"""Calculator interface definitions for `Eco.Calculator` component.
 
 This module defines the ACOM interfaces used by the calculator examples.
-All interfaces inherit from IEcoUnknown (QueryInterface, AddRef, Release).
 
 Interfaces:
-    IEcoCalculatorX: Addition and Subtraction.
-    IEcoCalculatorY: Multiplication and Division.
+    IEcoCalculatorX: addition and subtraction.
+    IEcoCalculatorY: multiplication and division.
 
 Constants:
     CID_EcoCalculator: Component ID for the calculator component.
@@ -14,17 +13,29 @@ Constants:
 from eco_python2acom.decorators.interface import interface
 from eco_python2acom.interfaces.base import IEcoUnknown
 from eco_python2acom.types.core import Int16, Int32
+from eco_python2acom.types.guid import UGUID
+
+IID_IEcoCalculatorX = UGUID("93221116-2248-4742-AE06-82819447843D")
+IID_IEcoCalculatorY = UGUID("BD6414C2-9096-423E-A90C-04D77AFD1CAD")
+
+# Calculator B: AE202E54-3CE5-4550-8996-03BD70C62565
+# CID_EcoCalculator = UGUID.from_string("AE202E54-3CE5-4550-8996-03BD70C62565")
+
+# Calculator C: 4828F655-2E45-40E7-8121-EBD220DC360E
+# CID_EcoCalculator = UGUID.from_string("4828F655-2E45-40E7-8121-EBD220DC360E")
+
+# Calculator D: 3A8E4467-7E82-475C-B4A3-719ED8397E61
+# CID_EcoCalculator = UGUID.from_string("3A8E4467-7E82-475C-B4A3-719ED8397E61")
+
+# Calculator E: 872FEF1D-E331-4B87-AD44-D1E7C232C2F0
+CID_EcoCalculator = UGUID("872FEF1D-E331-4B87-AD44-D1E7C232C2F0")
 
 
-@interface(iid="93221116-2248-4742-AE06-82819447843D")
+@interface(iid=IID_IEcoCalculatorX)
 class IEcoCalculatorX(IEcoUnknown):
-    """Calculator interface X — Addition and Subtraction.
+    """Calculator interface X — addition and subtraction."""
 
-    Inherits from IEcoUnknown:
-        QueryInterface, AddRef, Release.
-    """
-
-    def Addition(self, a: Int16, b: Int16) -> Int32:
+    def addition(self, a: Int16, b: Int16) -> Int32:
         """Add two numbers.
 
         Args:
@@ -36,7 +47,7 @@ class IEcoCalculatorX(IEcoUnknown):
         """
         ...
 
-    def Subtraction(self, a: Int16, b: Int16) -> Int16:
+    def subtraction(self, a: Int16, b: Int16) -> Int16:
         """Subtract two numbers.
 
         Args:
@@ -49,15 +60,11 @@ class IEcoCalculatorX(IEcoUnknown):
         ...
 
 
-@interface(iid="BD6414C2-9096-423E-A90C-04D77AFD1CAD")
+@interface(iid=IID_IEcoCalculatorY)
 class IEcoCalculatorY(IEcoUnknown):
-    """Calculator interface Y — Multiplication and Division.
+    """Calculator interface Y — multiplication and division."""
 
-    Inherits from IEcoUnknown:
-        QueryInterface, AddRef, Release.
-    """
-
-    def Multiplication(self, a: Int16, b: Int16) -> Int32:
+    def multiplication(self, a: Int16, b: Int16) -> Int32:
         """Multiply two numbers.
 
         Args:
@@ -69,7 +76,7 @@ class IEcoCalculatorY(IEcoUnknown):
         """
         ...
 
-    def Division(self, a: Int16, b: Int16) -> Int16:
+    def division(self, a: Int16, b: Int16) -> Int16:
         """Divide two numbers (integer division).
 
         Args:

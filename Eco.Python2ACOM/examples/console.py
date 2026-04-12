@@ -5,8 +5,8 @@ logger with rich formatting and helper functions for headers, sections,
 messages.
 
 Module-level attributes:
-    logger: Pre-configured ``logging.Logger`` (name ``eco.example``).
-    console: Rich ``Console`` instance for direct output.
+    logger: Pre-configured `logging.Logger` (name `eco.example`).
+    console: Rich `Console` instance for direct output.
 
 Helper functions:
     print_header: Prominent panel with title and optional subtitle.
@@ -15,8 +15,6 @@ Helper functions:
     print_error: Red cross and message.
     print_info: Cyan arrow and message.
 """
-
-from __future__ import annotations
 
 import logging
 from typing import Optional
@@ -65,12 +63,12 @@ def print_header(title: str, subtitle: Optional[str] = None) -> None:
     console.print(Panel(text, border_style="blue", padding=(0, 2)))
 
 
-def print_section(title: str, style: str = "bold yellow") -> None:
+def print_section(title: str, style: str) -> None:
     """Print a section divider.
 
     Args:
         title: Section title.
-        style: Rich style string (default: bold yellow).
+        style: Rich style string.
     """
     console.print(f"\n[{style}]>>> {title}[/{style}]\n")
 

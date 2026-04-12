@@ -1,9 +1,9 @@
 """Base ACOM interface definitions.
 
-This module provides the foundational IEcoUnknown interface that all
+This module provides the foundational `IEcoUnknown` interface that all
 ACOM interfaces inherit from, defined using our declarative approach.
 
-The IEcoUnknown interface provides three fundamental methods:
+The `IEcoUnknown` interface provides three fundamental methods:
     - QueryInterface: Get a different interface from a component.
     - AddRef: Increment reference count.
     - Release: Decrement reference count (free when zero).
@@ -13,7 +13,7 @@ from __future__ import annotations
 
 from typing import Optional, Union
 
-from eco_python2acom.decorators.interface import interface
+from eco_python2acom.decorators import interface
 from eco_python2acom.guids.iid import IID_IEcoComponentFactory, IID_IEcoUnknown
 from eco_python2acom.types.core import CString, Int16, UInt32, Void
 from eco_python2acom.types.guid import UGUID
@@ -29,12 +29,12 @@ from eco_python2acom.types.utils import cast
 class IEcoUnknown:
     """Base interface for all ACOM components.
 
-    Every ACOM interface inherits from IEcoUnknown and must implement
-    these three methods. The @eco_interface decorator automatically adds
+    Every ACOM interface inherits from `IEcoUnknown` and must implement
+    these three methods. The `@interface` decorator automatically adds
     them to the VTbl in the correct order.
 
     Note:
-        When defining a new interface, inherit from IEcoUnknown.
+        When defining a new interface, inherit from `IEcoUnknown`.
         The decorator will automatically include these methods.
     """
 
@@ -65,19 +65,19 @@ class IEcoUnknown:
         addr = self.ptr.value if self.ptr else 0
         return f"<{self.__class__.__name__} at 0x{addr:X}>"
 
-    def QueryInterface(self, riid: Ptr[UGUID], ppv: Ptr[Ptr[Void]]) -> Int16:
+    def query_interface(self, iid: Ptr[UGUID], out: Ptr[Ptr[Void]]) -> Int16:
         """Query for another interface on this component.
 
         Args:
-            riid: Pointer to the requested interface ID.
-            ppv: Output pointer to receive the interface.
+            iid: Pointer to the requested interface ID.
+            out: Output pointer to receive the interface.
 
         Returns:
             0 on success, error code otherwise.
         """
         ...
 
-    def AddRef(self) -> UInt32:
+    def add_ref(self) -> UInt32:
         """Increment the reference count.
 
         Returns:
@@ -85,7 +85,7 @@ class IEcoUnknown:
         """
         ...
 
-    def Release(self) -> UInt32:
+    def release(self) -> UInt32:
         """Decrement the reference count.
 
         When the count reaches zero, the component is freed.
@@ -105,46 +105,43 @@ class IEcoUnknown:
 class IEcoComponentFactory(IEcoUnknown):
     """Factory interface for creating ACOM component instances.
 
-    Each component DLL exports GetIEcoComponentFactoryPtr() that returns
+    Each component exports `GetIEcoComponentFactoryPtr()` that returns
     a pointer to this interface.
-
-    Inherits:
-        IEcoUnknown: QueryInterface, AddRef, Release
     """
 
-    def Alloc(
+    def alloc(
         self,
-        pISystem: Optional[Ptr[Void]],
-        pIUnknownOuter: Optional[Ptr[Void]],
-        riid: Ptr[UGUID],
-        ppv: Ptr[Ptr[Void]],
+        system: Optional[Ptr[Void]],
+        outer: Optional[Ptr[Void]],
+        iid: Ptr[UGUID],
+        out: Ptr[Ptr[Void]],
     ) -> Int16:
         """Allocate a new component instance.
 
         Args:
-            pISystem: Pointer to system interface (can be NULL).
-            pIUnknownOuter: Outer unknown for aggregation (can be NULL).
-            riid: Requested interface ID.
-            ppv: Output pointer for the interface.
+            system: Pointer to system interface (can be NULL).
+            outer: Outer unknown for aggregation (can be NULL).
+            iid: Requested interface ID.
+            out: Output pointer for the interface.
 
         Returns:
             0 on success, error code otherwise.
         """
         ...
 
-    def Init(self, pISystem: Optional[Ptr[Void]], pv: Ptr[Void]) -> Int16:
+    def init(self, system: Optional[Ptr[Void]], context: Ptr[Void]) -> Int16:
         """Initialize the factory with system context.
 
         Args:
-            pISystem: Pointer to system interface (can be NULL).
-            pv: Additional context (e.g., bus pointer).
+            system: Pointer to system interface (can be NULL).
+            context: Additional context (e.g., bus pointer).
 
         Returns:
             0 on success, error code otherwise.
         """
         ...
 
-    def get_Name(self) -> CString:
+    def get_name(self) -> CString:
         """Get the component name.
 
         Returns:
@@ -152,7 +149,7 @@ class IEcoComponentFactory(IEcoUnknown):
         """
         ...
 
-    def get_Version(self) -> CString:
+    def get_version(self) -> CString:
         """Get the component version.
 
         Returns:
@@ -160,7 +157,7 @@ class IEcoComponentFactory(IEcoUnknown):
         """
         ...
 
-    def get_Manufacturer(self) -> CString:
+    def get_manufacturer(self) -> CString:
         """Get the component manufacturer.
 
         Returns:

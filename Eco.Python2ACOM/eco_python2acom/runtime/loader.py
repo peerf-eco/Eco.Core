@@ -1,20 +1,18 @@
-"""DLL loader for EcoOS components.
+"""Library loader for EcoOS components.
 
-This module provides functionality to load DLLs and extract
+This module provides functionality to load libraries and extract
 component factories.
 
 Classes:
-    LoadedDll: Information about a loaded DLL.
-    DllLoader: Loader for EcoOS component DLLs.
+    EcoLib: Information about a loaded EcoOS library.
+    EcoLibLoader: Loader for EcoOS component libraries.
 """
-
-from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
 
 from eco_python2acom.interfaces.base import IEcoComponentFactory
-from eco_python2acom.runtime.utils import guid_to_filename
+from eco_python2acom.runtime.utils import guid_to_lib_filename
 from eco_python2acom.types.core import CDLL, Void
 from eco_python2acom.types.errors import EcoError, EcoErrorCode
 from eco_python2acom.types.guid import UGUID
@@ -22,12 +20,12 @@ from eco_python2acom.types.pointer import Ptr
 
 
 @dataclass
-class LoadedDll:
-    """Information about a loaded DLL.
+class EcoLib:
+    """Information about a loaded EcoOS library.
 
     Attributes:
-        path: Full path to the DLL file.
-        handle: DLL handle.
+        path: Full path to the library file.
+        handle: Library handle.
         factory: The component factory interface.
     """
 
@@ -36,37 +34,38 @@ class LoadedDll:
     factory: IEcoComponentFactory
 
 
-class DllLoader:
-    """Loader for EcoOS component DLLs.
+class EcoLibLoader:
+    """Loader for EcoOS component libraries.
 
-    Handles loading DLLs and extracting component factories
-    via GetIEcoComponentFactoryPtr export.
+    Handles loading shared libraries and extracting component factories
+    via the `GetIEcoComponentFactoryPtr` export.
     """
 
-    def load(self, path: Path) -> LoadedDll:
-        """Load a DLL and extract its component factory.
+    def load(self, path: Path) -> EcoLib:
+        """Load a library and extract its component factory.
 
         Args:
-            path: Path to the DLL file.
+            path: Path to the library file.
 
         Returns:
-            LoadedDll with handle and factory.
+            Library descriptor with handle and factory.
 
         Raises:
-            FileNotFoundError: If DLL file does not exist.
+            FileNotFoundError: If library file does not exist.
             EcoError: If factory extraction fails.
         """
         # Verify file exists
         path = path.resolve()
         if not path.exists():
-            raise FileNotFoundError(f"DLL not found: '{path}'")
+            raise FileNotFoundError(f"Library not found: '{path}'")
 
-        # Load DLL
+        # Load library
         try:
             handle = CDLL(str(path))
         except OSError as err:
             raise EcoError(
-                EcoErrorCode.FAIL, f"Failed to load DLL: '{path.name}': incompatible architecture"
+                EcoErrorCode.FAIL,
+                f"Failed to load library: '{path.name}': incompatible architecture",
             ) from err
 
         # Get factory pointer
@@ -78,32 +77,35 @@ class DllLoader:
         except AttributeError as err:
             raise EcoError(
                 EcoErrorCode.COMPONENT_NOTFOUND,
-                f"DLL does not export GetIEcoComponentFactoryPtr: '{path.name}'",
+                f"Library does not export `GetIEcoComponentFactoryPtr`: '{path.name}'",
             ) from err
-        return LoadedDll(
+
+        return EcoLib(
             path=path,
             handle=handle,
             factory=IEcoComponentFactory(factory_ptr),
         )
 
-    def load_by_cid(self, cid: UGUID, search_paths: list[Path]) -> LoadedDll:
-        """Load a DLL by component ID, searching in provided paths.
+    def load_by_cid(self, cid: UGUID, search_paths: list[Path]) -> EcoLib:
+        """Load a library by component ID, searching in provided paths.
 
         Args:
             cid: Component ID (CID).
             search_paths: List of directories to search.
 
         Returns:
-            LoadedDll with handle and factory.
+            Library descriptor with handle and factory.
 
         Raises:
-            FileNotFoundError: If DLL not found in any search path.
+            FileNotFoundError: If library not found in any search path.
         """
-        filename = guid_to_filename(cid)
+        filename = guid_to_lib_filename(cid)
 
         for search_path in search_paths:
-            dll_path = search_path / filename
-            if dll_path.exists():
-                return self.load(dll_path)
+            lib_path = search_path / filename
+            if lib_path.exists():
+                return self.load(lib_path)
 
-        raise FileNotFoundError(f"DLL not found for CID {cid.to_string()} in paths: {search_paths}")
+        raise FileNotFoundError(
+            f"Library not found for CID '{cid.to_string()}' in paths: {search_paths}"
+        )

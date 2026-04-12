@@ -1,11 +1,11 @@
 """Error codes and exceptions for ACOM/EcoOS.
 
-This module provides error code constants matching 'ErrEcoCodes.h'
+This module provides error code constants matching `ErrEcoCodes.h`
 and a custom exception class for ACOM operations.
 
 Note:
-    Error codes are based on the EcoOS 'ErrEcoCodes.h' header file.
-    Values are 16-bit integers (int16_t).
+    Error codes are based on the EcoOS `ErrEcoCodes.h` header file.
+    Values are 16-bit integers.
 """
 
 from enum import IntEnum
@@ -17,7 +17,7 @@ from eco_python2acom.types.core import Int16
 class EcoErrorCode(IntEnum):
     """ACOM/EcoOS error codes.
 
-    These codes correspond to the definitions in 'ErrEcoCodes.h'.
+    These codes correspond to the definitions in `ErrEcoCodes.h`.
     Success is indicated by 0x0000, errors by other values.
     """
 
@@ -89,9 +89,9 @@ class EcoError(Exception):
             if isinstance(code, EcoErrorCode):
                 self.code = code
             elif isinstance(code, Int16):
-                self.code = EcoErrorCode(code.value)
+                self.code = EcoErrorCode(code.value & 0xFFFF)
             else:
-                self.code = EcoErrorCode(code)
+                self.code = EcoErrorCode(int(code) & 0xFFFF)
         except ValueError:
             # Unknown error code, default to FAIL
             self.code = EcoErrorCode.FAIL

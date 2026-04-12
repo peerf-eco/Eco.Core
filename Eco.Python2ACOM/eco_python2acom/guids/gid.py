@@ -1,6 +1,9 @@
 """Generation IDs (GID) for EcoOS architectures.
 
-GIDs identify the target architecture/platform for runtime DLLs.
+GIDs identify the target architecture/platform for runtime libraries.
+
+Note:
+    GID format is UGUID: {XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX}
 """
 
 import struct

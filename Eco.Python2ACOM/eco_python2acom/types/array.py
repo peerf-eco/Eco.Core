@@ -1,7 +1,7 @@
 """Generic fixed-size array implementation for EcoOS/ACOM.
 
 This module provides the Array[T, N] generic type for type-safe fixed-size
-array operations with ctypes.
+array operations.
 """
 
 from __future__ import annotations
@@ -11,8 +11,6 @@ from typing import TYPE_CHECKING, Generic, TypeVar, overload
 
 from eco_python2acom.types.core import TYPE_NAMES, CStructure
 from eco_python2acom.types.utils import addressof
-
-__all__ = ["Array"]
 
 T = TypeVar("T")
 N = TypeVar("N", bound=int)
@@ -121,7 +119,7 @@ else:
     class _ArrayMeta(type):
         """Metaclass that enables Array[T, N] subscript syntax.
 
-        This metaclass intercepts __getitem__ calls on the Array class to
+        This metaclass intercepts `__getitem__` calls on the `Array` class to
         dynamically create typed array classes. It maintains a cache to avoid
         recreating the same array type multiple times.
 
@@ -174,9 +172,9 @@ else:
             if key in cls._cache:
                 return cls._cache[key]
 
-            # Create ctypes array type
+            # Create array type
             try:
-                ctypes_array = element_type * size
+                array_type = element_type * size
             except TypeError as err:
                 raise TypeError(f"Cannot create array of {element_type}: {err}") from err
 
@@ -186,12 +184,8 @@ else:
             )
 
             # Create smart array wrapper class
-            class SmartArray(ctypes_array):
-                """Runtime array implementation.
-
-                This class inherits from the ctypes array type and adds
-                custom __repr__ for better debugging output.
-                """
+            class SmartArray(array_type):
+                """Runtime array implementation."""
 
                 _element_type_ = element_type
                 _size_ = size
@@ -229,7 +223,7 @@ else:
 
                 def __hash__(self) -> int:
                     """Hash the array."""
-                    raise NotImplementedError("Hashing is not supported for arrays.")
+                    raise NotImplementedError("Hashing is not supported for arrays")
 
             SmartArray.__name__ = f"Array[{type_name}, {size}]"
             SmartArray.__qualname__ = f"Array[{type_name}, {size}]"
@@ -241,7 +235,7 @@ else:
     class Array(metaclass=_ArrayMeta):
         """Generic fixed-size array type.
 
-        This is the runtime class that uses _ArrayMeta to enable
+        This is the runtime class that uses `_ArrayMeta` to enable
         Array[T, N] syntax.
 
         Note:
@@ -250,3 +244,6 @@ else:
         """
 
         pass
+
+
+__all__ = ["Array"]

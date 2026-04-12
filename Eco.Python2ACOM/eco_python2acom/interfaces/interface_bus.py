@@ -1,23 +1,22 @@
-"""InterfaceBus interfaces for EcoOS.
+"""Interface bus interfaces for EcoOS.
 
-The InterfaceBus is the central registry for components in EcoOS.
-All interfaces inherit from IEcoUnknown.
+The `InterfaceBus` is the central registry for components in EcoOS.
 
 Interfaces:
     IEcoInterfaceBus1: Core interface bus for component management.
     IEcoInterfaceBus1MemExt: Memory extension for heap configuration.
-    IEcoInterfaceBus1FileExt: File extension for DLL auto-loading.
+    IEcoInterfaceBus1FileExt: File extension for auto-loading.
 
 Reference:
-    Based on IEcoInterfaceBus1.h, IEcoInterfaceBus1MemExt.h,
-    IEcoInterfaceBus1FileExt.h from Eco.InterfaceBus1/SharedFiles.
+    Based on `IEcoInterfaceBus1.h`, `IEcoInterfaceBus1MemExt.h`,
+    `IEcoInterfaceBus1FileExt.h` from `Eco.InterfaceBus1/SharedFiles`.
 """
 
 from __future__ import annotations
 
 from typing import Optional
 
-from eco_python2acom.decorators.interface import interface
+from eco_python2acom.decorators import interface
 from eco_python2acom.guids.iid import (
     IID_IEcoInterfaceBus1,
     IID_IEcoInterfaceBus1FileExt,
@@ -38,14 +37,11 @@ from eco_python2acom.types.pointer import Ptr
 class IEcoInterfaceBus1(IEcoUnknown):
     """Core interface bus for component registration and querying.
 
-    The InterfaceBus maintains a registry of component factories
+    The `InterfaceBus` maintains a registry of component factories
     and provides methods to create component instances.
-
-    Inherits:
-        IEcoUnknown: QueryInterface, AddRef, Release
     """
 
-    def Init(self) -> Int16:
+    def init(self) -> Int16:
         """Initialize the bus (no heap).
 
         Returns:
@@ -53,11 +49,11 @@ class IEcoInterfaceBus1(IEcoUnknown):
         """
         ...
 
-    def InitWith(self, pHeap: Ptr[Void], size: UInt32) -> Int16:
+    def init_with(self, heap: Ptr[Void], size: UInt32) -> Int16:
         """Initialize the bus with custom heap.
 
         Args:
-            pHeap: Pointer to heap memory.
+            heap: Pointer to heap memory.
             size: Size of heap in bytes.
 
         Returns:
@@ -65,19 +61,19 @@ class IEcoInterfaceBus1(IEcoUnknown):
         """
         ...
 
-    def RegisterComponent(self, cid: Ptr[UGUID], pIFactory: Ptr[IEcoUnknown]) -> Int16:
+    def register_component(self, cid: Ptr[UGUID], factory: Ptr[IEcoUnknown]) -> Int16:
         """Register a component factory by CID.
 
         Args:
             cid: Component ID pointer.
-            pIFactory: Pointer to IEcoComponentFactory.
+            factory: Pointer to `IEcoComponentFactory`.
 
         Returns:
             0 on success, error code otherwise.
         """
         ...
 
-    def UnRegisterComponent(self, cid: Ptr[UGUID]) -> Int16:
+    def unregister_component(self, cid: Ptr[UGUID]) -> Int16:
         """Unregister a component by CID.
 
         Args:
@@ -88,20 +84,20 @@ class IEcoInterfaceBus1(IEcoUnknown):
         """
         ...
 
-    def QueryComponent(
+    def query_component(
         self,
         cid: Ptr[UGUID],
-        pIUnknownOuter: Optional[Ptr[IEcoUnknown]],
+        outer: Optional[Ptr[IEcoUnknown]],
         iid: Ptr[UGUID],
-        ppv: Ptr[Ptr[Void]],
+        out: Ptr[Ptr[Void]],
     ) -> Int16:
         """Create component instance and get interface.
 
         Args:
             cid: Component ID to instantiate.
-            pIUnknownOuter: Outer unknown for aggregation (can be NULL).
+            outer: Outer unknown for aggregation (can be NULL).
             iid: Requested interface ID.
-            ppv: Output pointer for interface.
+            out: Output pointer for interface.
 
         Returns:
             0 on success, error code otherwise.
@@ -116,16 +112,13 @@ class IEcoInterfaceBus1(IEcoUnknown):
 
 @interface(iid=IID_IEcoInterfaceBus1MemExt)
 class IEcoInterfaceBus1MemExt(IEcoUnknown):
-    """Memory extension interface for InterfaceBus.
+    """Memory extension interface for `InterfaceBus`.
 
     Used to configure which memory manager the bus uses
     for internal allocations and pool management.
-
-    Inherits:
-        IEcoUnknown: QueryInterface, AddRef, Release
     """
 
-    def set_Manager(self, cid: Ptr[UGUID]) -> Int16:
+    def set_manager(self, cid: Ptr[UGUID]) -> Int16:
         """Set the memory manager CID.
 
         Args:
@@ -136,7 +129,7 @@ class IEcoInterfaceBus1MemExt(IEcoUnknown):
         """
         ...
 
-    def get_Manager(self) -> Ptr[UGUID]:
+    def get_manager(self) -> Ptr[UGUID]:
         """Get the current memory manager CID.
 
         Returns:
@@ -144,7 +137,7 @@ class IEcoInterfaceBus1MemExt(IEcoUnknown):
         """
         ...
 
-    def set_ExpandPool(self, enable: Bool) -> Int16:
+    def set_expand_pool(self, enable: Bool) -> Int16:
         """Enable/disable pool expansion.
 
         Args:
@@ -163,16 +156,13 @@ class IEcoInterfaceBus1MemExt(IEcoUnknown):
 
 @interface(iid=IID_IEcoInterfaceBus1FileExt)
 class IEcoInterfaceBus1FileExt(IEcoUnknown):
-    """File extension interface for InterfaceBus.
+    """File extension interface for `InterfaceBus`.
 
-    Enables automatic component loading from DLL files
+    Enables automatic component loading from library files
     based on a configurable search path.
-
-    Inherits:
-        IEcoUnknown: QueryInterface, AddRef, Release
     """
 
-    def set_Manager(self, cid: Ptr[UGUID]) -> Int16:
+    def set_manager(self, cid: Ptr[UGUID]) -> Int16:
         """Set the file system manager CID.
 
         Args:
@@ -183,7 +173,7 @@ class IEcoInterfaceBus1FileExt(IEcoUnknown):
         """
         ...
 
-    def get_Manager(self) -> Ptr[UGUID]:
+    def get_manager(self) -> Ptr[UGUID]:
         """Get the current file system manager CID.
 
         Returns:
@@ -191,8 +181,8 @@ class IEcoInterfaceBus1FileExt(IEcoUnknown):
         """
         ...
 
-    def set_SearchPath(self, path: CString) -> Int16:
-        """Set path for component DLL search.
+    def set_search_path(self, path: CString) -> Int16:
+        """Set path for component search.
 
         Args:
             path: Search path string.
@@ -202,7 +192,7 @@ class IEcoInterfaceBus1FileExt(IEcoUnknown):
         """
         ...
 
-    def get_SearchPath(self) -> CString:
+    def get_search_path(self) -> CString:
         """Get current search path.
 
         Returns:
@@ -210,34 +200,34 @@ class IEcoInterfaceBus1FileExt(IEcoUnknown):
         """
         ...
 
-    def RegisterComponent(self, cid: Ptr[UGUID], filename: CString) -> Int16:
+    def register_component(self, cid: Ptr[UGUID], filename: CString) -> Int16:
         """Register component from file by CID.
 
         Args:
             cid: Component ID.
-            filename: DLL filename.
+            filename: Path to component file.
 
         Returns:
             0 on success, error code otherwise.
         """
         ...
 
-    def QueryComponent(
+    def query_component(
         self,
         filename: CString,
         cid: Ptr[UGUID],
-        pIUnknownOuter: Optional[Ptr[IEcoUnknown]],
+        outer: Optional[Ptr[IEcoUnknown]],
         iid: Ptr[UGUID],
-        ppv: Ptr[Ptr[Void]],
+        out: Ptr[Ptr[Void]],
     ) -> Int16:
         """Query component from file directly.
 
         Args:
-            filename: DLL filename.
+            filename: Path to component file.
             cid: Component ID.
-            pIUnknownOuter: Outer unknown for aggregation (can be NULL).
+            outer: Outer unknown for aggregation (can be NULL).
             iid: Requested interface ID.
-            ppv: Output pointer for interface.
+            out: Output pointer for interface.
 
         Returns:
             0 on success, error code otherwise.
@@ -252,16 +242,13 @@ class IEcoInterfaceBus1FileExt(IEcoUnknown):
 
 @interface(iid=IID_IEcoInterfaceBus1NetExt)
 class IEcoInterfaceBus1NetExt(IEcoUnknown):
-    """Network extension interface for InterfaceBus.
+    """Network extension interface for `InterfaceBus`.
 
     Enables remote component registration and querying
     over a network connection.
-
-    Inherits:
-        IEcoUnknown: QueryInterface, AddRef, Release
     """
 
-    def set_Manager(self, cid: Ptr[UGUID]) -> Int16:
+    def set_manager(self, cid: Ptr[UGUID]) -> Int16:
         """Set the network manager CID.
 
         Args:
@@ -272,7 +259,7 @@ class IEcoInterfaceBus1NetExt(IEcoUnknown):
         """
         ...
 
-    def get_Manager(self) -> Ptr[UGUID]:
+    def get_manager(self) -> Ptr[UGUID]:
         """Get the current network manager CID.
 
         Returns:
@@ -280,22 +267,22 @@ class IEcoInterfaceBus1NetExt(IEcoUnknown):
         """
         ...
 
-    def QueryRemoteComponent(
+    def query_remote_component(
         self,
         network_name: CString,
         cid: Ptr[UGUID],
-        pIUnknownOuter: Optional[Ptr[IEcoUnknown]],
+        outer: Optional[Ptr[IEcoUnknown]],
         iid: Ptr[UGUID],
-        ppv: Ptr[Ptr[Void]],
+        out: Ptr[Ptr[Void]],
     ) -> Int16:
         """Query remote component over network.
 
         Args:
             network_name: Network name of remote bus.
             cid: Component ID.
-            pIUnknownOuter: Outer unknown for aggregation (can be NULL).
+            outer: Outer unknown for aggregation (can be NULL).
             iid: Requested interface ID.
-            ppv: Output pointer for interface.
+            out: Output pointer for interface.
 
         Returns:
             0 on success, error code otherwise.

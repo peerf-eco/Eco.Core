@@ -8,9 +8,9 @@
 
 ## Overview
 
-`eco-python2acom` is a Python library for interacting with ACOM (Adaptive Component Object Model) components from EcoOS. It provides a Pythonic interface for:
+`eco-python2acom` is a Python library for interacting with ACOM (_Adaptive Component Object Model_) components from EcoOS. It provides a Pythonic interface for:
 
-- Loading and registering ACOM component DLLs (automatic scan)
+- Loading and registering ACOM components (automatic scan)
 - Creating component instances via the interface bus
 - Calling component methods through virtual tables
 - Managing component lifecycles with reference counting

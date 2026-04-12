@@ -1,6 +1,6 @@
-"""File System Management interfaces for EcoOS.
+"""File system management interfaces for EcoOS.
 
-The FileSystemManagement component provides file system operations.
+The `FileSystemManagement` component provides file system operations.
 
 Interfaces:
     IEcoFileSystemManagement1: Top-level manager providing sub-managers.
@@ -9,13 +9,13 @@ Interfaces:
     IEcoDriveManager1: Drive/volume operations.
 
 Reference:
-    Based on IEcoFileSystemManagement1.h and related headers
-    from Eco.FileSystemManagement1/SharedFiles.
+    Based on `IEcoFileSystemManagement1.h` and related headers
+    from `Eco.FileSystemManagement1/SharedFiles`.
 """
 
 from __future__ import annotations
 
-from eco_python2acom.decorators.interface import interface
+from eco_python2acom.decorators import interface
 from eco_python2acom.guids.iid import (
     IID_IEcoDirectoryInfo1,
     IID_IEcoDirectoryManager1,
@@ -41,12 +41,9 @@ class IEcoFileInfo1(IEcoUnknown):
     """File information interface.
 
     Provides methods to retrieve file metadata such as file ID.
-
-    Inherits:
-        IEcoUnknown: QueryInterface, AddRef, Release
     """
 
-    def get_Id(self) -> Ptr[UGUID]:
+    def get_id(self) -> Ptr[UGUID]:
         """Get the file identifier.
 
         Returns:
@@ -65,12 +62,9 @@ class IEcoFile1(IEcoUnknown):
     """File interface for file operations.
 
     Provides methods to read, write, seek, and get file information.
-
-    Inherits:
-        IEcoUnknown: QueryInterface, AddRef, Release
     """
 
-    def get_Size(self) -> Int32:
+    def get_size(self) -> Int32:
         """Get the size of the file.
 
         Returns:
@@ -78,7 +72,7 @@ class IEcoFile1(IEcoUnknown):
         """
         ...
 
-    def get_Name(self) -> CString:
+    def get_name(self) -> CString:
         """Get the name of the file.
 
         Returns:
@@ -86,15 +80,15 @@ class IEcoFile1(IEcoUnknown):
         """
         ...
 
-    def get_Info(self) -> Ptr[IEcoFileInfo1]:
+    def get_info(self) -> Ptr[IEcoFileInfo1]:
         """Get the file information interface.
 
         Returns:
-            Pointer to IEcoFileInfo1 for retrieving file metadata.
+            Pointer to `IEcoFileInfo1` for retrieving file metadata.
         """
         ...
 
-    def get_Pointer(self) -> UInt32:
+    def get_pointer(self) -> UInt32:
         """Get the current file pointer position.
 
         Returns:
@@ -102,7 +96,7 @@ class IEcoFile1(IEcoUnknown):
         """
         ...
 
-    def set_Pointer(self, position: UInt32) -> Void:
+    def set_pointer(self, position: UInt32) -> Void:
         """Set the file pointer to a specific position.
 
         Args:
@@ -110,7 +104,7 @@ class IEcoFile1(IEcoUnknown):
         """
         ...
 
-    def Read(self, buffer: Ptr[Void], size: Ptr[UInt32]) -> Int16:
+    def read(self, buffer: Ptr[Void], size: Ptr[UInt32]) -> Int16:
         """Read data from the file into a buffer.
 
         Args:
@@ -122,7 +116,7 @@ class IEcoFile1(IEcoUnknown):
         """
         ...
 
-    def Write(self, buffer: Ptr[Void], size: Ptr[UInt32]) -> Int16:
+    def write(self, buffer: Ptr[Void], size: Ptr[UInt32]) -> Int16:
         """Write data from a buffer to the file.
 
         Args:
@@ -134,7 +128,7 @@ class IEcoFile1(IEcoUnknown):
         """
         ...
 
-    def Close(self) -> Int16:
+    def close(self) -> Int16:
         """Close the file.
 
         Returns:
@@ -142,7 +136,7 @@ class IEcoFile1(IEcoUnknown):
         """
         ...
 
-    def get_Descriptor(self) -> Int32:
+    def get_descriptor(self) -> Int32:
         """Get the file descriptor.
 
         Returns:
@@ -161,12 +155,9 @@ class IEcoDriveInfo1(IEcoUnknown):
     """Drive information interface.
 
     Provides methods to retrieve drive metadata such as drive ID.
-
-    Inherits:
-        IEcoUnknown: QueryInterface, AddRef, Release
     """
 
-    def get_Id(self) -> Ptr[UGUID]:
+    def get_id(self) -> Ptr[UGUID]:
         """Get the drive identifier.
 
         Returns:
@@ -185,19 +176,16 @@ class IEcoDriveManager1(IEcoUnknown):
     """Drive manager interface for drive operations.
 
     Provides methods to retrieve drive information by name.
-
-    Inherits:
-        IEcoUnknown: QueryInterface, AddRef, Release
     """
 
-    def get_Drive(self, name: CString) -> Ptr[IEcoDriveInfo1]:
+    def get_drive(self, name: CString) -> Ptr[IEcoDriveInfo1]:
         """Get a drive by its name.
 
         Args:
             name: Drive name string.
 
         Returns:
-            Pointer to IEcoDriveInfo1 for the specified drive.
+            Pointer to `IEcoDriveInfo1` for the specified drive.
         """
         ...
 
@@ -212,12 +200,9 @@ class IEcoDirectoryInfo1(IEcoUnknown):
     """Directory information interface.
 
     Provides methods to retrieve directory metadata such as directory ID.
-
-    Inherits:
-        IEcoUnknown: QueryInterface, AddRef, Release
     """
 
-    def get_Id(self) -> Ptr[UGUID]:
+    def get_id(self) -> Ptr[UGUID]:
         """Get the directory identifier.
 
         Returns:
@@ -236,23 +221,20 @@ class IEcoDirectoryManager1(IEcoUnknown):
     """Directory manager interface for directory operations.
 
     Provides methods to create and delete directories.
-
-    Inherits:
-        IEcoUnknown: QueryInterface, AddRef, Release
     """
 
-    def Create(self, name: CString) -> Ptr[IEcoDirectoryInfo1]:
+    def create(self, name: CString) -> Ptr[IEcoDirectoryInfo1]:
         """Create a new directory.
 
         Args:
             name: Directory name string.
 
         Returns:
-            Pointer to IEcoDirectoryInfo1 for the created directory.
+            Pointer to `IEcoDirectoryInfo1` for the created directory.
         """
         ...
 
-    def Delete(self, name: CString) -> Int16:
+    def delete(self, name: CString) -> Int16:
         """Delete an existing directory.
 
         Args:
@@ -274,38 +256,35 @@ class IEcoFileManager1(IEcoUnknown):
     """File manager interface for file operations.
 
     Provides methods to create, open, and close files.
-
-    Inherits:
-        IEcoUnknown: QueryInterface, AddRef, Release
     """
 
-    def Create(self, name: CString) -> Ptr[IEcoFile1]:
+    def create(self, name: CString) -> Ptr[IEcoFile1]:
         """Create a new file.
 
         Args:
             name: File name string.
 
         Returns:
-            Pointer to IEcoFile1.
+            Pointer to `IEcoFile1`.
         """
         ...
 
-    def Open(self, name: CString) -> Ptr[IEcoFile1]:
+    def open(self, name: CString) -> Ptr[IEcoFile1]:
         """Open an existing file.
 
         Args:
             name: File name string.
 
         Returns:
-            Pointer to IEcoFile1.
+            Pointer to `IEcoFile1`.
         """
         ...
 
-    def Close(self, pFile: Ptr[IEcoFile1]) -> Int16:
+    def close(self, file: Ptr[IEcoFile1]) -> Int16:
         """Close a file.
 
         Args:
-            pFile: Pointer to IEcoFile1.
+            file: Pointer to `IEcoFile1`.
 
         Returns:
             0 on success, error code otherwise.
@@ -323,31 +302,28 @@ class IEcoFileSystemManagement1(IEcoUnknown):
     """File system management interface.
 
     Provides access to file, directory, and drive managers.
-
-    Inherits:
-        IEcoUnknown: QueryInterface, AddRef, Release
     """
 
-    def get_FileManager(self) -> Ptr[IEcoFileManager1]:
+    def get_file_manager(self) -> Ptr[IEcoFileManager1]:
         """Get the file manager.
 
         Returns:
-            Pointer to IEcoFileManager1.
+            Pointer to `IEcoFileManager1`.
         """
         ...
 
-    def get_DirectoryManager(self) -> Ptr[IEcoDirectoryManager1]:
+    def get_directory_manager(self) -> Ptr[IEcoDirectoryManager1]:
         """Get the directory manager.
 
         Returns:
-            Pointer to IEcoDirectoryManager1.
+            Pointer to `IEcoDirectoryManager1`.
         """
         ...
 
-    def get_DriveManager(self) -> Ptr[IEcoDriveManager1]:
+    def get_drive_manager(self) -> Ptr[IEcoDriveManager1]:
         """Get the drive manager.
 
         Returns:
-            Pointer to IEcoDriveManager1.
+            Pointer to `IEcoDriveManager1`.
         """
         ...

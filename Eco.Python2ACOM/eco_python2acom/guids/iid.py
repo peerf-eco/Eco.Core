@@ -1,10 +1,9 @@
 """Interface Identifiers (IID) for EcoOS interfaces.
 
-IIDs uniquely identify interface types. When you call QueryInterface,
-you specify which interface to retrieve using its IID.
+IIDs uniquely identify interface types.
 
-Example:
-    >>> from eco_python2acom.interfaces.guids.iid import IID_IEcoInterfaceBus1
+Note:
+    IID format is UGUID: {XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX}
 """
 
 from eco_python2acom.types.guid import UGUID
@@ -119,5 +118,12 @@ IID_NAMES: dict[UGUID, str] = {
 
 
 def get_interface_name(iid: UGUID) -> str:
-    """Get human-readable interface name from IID."""
+    """Get human-readable interface name from IID.
+
+    Args:
+        iid: Interface identifier.
+
+    Returns:
+        Interface name string, or hex representation if unknown.
+    """
     return IID_NAMES.get(iid, iid.to_string())

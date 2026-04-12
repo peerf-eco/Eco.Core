@@ -1,14 +1,11 @@
-"""Core types for EcoOS/ACOM ctypes interoperability.
+"""Core types for EcoOS/ACOM interoperability.
 
-This module provides core primitive types for working with EcoOS C APIs
-through Python's ctypes library.
+This module provides core primitive types for working with EcoOS C APIs.
 
 Platform Support:
     - Windows (x86, x64) with __stdcall convention
 
 Type Mapping:
-    EcoOS types map to ctypes as follows:
-
     ========  ===========  =====  =====================================
     EcoOS     Python       Bytes  Description
     ========  ===========  =====  =====================================
@@ -113,7 +110,7 @@ Range: 0 to 255
 """
 
 UByte: TypeAlias = c_ubyte
-"""Alternative unsigned 8-bit type (ctypes.c_ubyte)."""
+"""Alternative unsigned 8-bit type."""
 
 # =============================================================================
 # Character Types
@@ -307,10 +304,10 @@ CData: TypeAlias = CSimpleData | CPointer | CUnion | CArray | CStructure | CFunc
 This type is used to represent any EcoOS data type.
 """
 
-
+# Canonical EcoOS names
 TYPE_NAMES: dict[type, str] = {
-    UInt8: "UInt8",
     Int8: "Int8",
+    UInt8: "UInt8",
     Int16: "Int16",
     UInt16: "UInt16",
     Int32: "Int32",
@@ -321,19 +318,11 @@ TYPE_NAMES: dict[type, str] = {
     Double: "Double",
     Char: "Char",
     WChar: "WChar",
-    Short: "Short",
-    UShort: "UShort",
     CString: "CString",
     WString: "WString",
-    Int: "Int",
-    UInt: "UInt",
-    LongLong: "LongLong",
-    ULongLong: "ULongLong",
-    SizeT: "SizeT",
-    SSizeT: "SSizeT",
-    UByte: "UByte",
     Void: "Void",
 }
+
 # =============================================================================
 # Public API
 # =============================================================================

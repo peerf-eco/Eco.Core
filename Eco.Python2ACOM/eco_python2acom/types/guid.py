@@ -7,7 +7,7 @@ and interface identifiers. UGUID is an 18-byte structure consisting of:
 - Data (16 bytes): The actual GUID data
 
 Note:
-    The UGUID structure is defined in 'IEcoBase1.h'.
+    The UGUID structure is defined in `IEcoBase1.h`.
     Standard format: {XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX}
 """
 
@@ -20,8 +20,6 @@ from eco_python2acom.decorators.model import model
 from eco_python2acom.types.array import Array
 from eco_python2acom.types.core import UInt8
 
-__all__ = ["UGUID"]
-
 
 @model
 class UGUID:
@@ -31,9 +29,9 @@ class UGUID:
     in the EcoOS/ACOM system.
     """
 
-    Preamble: UInt8
-    Length: UInt8
-    Data: Array[UInt8, 0x10]
+    preamble: UInt8
+    length: UInt8
+    data: Array[UInt8, 0x10]
 
     # Regex pattern for GUID string validation
     GUID_PATTERN: ClassVar[re.Pattern[str]] = re.compile(
@@ -62,14 +60,14 @@ class UGUID:
             length: Length byte (default 0x10).
 
         Raises:
-            ValueError: If both guid_string and data are provided, or if the
+            ValueError: If both `guid_string` and `data` are provided, or if the
                 provided data is not 16 bytes long.
         """
-        self.Preamble = UInt8(preamble)
-        self.Length = UInt8(length)
+        self.preamble = UInt8(preamble)
+        self.length = UInt8(length)
 
         if guid_string is not None and data is not None:
-            raise ValueError("Provide either 'guid_string' or 'data', not both.")
+            raise ValueError("Provide either 'guid_string' or 'data', not both")
 
         if guid_string is not None:
             self._from_string(guid_string)
@@ -93,7 +91,7 @@ class UGUID:
             )
 
         hex_str = "".join(match.groups())
-        self.Data[:] = [UInt8(b) for b in bytes.fromhex(hex_str)]
+        self.data[:] = [UInt8(byte) for byte in bytes.fromhex(hex_str)]
 
     def _from_bytes(self, data: bytes) -> None:
         """Initialize from raw bytes.
@@ -107,15 +105,15 @@ class UGUID:
         if len(data) != 0x10:
             raise ValueError(f"GUID data must be 16 bytes, got {len(data)}")
 
-        self.Data[:] = [UInt8(b) for b in data]
+        self.data[:] = [UInt8(byte) for byte in data]
 
     def to_bytes(self) -> bytes:
-        """Convert the 'Data' field to bytes.
+        """Convert the 'data' field to bytes.
 
         Returns:
             The 16-byte GUID data.
         """
-        return bytes(self.Data)
+        return bytes(self.data)
 
     def to_string(self, with_hyphens: bool = True) -> str:
         """Convert to standard GUID string format.
@@ -125,7 +123,7 @@ class UGUID:
 
         Returns:
             GUID string in format "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
-            or "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" if with_hyphens is False.
+            or "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" if `with_hyphens` is False.
         """
         data = self.to_bytes()
         if with_hyphens:
@@ -146,14 +144,14 @@ class UGUID:
         if not isinstance(other, UGUID):
             return NotImplemented
         return (
-            self.Preamble == other.Preamble
-            and self.Length == other.Length
+            self.preamble == other.preamble
+            and self.length == other.length
             and self.to_bytes() == other.to_bytes()
         )
 
     def __hash__(self) -> int:
         """Return hash of the UGUID."""
-        return hash((self.Preamble, self.Length, self.to_bytes()))
+        return hash((self.preamble, self.length, self.to_bytes()))
 
     def __str__(self) -> str:
         """Return string representation."""
@@ -162,8 +160,8 @@ class UGUID:
     def __repr__(self) -> str:
         """Return detailed representation."""
         return (
-            f"UGUID(preamble=0x{self.Preamble:02X}, "
-            f"length=0x{self.Length:02X}, "
+            f"UGUID(preamble=0x{self.preamble:02X}, "
+            f"length=0x{self.length:02X}, "
             f"data={self.to_string()!r})"
         )
 
@@ -172,7 +170,7 @@ class UGUID:
         """Create UGUID from raw components (as defined in C headers).
 
         This method matches the C-style initialization:
-        ``{ 0x01, 0x10, {0x93, 0x22, ...} }``
+        `{ 0x01, 0x10, {0x93, 0x22, ...} }`
 
         Args:
             preamble: Preamble byte.
@@ -196,3 +194,6 @@ class UGUID:
             A new UGUID instance.
         """
         return cls(guid_string=guid_string)
+
+
+__all__ = ["UGUID"]

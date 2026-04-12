@@ -1,8 +1,6 @@
 """Component Identifiers (CID) for EcoOS components.
 
-CIDs uniquely identify component implementations. When you call
-QueryComponent on the InterfaceBus, you specify which component
-to instantiate using its CID.
+CIDs uniquely identify component implementations.
 
 Note:
     CID format is UGUID: {XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX}
