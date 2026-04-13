@@ -172,7 +172,7 @@ class IEcoEnumConnectionPoints(IEcoUnknown):
 
         Args:
             count: Number of connection points to fetch.
-            point: Output array of `IEcoConnectionPoint` pointers.
+            points: Output array of `IEcoConnectionPoint` pointers.
             fetched: Output number of pointers actually returned.
 
         Returns:

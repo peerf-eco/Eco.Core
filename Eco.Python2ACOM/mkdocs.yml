@@ -1,0 +1,35 @@
+site_name: eco-python2acom
+site_description: Python bridge for ACOM component technology (EcoOS)
+repo_url: https://github.com/peerf-eco/eco-python2acom
+
+theme:
+  name: material
+  palette:
+    - scheme: slate
+      primary: teal
+      accent: cyan
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            show_source: false
+            show_root_heading: true
+            show_root_full_path: false
+            heading_level: 2
+            members_order: source
+            docstring_style: google
+            filters:
+              - "!^_"
+
+nav:
+  - Home: index.md
+  - Interfaces:
+    - Base: interfaces/base.md
+    - System: interfaces/system.md
+    - Connections: interfaces/connections.md
+    - Interface Bus: interfaces/interface_bus.md
+    - Memory Manager: interfaces/memory_manager.md
+    - File Manager: interfaces/file_manager.md
