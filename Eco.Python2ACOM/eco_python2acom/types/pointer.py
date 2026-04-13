@@ -211,7 +211,11 @@ else:
     class Ptr(metaclass=_PtrMeta):
         """Generic smart pointer type.
 
-        This is the runtime class that uses _PtrMeta to enable Ptr[T] syntax.
+        This is the runtime class that uses `_PtrMeta` to enable Ptr[T] syntax.
+
+        Note:
+            - For `Ptr[Void]`, the primary way to access the pointer is property `value`.
+            - For other types, use property `contents` instead.
         """
 
         pass

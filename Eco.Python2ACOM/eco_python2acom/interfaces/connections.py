@@ -61,7 +61,7 @@ class IEcoConnectionPoint(IEcoUnknown):
     the outgoing interface, and to enumerate current connections.
     """
 
-    def get_connection_interface(self, iid: Ptr[UGUID]) -> Int16:
+    def get_ConnectionInterface(self, iid: Ptr[UGUID]) -> Int16:
         """Get the IID of the outgoing interface supported by this point.
 
         Args:
@@ -72,7 +72,7 @@ class IEcoConnectionPoint(IEcoUnknown):
         """
         ...
 
-    def get_connection_point_container(
+    def get_ConnectionPointContainer(
         self, container: Ptr[Ptr[IEcoConnectionPointContainer]]
     ) -> Int16:
         """Get the connection point container that owns this point.
@@ -85,7 +85,7 @@ class IEcoConnectionPoint(IEcoUnknown):
         """
         ...
 
-    def advise(self, sink: Ptr[IEcoUnknown], cookie: Ptr[UInt32]) -> Int16:
+    def Advise(self, sink: Ptr[IEcoUnknown], cookie: Ptr[UInt32]) -> Int16:
         """Establish a connection between this point and the client's sink.
 
         Args:
@@ -97,7 +97,7 @@ class IEcoConnectionPoint(IEcoUnknown):
         """
         ...
 
-    def unadvise(self, cookie: UInt32) -> Int16:
+    def Unadvise(self, cookie: UInt32) -> Int16:
         """Terminate a connection identified by the given cookie.
 
         Args:
@@ -108,7 +108,7 @@ class IEcoConnectionPoint(IEcoUnknown):
         """
         ...
 
-    def enum_connections(self, enum: Ptr[Ptr[IEcoEnumConnections]]) -> Int16:
+    def EnumConnections(self, enum: Ptr[Ptr[IEcoEnumConnections]]) -> Int16:
         """Create an enumerator over current connections.
 
         Args:
@@ -133,7 +133,7 @@ class IEcoConnectionPointContainer(IEcoUnknown):
     all connection points.
     """
 
-    def enum_connection_points(self, enum: Ptr[Ptr[IEcoEnumConnectionPoints]]) -> Int16:
+    def EnumConnectionPoints(self, enum: Ptr[Ptr[IEcoEnumConnectionPoints]]) -> Int16:
         """Create an enumerator over all connection points.
 
         Args:
@@ -144,7 +144,7 @@ class IEcoConnectionPointContainer(IEcoUnknown):
         """
         ...
 
-    def find_connection_point(self, iid: Ptr[UGUID], point: Ptr[Ptr[IEcoConnectionPoint]]) -> Int16:
+    def FindConnectionPoint(self, iid: Ptr[UGUID], point: Ptr[Ptr[IEcoConnectionPoint]]) -> Int16:
         """Find the connection point for a given outgoing interface IID.
 
         Args:
@@ -166,7 +166,7 @@ class IEcoConnectionPointContainer(IEcoUnknown):
 class IEcoEnumConnectionPoints(IEcoUnknown):
     """Enumerator over connection points."""
 
-    def next(
+    def Next(
         self, count: UInt32, points: Ptr[Ptr[IEcoConnectionPoint]], fetched: Ptr[UInt32]
     ) -> Int16:
         """Retrieve the next connection point(s).
@@ -181,7 +181,7 @@ class IEcoEnumConnectionPoints(IEcoUnknown):
         """
         ...
 
-    def skip(self, count: UInt32) -> Int16:
+    def Skip(self, count: UInt32) -> Int16:
         """Skip the next elements in the enumeration.
 
         Args:
@@ -192,7 +192,7 @@ class IEcoEnumConnectionPoints(IEcoUnknown):
         """
         ...
 
-    def reset(self) -> Int16:
+    def Reset(self) -> Int16:
         """Reset the enumerator to the beginning.
 
         Returns:
@@ -200,7 +200,7 @@ class IEcoEnumConnectionPoints(IEcoUnknown):
         """
         ...
 
-    def clone(self, enum: Ptr[Ptr[IEcoEnumConnectionPoints]]) -> Int16:
+    def Clone(self, enum: Ptr[Ptr[IEcoEnumConnectionPoints]]) -> Int16:
         """Create a copy of the enumerator with the same state.
 
         Args:
@@ -221,7 +221,7 @@ class IEcoEnumConnectionPoints(IEcoUnknown):
 class IEcoEnumConnections(IEcoUnknown):
     """Enumerator over active connections (sink + cookie pairs)."""
 
-    def next(
+    def Next(
         self,
         count: UInt32,
         data: Ptr[EcoConnectionData],
@@ -239,7 +239,7 @@ class IEcoEnumConnections(IEcoUnknown):
         """
         ...
 
-    def skip(self, count: UInt32) -> Int16:
+    def Skip(self, count: UInt32) -> Int16:
         """Skip the next elements in the enumeration.
 
         Args:
@@ -250,7 +250,7 @@ class IEcoEnumConnections(IEcoUnknown):
         """
         ...
 
-    def reset(self) -> Int16:
+    def Reset(self) -> Int16:
         """Reset the enumerator to the beginning.
 
         Returns:
@@ -258,7 +258,7 @@ class IEcoEnumConnections(IEcoUnknown):
         """
         ...
 
-    def clone(self, enum: Ptr[Ptr[IEcoEnumConnections]]) -> Int16:
+    def Clone(self, enum: Ptr[Ptr[IEcoEnumConnections]]) -> Int16:
         """Create a copy of the enumerator with the same state.
 
         Args:

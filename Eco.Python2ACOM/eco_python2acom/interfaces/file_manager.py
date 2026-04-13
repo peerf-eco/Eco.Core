@@ -43,7 +43,7 @@ class IEcoFileInfo1(IEcoUnknown):
     Provides methods to retrieve file metadata such as file ID.
     """
 
-    def get_id(self) -> Ptr[UGUID]:
+    def get_Id(self) -> Ptr[UGUID]:
         """Get the file identifier.
 
         Returns:
@@ -64,7 +64,7 @@ class IEcoFile1(IEcoUnknown):
     Provides methods to read, write, seek, and get file information.
     """
 
-    def get_size(self) -> Int32:
+    def get_Size(self) -> Int32:
         """Get the size of the file.
 
         Returns:
@@ -72,7 +72,7 @@ class IEcoFile1(IEcoUnknown):
         """
         ...
 
-    def get_name(self) -> CString:
+    def get_Name(self) -> CString:
         """Get the name of the file.
 
         Returns:
@@ -80,7 +80,7 @@ class IEcoFile1(IEcoUnknown):
         """
         ...
 
-    def get_info(self) -> Ptr[IEcoFileInfo1]:
+    def get_Info(self) -> Ptr[IEcoFileInfo1]:
         """Get the file information interface.
 
         Returns:
@@ -88,7 +88,7 @@ class IEcoFile1(IEcoUnknown):
         """
         ...
 
-    def get_pointer(self) -> UInt32:
+    def get_Pointer(self) -> UInt32:
         """Get the current file pointer position.
 
         Returns:
@@ -96,7 +96,7 @@ class IEcoFile1(IEcoUnknown):
         """
         ...
 
-    def set_pointer(self, position: UInt32) -> Void:
+    def set_Pointer(self, position: UInt32) -> Void:
         """Set the file pointer to a specific position.
 
         Args:
@@ -104,7 +104,7 @@ class IEcoFile1(IEcoUnknown):
         """
         ...
 
-    def read(self, buffer: Ptr[Void], size: Ptr[UInt32]) -> Int16:
+    def Read(self, buffer: Ptr[Void], size: Ptr[UInt32]) -> Int16:
         """Read data from the file into a buffer.
 
         Args:
@@ -116,7 +116,7 @@ class IEcoFile1(IEcoUnknown):
         """
         ...
 
-    def write(self, buffer: Ptr[Void], size: Ptr[UInt32]) -> Int16:
+    def Write(self, buffer: Ptr[Void], size: Ptr[UInt32]) -> Int16:
         """Write data from a buffer to the file.
 
         Args:
@@ -128,7 +128,7 @@ class IEcoFile1(IEcoUnknown):
         """
         ...
 
-    def close(self) -> Int16:
+    def Close(self) -> Int16:
         """Close the file.
 
         Returns:
@@ -136,7 +136,7 @@ class IEcoFile1(IEcoUnknown):
         """
         ...
 
-    def get_descriptor(self) -> Int32:
+    def get_Descriptor(self) -> Int32:
         """Get the file descriptor.
 
         Returns:
@@ -157,7 +157,7 @@ class IEcoDriveInfo1(IEcoUnknown):
     Provides methods to retrieve drive metadata such as drive ID.
     """
 
-    def get_id(self) -> Ptr[UGUID]:
+    def get_Id(self) -> Ptr[UGUID]:
         """Get the drive identifier.
 
         Returns:
@@ -178,7 +178,7 @@ class IEcoDriveManager1(IEcoUnknown):
     Provides methods to retrieve drive information by name.
     """
 
-    def get_drive(self, name: CString) -> Ptr[IEcoDriveInfo1]:
+    def get_Drive(self, name: CString) -> Ptr[IEcoDriveInfo1]:
         """Get a drive by its name.
 
         Args:
@@ -202,7 +202,7 @@ class IEcoDirectoryInfo1(IEcoUnknown):
     Provides methods to retrieve directory metadata such as directory ID.
     """
 
-    def get_id(self) -> Ptr[UGUID]:
+    def get_Id(self) -> Ptr[UGUID]:
         """Get the directory identifier.
 
         Returns:
@@ -223,7 +223,7 @@ class IEcoDirectoryManager1(IEcoUnknown):
     Provides methods to create and delete directories.
     """
 
-    def create(self, name: CString) -> Ptr[IEcoDirectoryInfo1]:
+    def Create(self, name: CString) -> Ptr[IEcoDirectoryInfo1]:
         """Create a new directory.
 
         Args:
@@ -234,7 +234,7 @@ class IEcoDirectoryManager1(IEcoUnknown):
         """
         ...
 
-    def delete(self, name: CString) -> Int16:
+    def Delete(self, name: CString) -> Int16:
         """Delete an existing directory.
 
         Args:
@@ -258,7 +258,7 @@ class IEcoFileManager1(IEcoUnknown):
     Provides methods to create, open, and close files.
     """
 
-    def create(self, name: CString) -> Ptr[IEcoFile1]:
+    def Create(self, name: CString) -> Ptr[IEcoFile1]:
         """Create a new file.
 
         Args:
@@ -269,7 +269,7 @@ class IEcoFileManager1(IEcoUnknown):
         """
         ...
 
-    def open(self, name: CString) -> Ptr[IEcoFile1]:
+    def Open(self, name: CString) -> Ptr[IEcoFile1]:
         """Open an existing file.
 
         Args:
@@ -280,7 +280,7 @@ class IEcoFileManager1(IEcoUnknown):
         """
         ...
 
-    def close(self, file: Ptr[IEcoFile1]) -> Int16:
+    def Close(self, file: Ptr[IEcoFile1]) -> Int16:
         """Close a file.
 
         Args:
@@ -304,7 +304,7 @@ class IEcoFileSystemManagement1(IEcoUnknown):
     Provides access to file, directory, and drive managers.
     """
 
-    def get_file_manager(self) -> Ptr[IEcoFileManager1]:
+    def get_FileManager(self) -> Ptr[IEcoFileManager1]:
         """Get the file manager.
 
         Returns:
@@ -312,7 +312,7 @@ class IEcoFileSystemManagement1(IEcoUnknown):
         """
         ...
 
-    def get_directory_manager(self) -> Ptr[IEcoDirectoryManager1]:
+    def get_DirectoryManager(self) -> Ptr[IEcoDirectoryManager1]:
         """Get the directory manager.
 
         Returns:
@@ -320,7 +320,7 @@ class IEcoFileSystemManagement1(IEcoUnknown):
         """
         ...
 
-    def get_drive_manager(self) -> Ptr[IEcoDriveManager1]:
+    def get_DriveManager(self) -> Ptr[IEcoDriveManager1]:
         """Get the drive manager.
 
         Returns:

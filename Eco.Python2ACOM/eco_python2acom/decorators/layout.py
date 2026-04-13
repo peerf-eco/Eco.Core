@@ -26,8 +26,7 @@ def model(cls: C) -> C:
         C structure class ready for use with EcoOS.
 
     Raises:
-        TypeError: If the class uses multiple inheritance or inherits
-        from a non-structure base.
+        TypeError: If the class uses multiple inheritance or inherits from a non-structure base.
     """
     return eco_class(
         cls,
@@ -51,8 +50,7 @@ def union(cls: C) -> C:
         C union class ready for use with EcoOS.
 
     Raises:
-        TypeError: If the class uses multiple inheritance or inherits
-        from a non-structure base.
+        TypeError: If the class uses multiple inheritance or inherits from a non-structure base.
     """
     return eco_class(
         cls,

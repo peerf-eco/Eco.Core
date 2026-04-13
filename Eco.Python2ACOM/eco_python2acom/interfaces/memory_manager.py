@@ -70,7 +70,7 @@ class IEcoMemoryManager1(IEcoUnknown):
     before allocations can be made.
     """
 
-    def init(self, start: Optional[Ptr[Void]], size: UInt32) -> Int16:
+    def Init(self, start: Optional[Ptr[Void]], size: UInt32) -> Int16:
         """Initialize the memory manager with heap.
 
         Args:
@@ -82,7 +82,7 @@ class IEcoMemoryManager1(IEcoUnknown):
         """
         ...
 
-    def get_status(self, status: Ptr[EcoMemoryManager1Status]) -> Int16:
+    def get_Status(self, status: Ptr[EcoMemoryManager1Status]) -> Int16:
         """Get memory status information.
 
         Args:
@@ -93,7 +93,7 @@ class IEcoMemoryManager1(IEcoUnknown):
         """
         ...
 
-    def get_used_blocks(
+    def get_UsedBlocks(
         self, blocks: Ptr[EcoMemoryManager1Block], size_in_blocks: Ptr[UInt32]
     ) -> Int16:
         """Get descriptors of used memory blocks.
@@ -121,7 +121,7 @@ class IEcoMemoryAllocator1(IEcoUnknown):
     copy, fill, compare, and size retrieval.
     """
 
-    def alloc(self, size: UInt32) -> Ptr[Void]:
+    def Alloc(self, size: UInt32) -> Ptr[Void]:
         """Allocate memory block.
 
         Args:
@@ -132,7 +132,7 @@ class IEcoMemoryAllocator1(IEcoUnknown):
         """
         ...
 
-    def free(self, ptr: Ptr[Void]) -> None:
+    def Free(self, ptr: Ptr[Void]) -> None:
         """Free memory block.
 
         Args:
@@ -140,7 +140,7 @@ class IEcoMemoryAllocator1(IEcoUnknown):
         """
         ...
 
-    def realloc(self, ptr: Ptr[Void], size: UInt32) -> Ptr[Void]:
+    def Realloc(self, ptr: Ptr[Void], size: UInt32) -> Ptr[Void]:
         """Reallocate memory block.
 
         Args:
@@ -152,7 +152,7 @@ class IEcoMemoryAllocator1(IEcoUnknown):
         """
         ...
 
-    def copy(self, dst: Ptr[Void], src: Ptr[Void], size: UInt32) -> Ptr[Void]:
+    def Copy(self, dst: Ptr[Void], src: Ptr[Void], size: UInt32) -> Ptr[Void]:
         """Copy memory from source to destination.
 
         Args:
@@ -165,7 +165,7 @@ class IEcoMemoryAllocator1(IEcoUnknown):
         """
         ...
 
-    def fill(self, dst: Ptr[Void], value: Char, size: UInt32) -> Ptr[Void]:
+    def Fill(self, dst: Ptr[Void], value: Char, size: UInt32) -> Ptr[Void]:
         """Fill memory with a byte value.
 
         Args:
@@ -178,7 +178,7 @@ class IEcoMemoryAllocator1(IEcoUnknown):
         """
         ...
 
-    def compare(self, first: Ptr[Void], second: Ptr[Void], size: UInt32) -> Int16:
+    def Compare(self, first: Ptr[Void], second: Ptr[Void], size: UInt32) -> Int16:
         """Compare two memory blocks.
 
         Args:
@@ -191,7 +191,7 @@ class IEcoMemoryAllocator1(IEcoUnknown):
         """
         ...
 
-    def retrieve_size(self, ptr: Ptr[Void]) -> UInt32:
+    def RetrieveSize(self, ptr: Ptr[Void]) -> UInt32:
         """Get size of allocated block.
 
         Args:

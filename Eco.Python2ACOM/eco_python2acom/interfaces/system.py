@@ -25,15 +25,15 @@ class IEcoSystem1(IEcoUnknown):
     and other system services. The interface is identified by `GID_IEcoSystem`.
     """
 
-    def set_data(self, ptr: Ptr[Void]) -> Void:
+    def set_Data(self, data: Ptr[Void]) -> Void:
         """Store arbitrary user data on the system object.
 
         Args:
-            ptr: Pointer to user data.
+            data: Pointer to user data.
         """
         ...
 
-    def get_data(self) -> Ptr[Void]:
+    def get_Data(self) -> Ptr[Void]:
         """Retrieve previously stored user data.
 
         Returns:

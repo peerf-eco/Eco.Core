@@ -6,23 +6,22 @@ Platform Support:
     - Windows (x86, x64) with __stdcall convention
 
 Type Mapping:
-    ========  ===========  =====  =====================================
-    EcoOS     Python       Bytes  Description
-    ========  ===========  =====  =====================================
-    bool_t    Bool         1      Boolean (0=false, non-zero=true)
-    byte_t    Byte         1      Unsigned 8-bit integer
-    char_t    Char         1      Single-byte character (ASCII)
-    int8_t    Int8         1      Signed 8-bit integer
-    uint8_t   UInt8        1      Unsigned 8-bit integer
-    int16_t   Int16        2      Signed 16-bit integer
-    uint16_t  UInt16       2      Unsigned 16-bit integer
-    int32_t   Int32        4      Signed 32-bit integer
-    uint32_t  UInt32       4      Unsigned 32-bit integer
-    int64_t   Int64        8      Signed 64-bit integer
-    uint64_t  UInt64       8      Unsigned 64-bit integer
-    float_t   Float        4      Single-precision floating-point
-    double_t  Double       8      Double-precision floating-point
-    ========  ===========  =====  =====================================
+
+    | EcoOS    | Python  | Bytes | Description                       |
+    |----------|---------|-------|-----------------------------------|
+    | bool_t   | Bool    | 1     | Boolean (0=false, non-zero=true)  |
+    | byte_t   | Byte    | 1     | Unsigned 8-bit integer            |
+    | char_t   | Char    | 1     | Single-byte character (ASCII)     |
+    | int8_t   | Int8    | 1     | Signed 8-bit integer              |
+    | uint8_t  | UInt8   | 1     | Unsigned 8-bit integer            |
+    | int16_t  | Int16   | 2     | Signed 16-bit integer             |
+    | uint16_t | UInt16  | 2     | Unsigned 16-bit integer           |
+    | int32_t  | Int32   | 4     | Signed 32-bit integer             |
+    | uint32_t | UInt32  | 4     | Unsigned 32-bit integer           |
+    | int64_t  | Int64   | 8     | Signed 64-bit integer             |
+    | uint64_t | UInt64  | 8     | Unsigned 64-bit integer           |
+    | float_t  | Float   | 4     | Single-precision floating-point   |
+    | double_t | Double  | 8     | Double-precision floating-point   |
 """
 
 from __future__ import annotations

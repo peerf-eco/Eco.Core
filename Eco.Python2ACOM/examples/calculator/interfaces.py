@@ -3,8 +3,8 @@
 This module defines the ACOM interfaces used by the calculator examples.
 
 Interfaces:
-    IEcoCalculatorX: addition and subtraction.
-    IEcoCalculatorY: multiplication and division.
+    IEcoCalculatorX: Addition and Subtraction.
+    IEcoCalculatorY: Multiplication and Division.
 
 Constants:
     CID_EcoCalculator: Component ID for the calculator component.
@@ -35,7 +35,7 @@ CID_EcoCalculator = UGUID("872FEF1D-E331-4B87-AD44-D1E7C232C2F0")
 class IEcoCalculatorX(IEcoUnknown):
     """Calculator interface X — addition and subtraction."""
 
-    def addition(self, a: Int16, b: Int16) -> Int32:
+    def Addition(self, a: Int16, b: Int16) -> Int32:
         """Add two numbers.
 
         Args:
@@ -47,7 +47,7 @@ class IEcoCalculatorX(IEcoUnknown):
         """
         ...
 
-    def subtraction(self, a: Int16, b: Int16) -> Int16:
+    def Subtraction(self, a: Int16, b: Int16) -> Int16:
         """Subtract two numbers.
 
         Args:
@@ -64,7 +64,7 @@ class IEcoCalculatorX(IEcoUnknown):
 class IEcoCalculatorY(IEcoUnknown):
     """Calculator interface Y — multiplication and division."""
 
-    def multiplication(self, a: Int16, b: Int16) -> Int32:
+    def Multiplication(self, a: Int16, b: Int16) -> Int32:
         """Multiply two numbers.
 
         Args:
@@ -76,7 +76,7 @@ class IEcoCalculatorY(IEcoUnknown):
         """
         ...
 
-    def division(self, a: Int16, b: Int16) -> Int16:
+    def Division(self, a: Int16, b: Int16) -> Int16:
         """Divide two numbers (integer division).
 
         Args:

@@ -65,7 +65,7 @@ class IEcoUnknown:
         addr = self.ptr.value if self.ptr else 0
         return f"<{self.__class__.__name__} at 0x{addr:X}>"
 
-    def query_interface(self, iid: Ptr[UGUID], out: Ptr[Ptr[Void]]) -> Int16:
+    def QueryInterface(self, iid: Ptr[UGUID], out: Ptr[Ptr[Void]]) -> Int16:
         """Query for another interface on this component.
 
         Args:
@@ -77,7 +77,7 @@ class IEcoUnknown:
         """
         ...
 
-    def add_ref(self) -> UInt32:
+    def AddRef(self) -> UInt32:
         """Increment the reference count.
 
         Returns:
@@ -85,7 +85,7 @@ class IEcoUnknown:
         """
         ...
 
-    def release(self) -> UInt32:
+    def Release(self) -> UInt32:
         """Decrement the reference count.
 
         When the count reaches zero, the component is freed.
@@ -109,7 +109,7 @@ class IEcoComponentFactory(IEcoUnknown):
     a pointer to this interface.
     """
 
-    def alloc(
+    def Alloc(
         self,
         system: Optional[Ptr[Void]],
         outer: Optional[Ptr[Void]],
@@ -129,7 +129,7 @@ class IEcoComponentFactory(IEcoUnknown):
         """
         ...
 
-    def init(self, system: Optional[Ptr[Void]], context: Ptr[Void]) -> Int16:
+    def Init(self, system: Optional[Ptr[Void]], context: Ptr[Void]) -> Int16:
         """Initialize the factory with system context.
 
         Args:
@@ -141,7 +141,7 @@ class IEcoComponentFactory(IEcoUnknown):
         """
         ...
 
-    def get_name(self) -> CString:
+    def get_Name(self) -> CString:
         """Get the component name.
 
         Returns:
@@ -149,7 +149,7 @@ class IEcoComponentFactory(IEcoUnknown):
         """
         ...
 
-    def get_version(self) -> CString:
+    def get_Version(self) -> CString:
         """Get the component version.
 
         Returns:
@@ -157,7 +157,7 @@ class IEcoComponentFactory(IEcoUnknown):
         """
         ...
 
-    def get_manufacturer(self) -> CString:
+    def get_Manufacturer(self) -> CString:
         """Get the component manufacturer.
 
         Returns:

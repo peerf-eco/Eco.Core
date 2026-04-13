@@ -41,7 +41,7 @@ class IEcoInterfaceBus1(IEcoUnknown):
     and provides methods to create component instances.
     """
 
-    def init(self) -> Int16:
+    def Init(self) -> Int16:
         """Initialize the bus (no heap).
 
         Returns:
@@ -49,7 +49,7 @@ class IEcoInterfaceBus1(IEcoUnknown):
         """
         ...
 
-    def init_with(self, heap: Ptr[Void], size: UInt32) -> Int16:
+    def InitWith(self, heap: Ptr[Void], size: UInt32) -> Int16:
         """Initialize the bus with custom heap.
 
         Args:
@@ -61,7 +61,7 @@ class IEcoInterfaceBus1(IEcoUnknown):
         """
         ...
 
-    def register_component(self, cid: Ptr[UGUID], factory: Ptr[IEcoUnknown]) -> Int16:
+    def RegisterComponent(self, cid: Ptr[UGUID], factory: Ptr[IEcoUnknown]) -> Int16:
         """Register a component factory by CID.
 
         Args:
@@ -73,7 +73,7 @@ class IEcoInterfaceBus1(IEcoUnknown):
         """
         ...
 
-    def unregister_component(self, cid: Ptr[UGUID]) -> Int16:
+    def UnregisterComponent(self, cid: Ptr[UGUID]) -> Int16:
         """Unregister a component by CID.
 
         Args:
@@ -84,7 +84,7 @@ class IEcoInterfaceBus1(IEcoUnknown):
         """
         ...
 
-    def query_component(
+    def QueryComponent(
         self,
         cid: Ptr[UGUID],
         outer: Optional[Ptr[IEcoUnknown]],
@@ -118,7 +118,7 @@ class IEcoInterfaceBus1MemExt(IEcoUnknown):
     for internal allocations and pool management.
     """
 
-    def set_manager(self, cid: Ptr[UGUID]) -> Int16:
+    def set_Manager(self, cid: Ptr[UGUID]) -> Int16:
         """Set the memory manager CID.
 
         Args:
@@ -129,7 +129,7 @@ class IEcoInterfaceBus1MemExt(IEcoUnknown):
         """
         ...
 
-    def get_manager(self) -> Ptr[UGUID]:
+    def get_Manager(self) -> Ptr[UGUID]:
         """Get the current memory manager CID.
 
         Returns:
@@ -137,7 +137,7 @@ class IEcoInterfaceBus1MemExt(IEcoUnknown):
         """
         ...
 
-    def set_expand_pool(self, enable: Bool) -> Int16:
+    def set_ExpandPool(self, enable: Bool) -> Int16:
         """Enable/disable pool expansion.
 
         Args:
@@ -162,7 +162,7 @@ class IEcoInterfaceBus1FileExt(IEcoUnknown):
     based on a configurable search path.
     """
 
-    def set_manager(self, cid: Ptr[UGUID]) -> Int16:
+    def set_Manager(self, cid: Ptr[UGUID]) -> Int16:
         """Set the file system manager CID.
 
         Args:
@@ -173,7 +173,7 @@ class IEcoInterfaceBus1FileExt(IEcoUnknown):
         """
         ...
 
-    def get_manager(self) -> Ptr[UGUID]:
+    def get_Manager(self) -> Ptr[UGUID]:
         """Get the current file system manager CID.
 
         Returns:
@@ -181,7 +181,7 @@ class IEcoInterfaceBus1FileExt(IEcoUnknown):
         """
         ...
 
-    def set_search_path(self, path: CString) -> Int16:
+    def set_SearchPath(self, path: CString) -> Int16:
         """Set path for component search.
 
         Args:
@@ -192,7 +192,7 @@ class IEcoInterfaceBus1FileExt(IEcoUnknown):
         """
         ...
 
-    def get_search_path(self) -> CString:
+    def get_SearchPath(self) -> CString:
         """Get current search path.
 
         Returns:
@@ -200,7 +200,7 @@ class IEcoInterfaceBus1FileExt(IEcoUnknown):
         """
         ...
 
-    def register_component(self, cid: Ptr[UGUID], filename: CString) -> Int16:
+    def RegisterComponent(self, cid: Ptr[UGUID], filename: CString) -> Int16:
         """Register component from file by CID.
 
         Args:
@@ -212,7 +212,7 @@ class IEcoInterfaceBus1FileExt(IEcoUnknown):
         """
         ...
 
-    def query_component(
+    def QueryComponent(
         self,
         filename: CString,
         cid: Ptr[UGUID],
@@ -248,7 +248,7 @@ class IEcoInterfaceBus1NetExt(IEcoUnknown):
     over a network connection.
     """
 
-    def set_manager(self, cid: Ptr[UGUID]) -> Int16:
+    def set_Manager(self, cid: Ptr[UGUID]) -> Int16:
         """Set the network manager CID.
 
         Args:
@@ -259,7 +259,7 @@ class IEcoInterfaceBus1NetExt(IEcoUnknown):
         """
         ...
 
-    def get_manager(self) -> Ptr[UGUID]:
+    def get_Manager(self) -> Ptr[UGUID]:
         """Get the current network manager CID.
 
         Returns:
@@ -267,7 +267,7 @@ class IEcoInterfaceBus1NetExt(IEcoUnknown):
         """
         ...
 
-    def query_remote_component(
+    def QueryRemoteComponent(
         self,
         network_name: CString,
         cid: Ptr[UGUID],

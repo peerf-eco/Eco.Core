@@ -17,10 +17,10 @@ The bootstrap sequence mirrors `createCEcoSystem1` from C:
 Example:
     >>> with EcoSystem() as eco:
     ...     ppv = Ptr[Void]()
-    ...     eco.bus.query_component(byref(cid), None, byref(iid), byref(ppv))
+    ...     eco.bus.QueryComponent(byref(cid), None, byref(iid), byref(ppv))
     ...     calc = IEcoCalculatorX(ppv)
-    ...     calc.addition(10, 20)
-    ...     calc.release()
+    ...     calc.Addition(10, 20)
+    ...     calc.Release()
 """
 
 import os
@@ -67,10 +67,10 @@ class EcoSystem:
 
         with EcoSystem() as eco:
             ppv = Ptr[Void]()
-            eco.bus.query_component(byref(cid), None, byref(iid), byref(ppv))
+            eco.bus.QueryComponent(byref(cid), None, byref(iid), byref(ppv))
             calc = IEcoCalculatorX(ppv)
-            calc.addition(10, 20)
-            calc.release()
+            calc.Addition(10, 20)
+            calc.Release()
 
     Attributes:
         initialized: Whether the system has been initialized.
@@ -91,7 +91,7 @@ class EcoSystem:
         heap_size: int = DEFAULT_HEAP_SIZE,
         gid: Optional[UGUID] = None,
     ) -> None:
-        """Initialize EcoSystem container.
+        """Initialize `EcoSystem` container.
 
         Args:
             runtime_path: Path to `ECO_FRAMEWORK_RT` directory.
@@ -223,7 +223,7 @@ class EcoSystem:
 
         # Step 8: Finalize bus factory
         if self._bus_factory is not None and self._bus is not None:
-            self._bus_factory.init(None, self._bus.ptr)
+            self._bus_factory.Init(None, self._bus.ptr)
 
         self._initialized = True
 
@@ -238,7 +238,7 @@ class EcoSystem:
         self._bus_factory = loaded.factory
 
         bus_ptr = Ptr[Void]()
-        result = self._bus_factory.alloc(None, None, byref(IID_IEcoInterfaceBus1), byref(bus_ptr))
+        result = self._bus_factory.Alloc(None, None, byref(IID_IEcoInterfaceBus1), byref(bus_ptr))
         if result.value != 0 or not bus_ptr.value:
             raise EcoError(result, "Failed to create `InterfaceBus` instance")
 
@@ -249,7 +249,7 @@ class EcoSystem:
         loaded = self._loader.load_by_cid(CID_EcoMemoryManager1, [runtime_path])
         self._loaded_libs.append(loaded)
 
-        result = self._bus.register_component(
+        result = self._bus.RegisterComponent(
             byref(CID_EcoMemoryManager1),
             cast(loaded.factory.ptr, Ptr[IEcoUnknown]),
         )
@@ -259,17 +259,17 @@ class EcoSystem:
     def _configure_mem_ext(self) -> None:
         """Configure `InterfaceBus` memory extension."""
         mem_ext_ptr = Ptr[Void]()
-        result = self._bus.query_interface(byref(IID_IEcoInterfaceBus1MemExt), byref(mem_ext_ptr))
+        result = self._bus.QueryInterface(byref(IID_IEcoInterfaceBus1MemExt), byref(mem_ext_ptr))
         if result.value == 0 and mem_ext_ptr.value:
             mem_ext = IEcoInterfaceBus1MemExt(mem_ext_ptr)
-            mem_ext.set_manager(byref(CID_EcoMemoryManager1))
-            mem_ext.set_expand_pool(Bool(True))
-            mem_ext.release()
+            mem_ext.set_Manager(byref(CID_EcoMemoryManager1))
+            mem_ext.set_ExpandPool(Bool(True))
+            mem_ext.Release()
 
     def _init_memory_manager(self) -> None:
         """Query and initialize `MemoryManager` with heap."""
         mgr_ptr = Ptr[Void]()
-        result = self._bus.query_component(
+        result = self._bus.QueryComponent(
             byref(CID_EcoMemoryManager1),
             None,
             byref(IID_IEcoMemoryManager1),
@@ -279,11 +279,11 @@ class EcoSystem:
             raise EcoError(result, "Failed to get `MemoryManager` interface")
 
         self._mem_manager = IEcoMemoryManager1(mgr_ptr)
-        self._mem_manager.init(None, self._heap_size)
+        self._mem_manager.Init(None, self._heap_size)
 
         # Also get IEcoMemoryAllocator1 for convenience
         alloc_ptr = Ptr[Void]()
-        result = self._bus.query_component(
+        result = self._bus.QueryComponent(
             byref(CID_EcoMemoryManager1),
             None,
             byref(IID_IEcoMemoryAllocator1),
@@ -299,7 +299,7 @@ class EcoSystem:
         loaded = self._loader.load_by_cid(CID_EcoFileSystemManagement1, [runtime_path])
         self._loaded_libs.append(loaded)
 
-        result = self._bus.register_component(
+        result = self._bus.RegisterComponent(
             byref(CID_EcoFileSystemManagement1),
             cast(loaded.factory.ptr, Ptr[IEcoUnknown]),
         )
@@ -309,11 +309,11 @@ class EcoSystem:
     def _configure_file_ext(self) -> None:
         """Configure `InterfaceBus` file extension."""
         file_ext_ptr = Ptr[Void]()
-        result = self._bus.query_interface(byref(IID_IEcoInterfaceBus1FileExt), byref(file_ext_ptr))
+        result = self._bus.QueryInterface(byref(IID_IEcoInterfaceBus1FileExt), byref(file_ext_ptr))
         if result.value == 0 and file_ext_ptr.value:
             file_ext = IEcoInterfaceBus1FileExt(file_ext_ptr)
-            file_ext.set_manager(byref(CID_EcoFileSystemManagement1))
-            file_ext.release()
+            file_ext.set_Manager(byref(CID_EcoFileSystemManagement1))
+            file_ext.Release()
 
     def _scan_and_register_user_libs(self) -> None:
         """Scan user paths for EcoOS libraries and register each with the bus.
@@ -349,7 +349,7 @@ class EcoSystem:
             loaded = self._loader.load(lib_file)
             self._loaded_libs.append(loaded)
 
-            result = self._bus.register_component(
+            result = self._bus.RegisterComponent(
                 byref(cid),
                 cast(loaded.factory.ptr, Ptr[IEcoUnknown]),
             )
@@ -374,7 +374,7 @@ class EcoSystem:
         ):
             if iface is not None:
                 try:
-                    iface.release()
+                    iface.Release()
                 except Exception:
                     pass
 

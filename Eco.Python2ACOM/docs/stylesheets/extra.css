@@ -1,0 +1,59 @@
+/* ── Code blocks ── */
+.md-typeset code {
+  font-size: 0.85em;
+}
+
+/* ── API: attribute values (GUID constants etc.) ── */
+.doc-attribute .doc-heading code {
+  font-size: 0.78em;
+  opacity: 0.75;
+}
+
+/* ── Navigation ── */
+.md-nav__title {
+  font-weight: 600;
+}
+
+/* ── Admonitions ── */
+.md-typeset .admonition {
+  border-radius: 6px;
+}
+
+/* ── Table of Contents ── */
+.md-nav--secondary .md-nav__title {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.55;
+  padding-bottom: 0.3rem;
+  border-bottom: 1px solid var(--md-default-fg-color--lightest);
+  margin-bottom: 0.4rem;
+}
+
+.md-nav--secondary .md-nav__link {
+  font-size: 0.72rem;
+}
+
+.md-nav--secondary .md-nav__link--active {
+  color: var(--md-accent-fg-color);
+  font-weight: 600;
+  border-left: 2px solid var(--md-accent-fg-color);
+  padding-left: 0.4rem;
+}
+
+.md-nav--secondary .md-nav__item .md-nav__item .md-nav__link {
+  font-size: 0.68rem;
+  opacity: 0.8;
+  padding-left: 1rem;
+}
+
+/* ── Tables ── */
+.md-typeset table:not([class]) {
+  font-size: 0.85em;
+}
+
+.md-typeset table:not([class]) th {
+  background-color: var(--md-primary-fg-color--dark);
+  color: var(--md-primary-bg-color);
+}

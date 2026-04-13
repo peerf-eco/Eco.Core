@@ -26,12 +26,10 @@ def interface(iid: Union[str, UGUID], preamble: int = 0x01, length: int = 0x10) 
         length: Length byte for UGUID.
 
     Returns:
-        A decorator that converts the class into an interface class ready
-        for use with EcoOS.
+        A decorator that converts the class into an interface class ready for use with EcoOS.
 
     Raises:
-        TypeError: If the class uses multiple inheritance or inherits
-        from a non-structure base.
+        TypeError: If the class uses multiple inheritance or inherits from a non-structure base.
     """
 
     def decorator(cls: C) -> C:

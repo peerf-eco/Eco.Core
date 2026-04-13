@@ -33,7 +33,7 @@ def main() -> int:
             console.print()
 
             ppv_x = Ptr[Void]()
-            result = eco.bus.query_component(
+            result = eco.bus.QueryComponent(
                 byref(CID_EcoCalculator), None, byref(IEcoCalculatorX._iid_), byref(ppv_x)
             )
             if result.value != 0 or not ppv_x.value:
@@ -43,39 +43,39 @@ def main() -> int:
             print_success(f"Got {calc_x}")
             console.print(
                 get_operation_table(
-                    "Addition", "+", [(10, 20), (100, 200), (-50, 100)], calc_x.addition
+                    "Addition", "+", [(10, 20), (100, 200), (-50, 100)], calc_x.Addition
                 )
             )
             console.print(
                 get_operation_table(
-                    "Subtraction", "-", [(50, 30), (100, 200), (-50, -30)], calc_x.subtraction
+                    "Subtraction", "-", [(50, 30), (100, 200), (-50, -30)], calc_x.Subtraction
                 )
             )
             console.print()
 
             ppv_y = Ptr[Void]()
-            result = calc_x.query_interface(byref(IEcoCalculatorY._iid_), byref(ppv_y))
+            result = calc_x.QueryInterface(byref(IEcoCalculatorY._iid_), byref(ppv_y))
             if result.value != 0 or not ppv_y.value:
                 print_error(f"Failed to query interface (code={result.value})")
-                calc_x.release()
+                calc_x.Release()
                 return -3
             calc_y = IEcoCalculatorY(ppv_y)
             print_success(f"Got {calc_y}")
             console.print(
                 get_operation_table(
-                    "Multiplication", "*", [(6, 7), (100, 100), (-10, 5)], calc_y.multiplication
+                    "Multiplication", "*", [(6, 7), (100, 100), (-10, 5)], calc_y.Multiplication
                 )
             )
             console.print(
                 get_operation_table(
-                    "Division", "/", [(100, 10), (42, 7), (-100, 5)], calc_y.division
+                    "Division", "/", [(100, 10), (42, 7), (-100, 5)], calc_y.Division
                 )
             )
             console.print()
 
-            calc_y.release()
+            calc_y.Release()
             print_success(f"Released {calc_y}")
-            calc_x.release()
+            calc_x.Release()
             print_success(f"Released {calc_x}")
 
         print_info("Released EcoSystem")
