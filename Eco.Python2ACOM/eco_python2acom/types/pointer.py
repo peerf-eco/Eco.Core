@@ -141,10 +141,7 @@ else:
                         return "<Ptr[Void] NULL>"
 
                     def __eq__(self, other: object) -> bool:
-                        """Compare two pointers for equality.
-
-                        Comparison is done on the value of the pointers.
-                        """
+                        """Compare two void pointers by address."""
                         if not isinstance(other, SmartVoidPtr):
                             return NotImplemented
                         return self.value == other.value
@@ -195,10 +192,7 @@ else:
                         return f"<Ptr[{type_name}] NULL>"
 
                 def __eq__(self, other: object) -> bool:
-                    """Compare two pointers for equality.
-
-                    Comparison is done on the value of the pointers.
-                    """
+                    """Compare two pointers by address."""
                     if not isinstance(other, SmartPtr):
                         return NotImplemented
                     return addressof(self.contents) == addressof(other.contents)

@@ -199,18 +199,10 @@ else:
                         return f"<Array[{type_name}, {size}]>"
 
                 def __eq__(self, other: object) -> bool:
-                    """Compare two arrays for equality.
-
-                    Comparison is done on the size and contents of the arrays.
-                    """
+                    """Compare two arrays for equality."""
                     if not isinstance(other, SmartArray):
                         return NotImplemented
-                    if self._size_ != other._size_:
-                        return False
-                    for i in range(self._size_):
-                        if self[i] != other[i]:
-                            return False
-                    return True
+                    return all(self[i] == other[i] for i in range(self._size_))
 
                 def __iter__(self):
                     """Iterate over array elements."""
@@ -221,9 +213,7 @@ else:
                     """Convert array to bytes."""
                     return bytes(int(self[i]) for i in range(self._size_))
 
-                def __hash__(self) -> int:
-                    """Hash the array."""
-                    raise NotImplementedError("Hashing is not supported for arrays")
+                __hash__ = None  # mutable container, unhashable
 
             SmartArray.__name__ = f"Array[{type_name}, {size}]"
             SmartArray.__qualname__ = f"Array[{type_name}, {size}]"

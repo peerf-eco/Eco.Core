@@ -16,7 +16,7 @@ from __future__ import annotations
 import re
 from typing import ClassVar, Optional
 
-from eco_python2acom.decorators.model import model
+from eco_python2acom.decorators.layout import model
 from eco_python2acom.types.array import Array
 from eco_python2acom.types.core import UInt8
 
@@ -155,7 +155,7 @@ class UGUID:
 
     def __str__(self) -> str:
         """Return string representation."""
-        return f"UGUID({self.to_string()})"
+        return self.to_string()
 
     def __repr__(self) -> str:
         """Return detailed representation."""

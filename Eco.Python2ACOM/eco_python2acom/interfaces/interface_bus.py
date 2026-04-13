@@ -16,7 +16,7 @@ from __future__ import annotations
 
 from typing import Optional
 
-from eco_python2acom.decorators import interface
+from eco_python2acom.decorators.interface import interface
 from eco_python2acom.guids.iid import (
     IID_IEcoInterfaceBus1,
     IID_IEcoInterfaceBus1FileExt,

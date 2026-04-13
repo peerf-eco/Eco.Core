@@ -15,7 +15,8 @@ from __future__ import annotations
 
 from typing import Optional
 
-from eco_python2acom.decorators import interface, model
+from eco_python2acom.decorators.interface import interface
+from eco_python2acom.decorators.layout import model
 from eco_python2acom.guids.iid import IID_IEcoMemoryAllocator1, IID_IEcoMemoryManager1
 from eco_python2acom.interfaces.base import IEcoUnknown
 from eco_python2acom.types.core import Char, Int16, UInt32, Void

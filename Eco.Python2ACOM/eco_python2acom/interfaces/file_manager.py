@@ -15,7 +15,7 @@ Reference:
 
 from __future__ import annotations
 
-from eco_python2acom.decorators import interface
+from eco_python2acom.decorators.interface import interface
 from eco_python2acom.guids.iid import (
     IID_IEcoDirectoryInfo1,
     IID_IEcoDirectoryManager1,

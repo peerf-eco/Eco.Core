@@ -13,7 +13,7 @@ from __future__ import annotations
 
 from typing import Optional, Union
 
-from eco_python2acom.decorators import interface
+from eco_python2acom.decorators.interface import interface
 from eco_python2acom.guids.iid import IID_IEcoComponentFactory, IID_IEcoUnknown
 from eco_python2acom.types.core import CString, Int16, UInt32, Void
 from eco_python2acom.types.guid import UGUID

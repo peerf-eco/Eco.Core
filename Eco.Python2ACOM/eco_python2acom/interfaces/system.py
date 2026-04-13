@@ -10,7 +10,7 @@ Reference:
 
 from __future__ import annotations
 
-from eco_python2acom.decorators import interface
+from eco_python2acom.decorators.interface import interface
 from eco_python2acom.guids.gid import GID_IEcoSystem
 from eco_python2acom.interfaces.base import IEcoUnknown
 from eco_python2acom.types.core import Void

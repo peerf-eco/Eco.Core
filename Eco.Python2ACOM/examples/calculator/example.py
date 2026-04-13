@@ -20,9 +20,9 @@ from examples.console import console, print_error, print_header, print_info, pri
 def main() -> int:
     """Run calculator example."""
     print_header("Calculator Example")
-    print_info(f"CID: {CID_EcoCalculator.to_string()}")
-    print_info(f"IEcoCalculatorX IID: {IID_IEcoCalculatorX.to_string()}")
-    print_info(f"IEcoCalculatorY IID: {IID_IEcoCalculatorY.to_string()}")
+    print_info(f"CID: {CID_EcoCalculator}")
+    print_info(f"IEcoCalculatorX IID: {IID_IEcoCalculatorX}")
+    print_info(f"IEcoCalculatorY IID: {IID_IEcoCalculatorY}")
     console.print()
 
     try:
