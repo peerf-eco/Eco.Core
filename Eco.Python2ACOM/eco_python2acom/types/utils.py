@@ -3,7 +3,7 @@
 import ctypes
 from typing import Any, TypeVar
 
-from eco_python2acom.types.core import CData, CPointer, CStructure
+from eco_python2acom.types.core import CData, CLayout, CPointer
 
 # TypeVar for cast target
 U = TypeVar("U")
@@ -86,7 +86,7 @@ def sizeof(obj_or_type: Any) -> int:
     """
     if isinstance(obj_or_type, CData):
         obj_or_type = type(obj_or_type)
-    if issubclass(obj_or_type, CStructure):
+    if issubclass(obj_or_type, CLayout):
         from eco_python2acom.decorators.utils import finalize
 
         finalize(obj_or_type)

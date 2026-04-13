@@ -7,7 +7,7 @@ from collections.abc import Callable
 from types import FrameType, NoneType
 from typing import Any, ClassVar, Optional, Union, get_args, get_origin, get_type_hints
 
-from eco_python2acom.types.core import CData, CFuncType, CStructure, Int16, Void
+from eco_python2acom.types.core import CData, CFuncType, CLayout, Int16, Void
 from eco_python2acom.types.pointer import Ptr
 
 # -----------------------------------------------------------------------------
@@ -129,6 +129,30 @@ def _resolve_methods(cls: type) -> list[tuple[str, type]]:
     return methods
 
 
+def _apply_resolver(
+    cls: type, marker: str, resolver: Callable[[type], list[tuple[str, type]]]
+) -> list[tuple[str, type]]:
+    """Apply a resolver function to populate fields of a class.
+
+    Args:
+        cls: The class to populate fields of.
+        marker: The class attribute marker to check.
+        resolver: A function to resolve field types.
+
+    Returns:
+        A list of tuples with field names and resolved types.
+    """
+    if not cls.__dict__.get(marker):
+        return []
+
+    try:
+        return resolver(cls)
+    except TypeError:
+        raise
+    except Exception as err:
+        raise TypeError(f"Class '{cls.__name__}' contains unresolved types") from err
+
+
 def _install_dispatchers(cls: type, methods: list[tuple[str, type]]) -> None:
     """Replace method stubs with C function dispatchers for an interface class.
 
@@ -174,7 +198,7 @@ def _install_dispatchers(cls: type, methods: list[tuple[str, type]]) -> None:
                             full_args.append(kwargs[param_name])
                         else:
                             raise TypeError(
-                                f"{method_name}() missing required argument: '{param_name}'"
+                                f"'{method_name}' missing required argument: '{param_name}'"
                             )
                     result = func_ptr(self.ptr, *full_args)
                 else:
@@ -212,27 +236,11 @@ def finalize(cls: type) -> None:
     if cls.__dict__.get("_eco_ready_"):
         return
 
-    methods: list[tuple[str, type]] = []
-    if cls.__dict__.get("_eco_interface_"):
-        try:
-            methods = _resolve_methods(cls)
-        except TypeError:
-            raise
-        except Exception as err:
-            raise TypeError(
-                f"Interface '{cls.__name__}': contains unresolved method types"
-            ) from err
+    methods = _apply_resolver(cls, "_eco_interface_", _resolve_methods)
+    model_fields = _apply_resolver(cls, "_eco_model_", _resolve_fields)
+    union_fields = _apply_resolver(cls, "_eco_union_", _resolve_fields)
 
-    fields: list[tuple[str, type]] = []
-    if cls.__dict__.get("_eco_model_"):
-        try:
-            fields = _resolve_fields(cls)
-        except TypeError:
-            raise
-        except Exception as err:
-            raise TypeError(f"Model '{cls.__name__}': contains unresolved field types") from err
-
-    cls._fields_ = fields + methods
+    cls._fields_ = union_fields + model_fields + methods
     cls._eco_ready_ = True
 
     if methods:
@@ -240,10 +248,10 @@ def finalize(cls: type) -> None:
 
 
 # -----------------------------------------------------------------------------
-# Metaclass for EcoOS structures
+# Metaclass for EcoOS structures and unions
 # -----------------------------------------------------------------------------
 
-StructureMeta = type(CStructure)
+_eco_layout_meta_cache: dict[type, type] = {}
 
 
 def _struct_eq(self, other: Any) -> bool:
@@ -281,39 +289,58 @@ def _struct_repr(self) -> str:
     return f"{cls.__name__}({', '.join(field_strs)})"
 
 
-class EcoStructMeta(StructureMeta):  # type: ignore[misc]
-    """Metaclass for EcoOS C structures with lazy field resolution.
+def _get_eco_layout_meta(base: type) -> type:
+    """Get or create an `EcoLayoutMeta` metaclass for the given base.
 
-    - On class creation: finalizes bases.
-    - On `_fields_` access or instance creation: finalizes the class.
-    - Adds `__eq__` and `__repr__` methods for better debugging.
+    Args:
+        base: The base type.
+
+    Returns:
+        The `EcoLayoutMeta` metaclass for the given base type.
     """
+    if base in _eco_layout_meta_cache:
+        return _eco_layout_meta_cache[base]
 
-    def __new__(
-        cls, name: str, bases: tuple[type, ...], namespace: dict[str, Any], **kwargs: Any
-    ) -> type:
-        """Create the class and finalize bases."""
-        for base in reversed(bases):
-            if issubclass(base, CStructure) and base != CStructure:
-                finalize(base)
+    native_meta = type(base)
 
-        if "__eq__" not in namespace:
-            namespace["__eq__"] = _struct_eq
-        if "__repr__" not in namespace:
-            namespace["__repr__"] = _struct_repr
+    class EcoLayoutMeta(native_meta):  # type: ignore
+        """Metaclass for EcoOS C structures and unions with lazy field resolution.
 
-        return super().__new__(cls, name, bases, namespace, **kwargs)  # type: ignore
+        - On class creation: finalizes bases.
+        - On `_fields_` access or instance creation: finalizes the class.
+        - Adds `__eq__` and `__repr__` methods for better debugging.
+        """
 
-    def __call__(cls, *args: Any, **kwargs: Any) -> Any:
-        """Create instance, ensuring fields are resolved."""
-        finalize(cls)
-        return super().__call__(*args, **kwargs)
+        def __new__(
+            cls, name: str, bases: tuple[type, ...], namespace: dict[str, Any], **kwargs: Any
+        ) -> type:
+            """Create the class and finalize bases."""
+            for base in reversed(bases):
+                if issubclass(base, CLayout) and base not in CLayout.__args__:
+                    finalize(base)
 
-    def __getattribute__(cls, name: str) -> Any:
-        """Intercept `_fields_` access to trigger lazy resolution."""
-        if name == "_fields_":
+            if "__eq__" not in namespace:
+                namespace["__eq__"] = _struct_eq
+            if "__repr__" not in namespace:
+                namespace["__repr__"] = _struct_repr
+
+            return super().__new__(cls, name, bases, namespace, **kwargs)  # type: ignore
+
+        def __call__(cls, *args: Any, **kwargs: Any) -> Any:
+            """Create instance, ensuring fields are resolved."""
             finalize(cls)
-        return super().__getattribute__(name)
+            return super().__call__(*args, **kwargs)
+
+        def __getattribute__(cls, name: str) -> Any:
+            """Intercept `_fields_` access to trigger lazy resolution."""
+            if name == "_fields_":
+                finalize(cls)
+            return super().__getattribute__(name)
+
+    EcoLayoutMeta.__name__ = f"EcoLayoutMeta[{base.__name__}]"
+    EcoLayoutMeta.__qualname__ = EcoLayoutMeta.__name__
+    _eco_layout_meta_cache[base] = EcoLayoutMeta
+    return EcoLayoutMeta
 
 
 # -----------------------------------------------------------------------------
@@ -321,33 +348,31 @@ class EcoStructMeta(StructureMeta):  # type: ignore[misc]
 # -----------------------------------------------------------------------------
 
 
-def _validate_bases(cls: type, kind: str) -> tuple[type, ...]:
-    """Validate class inheritance and return bases tuple for EcoStructMeta.
+def _resolve_base(cls: type, base: type) -> type:
+    """Resolve and validate the base class for a decorated class.
 
     Args:
         cls: The class being decorated.
-        kind: Descriptor for error messages.
+        base: The default base type.
 
     Returns:
-        Tuple of base classes for the new EcoStructMeta class.
+        The resolved base class.
 
     Raises:
         TypeError: If multiple inheritance is used or base is invalid.
     """
     if len(cls.__bases__) > 1:
-        raise TypeError(f"{kind} '{cls.__name__}' uses multiple inheritance")
+        raise TypeError(f"'{cls.__name__}' uses multiple inheritance")
 
-    base = next(iter(cls.__bases__)) if cls.__bases__ else object
-    if base is not object and not issubclass(base, CStructure):
-        raise TypeError(
-            f"{kind} '{cls.__name__}' inherits from non-structure base '{base.__name__}'"
-        )
+    parent = next(iter(cls.__bases__)) if cls.__bases__ else object
+    if parent is not object and not issubclass(parent, base):
+        raise TypeError(f"Class '{cls.__name__}' inherits from invalid base '{parent.__name__}'")
 
-    return (base,) if base is not object else (CStructure,)
+    return parent if parent is not object else base
 
 
 def _build_namespace(cls: type, extra: dict[str, Any] | None = None) -> dict[str, Any]:
-    """Build namespace dict for a new EcoStructMeta class.
+    """Build namespace dict for a new `EcoLayoutMeta` class.
 
     Copies module, qualname, docs, annotations, and all non-special attributes
     from the original class. Optionally merges extra attributes.
@@ -357,7 +382,7 @@ def _build_namespace(cls: type, extra: dict[str, Any] | None = None) -> dict[str
         extra: Additional attributes to add to namespace.
 
     Returns:
-        Namespace dict ready for EcoStructMeta.
+        Namespace dict ready for `EcoLayoutMeta`.
     """
     namespace: dict[str, Any] = {
         "__module__": cls.__module__,
@@ -397,32 +422,36 @@ def _register_class(frame: FrameType, cls: type) -> None:
     )
 
     registry[cls.__name__] = cls
-    cls.__decl_localns__ = registry  # type: ignore[attr-defined]
-    cls.__decl_globalns__ = frame.f_globals  # type: ignore[attr-defined]
+    cls.__decl_localns__ = registry  # type: ignore
+    cls.__decl_globalns__ = frame.f_globals  # type: ignore
 
 
 def eco_class(
-    cls: type, kind: str, frame: FrameType | None, extra: dict[str, Any] | None = None
+    cls: type,
+    base: type,
+    frame: FrameType | None,
+    extra: dict[str, Any] | None = None,
 ) -> type:
-    """Create an `EcoStructMeta` class from a decorated class.
+    """Create an `EcoLayoutMeta` class from a decorated class.
 
     Args:
         cls: The original class being decorated.
-        kind: Descriptor for error messages.
+        base: The default base type.
         frame: Caller's frame for namespace registration.
         extra: Additional attributes to add to namespace.
 
     Returns:
-        The new class created by `EcoStructMeta`.
+        The new class created by `EcoLayoutMeta`.
     """
-    bases = _validate_bases(cls, kind)
+    base_cls = _resolve_base(cls, base)
     namespace = _build_namespace(cls, extra)
-    new_class = EcoStructMeta(cls.__name__, bases, namespace)
+    meta = _get_eco_layout_meta(base)
+    new_class = meta(cls.__name__, (base_cls,), namespace)
 
     if frame is not None:
         _register_class(frame, new_class)
 
-    return new_class
+    return new_class  # type: ignore
 
 
-__all__ = ["EcoStructMeta", "eco_class", "finalize", "normalize", "validate"]
+__all__ = ["eco_class", "finalize", "normalize", "validate"]

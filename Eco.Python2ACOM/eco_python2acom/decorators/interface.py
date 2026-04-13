@@ -8,6 +8,7 @@ from collections.abc import Callable
 from typing import TypeVar, Union
 
 from eco_python2acom.decorators.utils import eco_class
+from eco_python2acom.types.core import CStructure
 from eco_python2acom.types.guid import UGUID
 
 C = TypeVar("C", bound=type)
@@ -41,7 +42,7 @@ def interface(iid: Union[str, UGUID], preamble: int = 0x01, length: int = 0x10) 
 
         return eco_class(
             cls,
-            kind="Interface",
+            base=CStructure,
             frame=inspect.currentframe().f_back,
             extra={"_iid_": guid, "_eco_interface_": True},
         )  # type: ignore

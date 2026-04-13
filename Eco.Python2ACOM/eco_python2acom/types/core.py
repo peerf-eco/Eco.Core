@@ -304,6 +304,12 @@ CData: TypeAlias = CSimpleData | CPointer | CUnion | CArray | CStructure | CFunc
 This type is used to represent any EcoOS data type.
 """
 
+CLayout: TypeAlias = CStructure | CUnion
+"""Base type for layout-compatible types.
+
+This includes structures and unions, which have a defined memory layout.
+"""
+
 # Canonical EcoOS names
 TYPE_NAMES: dict[type, str] = {
     Int8: "Int8",
@@ -381,4 +387,5 @@ __all__ = [
     "CPointer",
     "CSimpleData",
     "CData",
+    "CLayout",
 ]
