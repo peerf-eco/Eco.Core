@@ -1,6 +1,6 @@
 """Generic smart pointer implementation for EcoOS/ACOM.
 
-This module provides the Ptr[T] generic type for type-safe pointer operations.
+This module provides the `Ptr[T]` generic type for type-safe pointer operations.
 """
 
 from __future__ import annotations
@@ -35,7 +35,7 @@ if TYPE_CHECKING:
             Args:
                 value: Optional value to point to. Can be:
                     - None: creates NULL pointer
-                    - int: creates pointer with this address (for Void)
+                    - int: creates pointer with this address (for `Void`)
                     - Instance of T: creates pointer to that instance
                     - Value convertible to T: wraps and creates pointer
             """
@@ -58,7 +58,7 @@ if TYPE_CHECKING:
                 value: New value to store at pointer location.
 
             Raises:
-                AttributeError: If T is Void.
+                AttributeError: If T is `Void`.
             """
             ...
 
@@ -122,8 +122,11 @@ else:
                 A pointer class for the specified type.
 
             Raises:
-                TypeError: If item cannot be made into a pointer.
+                TypeError: If `item` is not a type or cannot be made into a pointer.
             """
+            if not isinstance(item, type):
+                raise TypeError(f"Ptr element type must be a type, got '{item}'")
+
             # Check cache first
             if item in cls._cache:
                 return cls._cache[item]
@@ -163,7 +166,7 @@ else:
             try:
                 ptr_type = pointer_type(item)
             except TypeError as err:
-                raise TypeError(f"Cannot create pointer to {item}: {err}") from err
+                raise TypeError(f"Cannot create pointer to '{item}': {err}") from err
 
             # Create smart pointer wrapper class
             class SmartPtr(ptr_type):
@@ -180,25 +183,32 @@ else:
                     else:
                         try:
                             super().__init__(item(value))
-                        except Exception:
-                            super().__init__()
+                        except Exception as err:
+                            raise TypeError(
+                                f"Cannot initialize Ptr[{type_name}] from value of type "
+                                f"'{type(value).__name__}'"
+                            ) from err
 
                 def __repr__(self) -> str:
                     """String representation with address."""
-                    try:
-                        addr = addressof(self.contents)
-                        return f"<Ptr[{type_name}] 0x{addr:X}>"
-                    except Exception:
+                    if not bool(self):
                         return f"<Ptr[{type_name}] NULL>"
+                    return f"<Ptr[{type_name}] 0x{addressof(self.contents):X}>"
 
                 def __eq__(self, other: object) -> bool:
                     """Compare two pointers by address."""
                     if not isinstance(other, SmartPtr):
                         return NotImplemented
+                    self_null = not bool(self)
+                    other_null = not bool(other)
+                    if self_null or other_null:
+                        return self_null and other_null
                     return addressof(self.contents) == addressof(other.contents)
 
                 def __hash__(self) -> int:
                     """Hash the pointer."""
+                    if not bool(self):
+                        return hash(None)
                     return hash(addressof(self.contents))
 
             SmartPtr.__name__ = f"Ptr[{type_name}]"

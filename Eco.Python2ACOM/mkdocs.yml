@@ -6,7 +6,6 @@ copyright: Copyright &copy; 2024 Sergei Vdovenkov
 
 theme:
   name: material
-  custom_dir: docs/overrides
   palette:
     - scheme: slate
       primary: deep purple

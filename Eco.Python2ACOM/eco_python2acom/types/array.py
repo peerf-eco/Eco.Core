@@ -1,6 +1,6 @@
 """Generic fixed-size array implementation for EcoOS/ACOM.
 
-This module provides the Array[T, N] generic type for type-safe fixed-size
+This module provides the `Array[T, N]` generic type for type-safe fixed-size
 array operations.
 """
 
@@ -152,15 +152,15 @@ else:
             """
             # Validate parameters
             if not isinstance(params, tuple) or len(params) != 2:
-                raise TypeError(f"Array requires 2 parameters: Array[Type, Size], got {params}")
+                raise TypeError(f"Array requires 2 parameters: Array[Type, Size], got '{params}'")
 
             element_type, size = params
 
             if not isinstance(size, int) or size < 0:
-                raise TypeError(f"Array size must be a non-negative integer, got {size}")
+                raise TypeError(f"Array size must be a non-negative integer, got '{size}'")
 
             if not isinstance(element_type, type):
-                raise TypeError(f"Array element type must be a type, got {element_type}")
+                raise TypeError(f"Array element type must be a type, got '{element_type}'")
 
             if issubclass(element_type, CLayout) and element_type not in CLayout.__args__:
                 from eco_python2acom.decorators.utils import finalize
@@ -176,7 +176,7 @@ else:
             try:
                 array_type = element_type * size
             except TypeError as err:
-                raise TypeError(f"Cannot create array of {element_type}: {err}") from err
+                raise TypeError(f"Cannot create array of '{element_type}': {err}") from err
 
             # Get display name
             type_name = TYPE_NAMES.get(
