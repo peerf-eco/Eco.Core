@@ -50,7 +50,7 @@ typedef struct CEcoTypeLib1Builder_01434A0B {
     IEcoSystem1* m_pISys;
 
     /* Instance data */
-    char_t* m_Name;
+    IEcoInterfaceBus1* m_pIBus;
 
 } CEcoTypeLib1Builder_01434A0B;
 

@@ -23,6 +23,8 @@
 #include "IEcoMethodDescriptor1.h"
 #include "IEcoSystem1.h"
 #include "IdEcoMemoryManager1.h"
+#include "IdEcoList1.h"
+#include "IEcoParamDescriptor1.h"
 
 typedef struct CEcoTypeLib1Method_01434A0B* CEcoTypeLib1Method_01434A0BPtr_t;
 
@@ -51,6 +53,9 @@ typedef struct CEcoTypeLib1Method_01434A0B {
 
     /* Instance data */
     char_t* m_Name;
+    uint8_t m_Flags;
+    IEcoList1* m_pIParamList;
+    IEcoParamDescriptor1* m_pIParamResult;
 
 } CEcoTypeLib1Method_01434A0B;
 

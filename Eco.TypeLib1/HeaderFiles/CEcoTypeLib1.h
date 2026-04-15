@@ -23,6 +23,7 @@
 #include "IEcoTypeLib1.h"
 #include "IEcoSystem1.h"
 #include "IdEcoMemoryManager1.h"
+#include "IEcoTypeLib1File.h"
 
 typedef struct CEcoTypeLib1_01434A0B* CEcoTypeLib1_01434A0BPtr_t;
 
@@ -50,7 +51,8 @@ typedef struct CEcoTypeLib1_01434A0B {
     IEcoSystem1* m_pISys;
 
     /* Instance data */
-    char_t* m_Name;
+    IEcoTypeLib1File* m_pIFile;
+    IEcoTypeLib1Builder* m_pIBuilder;
 
 } CEcoTypeLib1_01434A0B;
 

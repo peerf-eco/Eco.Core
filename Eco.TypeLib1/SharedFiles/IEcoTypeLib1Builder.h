@@ -36,19 +36,26 @@
 typedef enum EcoTypeLib1TypeTag {
     ECO_TYPE_UNDEFINED = 0,
     ECO_TYPE_INT8,
-    ECO_TYPE_UINT8,
     ECO_TYPE_INT16,
-    ECO_TYPE_UINT16,
     ECO_TYPE_INT32,
+    ECO_TYPE_INT64,
+    ECO_TYPE_UINT8,
+    ECO_TYPE_UINT16,
     ECO_TYPE_UINT32,
+    ECO_TYPE_UINT64,
     ECO_TYPE_FLOAT,
     ECO_TYPE_DOUBLE,
+    ECO_TYPE_BOOLEAN,
+    ECO_TYPE_CHAR,
+    ECO_TYPE_WCHAR,
     ECO_TYPE_ASTRING,    /* ASCII String */
     ECO_TYPE_WSTRING,    /* Wide String */
     ECO_TYPE_INTERFACE,  /* Указатель на интерфейс */
     ECO_TYPE_VOIDPTR,    /* void* */
     ECO_TYPE_VOID        /* void (только для Result) */
 } EcoTypeLib1TypeTag;
+
+extern const uint32_t ECO_TYPE_SIZE[];
 
 /* Флаги параметров (ParamDescriptor) */
 #define ECO_PARAM_IN        0x01  /* Аргумент передается в метод */
@@ -108,7 +115,7 @@ typedef struct IEcoTypeLib1BuilderVTbl {
     /* Создание параметра: name, typeTag, flags (ECO_PARAM_IN | ECO_PARAM_OUT ...) */
     int16_t (ECOCALLMETHOD *CreateParameter)(
         /* in */ IEcoTypeLib1BuilderPtr_t me, 
-        /* in */ const char* name, 
+        /* in */ const char_t* name, 
         /* in */ uint16_t typeTag, 
         /* in */ uint8_t flags,
         /* out */ struct IEcoParamDescriptor1** ppIParam
@@ -117,7 +124,7 @@ typedef struct IEcoTypeLib1BuilderVTbl {
     /* Создание метода: name, flags (ECO_METHOD_GETTER ...) */
     int16_t (ECOCALLMETHOD *CreateMethod)(
         /* in */ IEcoTypeLib1BuilderPtr_t me, 
-        /* in */ const char* name,
+        /* in */ const char_t* name,
         /* in */ uint8_t flags,
         /* out */ struct IEcoMethodDescriptor1** ppIMethod
     );
@@ -125,7 +132,7 @@ typedef struct IEcoTypeLib1BuilderVTbl {
     /* Создание константы */
     int16_t (ECOCALLMETHOD *CreateConstant)(
         /* in */ IEcoTypeLib1BuilderPtr_t me, 
-        /* in */ const char* name,
+        /* in */ const char_t* name,
         /* in */ uint16_t typeTag,
         /* in */ voidptr_t value,
         /* out */ struct IEcoConstDescriptor1** ppIConst
@@ -135,14 +142,15 @@ typedef struct IEcoTypeLib1BuilderVTbl {
     int16_t (ECOCALLMETHOD *CreateInterfaceDescriptor)(
         /* in */ IEcoTypeLib1BuilderPtr_t me,
         /* in */ uint16_t parentIndex,
+        /* in */ uint8_t flags,
         /* out */ struct IEcoInterfaceDescriptor1** ppIDesc
     );
 
-     /* Создание записи в директории (связывание IID и дескриптора) */
+    /* Создание записи в директории (связывание IID и дескриптора) */
     int16_t (ECOCALLMETHOD *CreateInterfaceDirectoryEntry)(
         /* in */ IEcoTypeLib1BuilderPtr_t me,
-        /* in */ const char* name,
-        /* in */ const char* ns,
+        /* in */ const char_t* name,
+        /* in */ const char_t* namespace,
         /* in */ const UGUID* iid,
         /* in */ struct IEcoInterfaceDescriptor1* pIDesc,
         /* out */ struct IEcoInterfaceDirectoryEntry1** ppIEntry
@@ -152,7 +160,7 @@ typedef struct IEcoTypeLib1BuilderVTbl {
     int16_t (ECOCALLMETHOD *CreateInterfaceDirectory)(
         /* in */ IEcoTypeLib1BuilderPtr_t me,
         /* out */ struct IEcoInterfaceDirectory1** ppIDirectory
-    );   
+    );
 
 } IEcoTypeLib1BuilderVTbl, *IEcoTypeLib1BuilderVTblPtr_t;
 

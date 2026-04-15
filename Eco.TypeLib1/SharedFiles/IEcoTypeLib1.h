@@ -45,16 +45,16 @@ typedef struct IEcoTypeLib1VTbl {
     /* IEcoTypeLib1 */
 
     /* Прямая загрузка: читает файл и возвращает готовый объект Директории */
-    int16_t (ECOCALLMETHOD *LoadFile)(/* in */ IEcoTypeLib1Ptr_t me, /* in */ const char* path, /* out */ IEcoInterfaceDirectory1** ppIDirectory);
+    int16_t (ECOCALLMETHOD *LoadFile)(/* in */ IEcoTypeLib1Ptr_t me, /* in */ const char_t* path, /* out */ IEcoInterfaceDirectory1** ppIDirectory);
 
     /* Прямое сохранение: берет объект Директории и пишет его в бинарный файл */
-    int16_t (ECOCALLMETHOD *SaveFile)(/* in */ IEcoTypeLib1Ptr_t me, /* in */ const char* path, /* in */ IEcoInterfaceDirectory1* pIDirectory);
+    int16_t (ECOCALLMETHOD *SaveFile)(/* in */ IEcoTypeLib1Ptr_t me, /* in */ const char_t* path, /* in */ IEcoInterfaceDirectory1* pIDirectory);
 
     /* Создание пустого билдера для ручного наполнения */
     int16_t (ECOCALLMETHOD *CreateBuilder)(/* in */ IEcoTypeLib1Ptr_t me, /* out */ struct IEcoTypeLib1Builder** ppIBuilder);
 
     /* Низкоуровневый доступ (для специфических задач на MCU) */
-    int16_t (ECOCALLMETHOD *Open)(IEcoTypeLib1Ptr_t me, const char* path, struct IEcoTypeLib1File** ppIFile);
+    int16_t (ECOCALLMETHOD *Open)(IEcoTypeLib1Ptr_t me, const char_t* path, struct IEcoTypeLib1File** ppIFile);
 
 } IEcoTypeLib1VTbl, *IEcoTypeLib1VTblPtr_t;
 

@@ -51,6 +51,8 @@ typedef struct CEcoTypeLib1Parameter_01434A0B {
 
     /* Instance data */
     char_t* m_Name;
+    uint16_t m_TypeTag;
+    uint8_t m_Flags;
 
 } CEcoTypeLib1Parameter_01434A0B;
 

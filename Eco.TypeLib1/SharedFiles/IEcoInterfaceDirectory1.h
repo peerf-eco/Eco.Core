@@ -44,15 +44,15 @@ typedef struct IEcoInterfaceDirectory1VTbl {
     /* IEcoInterfaceDirectory1 */
 
     /* Работа с записями (InterfaceDirectoryEntry) */
-    int16_t (ECOCALLMETHOD *AddEntry)(/* in */ IEcoInterfaceDirectory1Ptr_t me, uint16_t index, /* in */ struct IEcoInterfaceDirectoryEntry1* pIEntry);
+    int16_t (ECOCALLMETHOD *AddEntry)(/* in */ IEcoInterfaceDirectory1Ptr_t me, /* in */ uint16_t index, /* in */ struct IEcoInterfaceDirectoryEntry1* pIEntry);
     uint16_t (ECOCALLMETHOD *get_NumInterfaces)(/* in */ IEcoInterfaceDirectory1Ptr_t me);
-    int16_t (ECOCALLMETHOD *GetEntryAtIndex)(/* in */ IEcoInterfaceDirectory1Ptr_t me, uint16_t index, IEcoInterfaceDirectoryEntry1** ppEntry);
-    int16_t (ECOCALLMETHOD *GetEntryByIID)(/* in */ IEcoInterfaceDirectory1Ptr_t me, const UGUID* riid, IEcoInterfaceDirectoryEntry1** ppEntry);
+    int16_t (ECOCALLMETHOD *GetEntryAtIndex)(/* in */ IEcoInterfaceDirectory1Ptr_t me, /* in */ uint16_t index, /* out */ IEcoInterfaceDirectoryEntry1** ppEntry);
+    int16_t (ECOCALLMETHOD *GetEntryByIID)(/* in */ IEcoInterfaceDirectory1Ptr_t me, /* in */ const UGUID* riid, /* out */ IEcoInterfaceDirectoryEntry1** ppEntry);
 
-     /* Работа с аннотациями */
+    /* Работа с аннотациями */
     uint16_t (ECOCALLMETHOD *get_AnnotationCount)(/* in */ IEcoInterfaceDirectory1Ptr_t me);
-    int16_t (ECOCALLMETHOD *GetAnnotationAtIndex)(/* in */ IEcoInterfaceDirectory1Ptr_t me, uint16_t index, struct IEcoTypeLibAnnotation1** ppAnnotation);
-    int16_t (ECOCALLMETHOD *GetAnnotationByKey)(/* in */ IEcoInterfaceDirectory1Ptr_t me, const char* key, char** ppValue);
+    int16_t (ECOCALLMETHOD *GetAnnotationAtIndex)(/* in */ IEcoInterfaceDirectory1Ptr_t me, /* in */ uint16_t index, /* out */ struct IEcoTypeLibAnnotation1** ppAnnotation);
+    int16_t (ECOCALLMETHOD *GetAnnotationByKey)(/* in */ IEcoInterfaceDirectory1Ptr_t me, /* in */ const char_t* key, /* out */ char_t** ppValue);
    
 } IEcoInterfaceDirectory1VTbl, *IEcoInterfaceDirectory1VTblPtr_t;
 

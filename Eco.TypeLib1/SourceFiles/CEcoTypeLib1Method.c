@@ -113,7 +113,7 @@ static uint32_t ECOCALLMETHOD CEcoTypeLib1Method_01434A0B_Release(/* in */ IEcoM
 /*
  *
  * <summary>
- *   MyFunction Function
+ *   get_Name Function
  * </summary>
  *
  * <description>
@@ -121,27 +121,188 @@ static uint32_t ECOCALLMETHOD CEcoTypeLib1Method_01434A0B_Release(/* in */ IEcoM
  * </description>
  *
  */
-static int16_t ECOCALLMETHOD CEcoTypeLib1Method_01434A0B_MyFunction(/* in */ IEcoMethodDescriptor1Ptr_t me, /* in */ char_t* Name, /* out */ char_t** copyName) {
+static int16_t ECOCALLMETHOD CEcoTypeLib1Method_01434A0B_get_Name(/* in */ IEcoMethodDescriptor1Ptr_t me, /* out */ char_t** ppName) {
     CEcoTypeLib1Method_01434A0B* pCMe = (CEcoTypeLib1Method_01434A0B*)me;
-    int16_t index = 0;
 
-    /* Pointer Validation */
-    if (me == 0 || Name == 0 || copyName == 0) {
+    if (me == 0 || ppName == 0) {
         return ERR_ECO_POINTER;
     }
 
-    /* Copying the string */
-    while(Name[index] != 0) {
-        index++;
-    }
-    pCMe->m_Name = (char_t*)pCMe->m_pIMem->pVTbl->Alloc(pCMe->m_pIMem, index + 1);
-    index = 0;
-    while(Name[index] != 0) {
-        pCMe->m_Name[index] = Name[index];
-        index++;
-    }
-    *copyName = pCMe->m_Name;
+    *ppName = pCMe->m_Name;
+    return ERR_ECO_SUCCESES;
+}
 
+/*
+ *
+ * <summary>
+ *   set_Name Function
+ * </summary>
+ *
+ * <description>
+ *   Function
+ * </description>
+ *
+ */
+static int16_t ECOCALLMETHOD CEcoTypeLib1Method_01434A0B_set_Name(/* in */ IEcoMethodDescriptor1Ptr_t me, /* in */ char_t* name) {
+    CEcoTypeLib1Method_01434A0B* pCMe = (CEcoTypeLib1Method_01434A0B*)me;
+
+    if (me == 0) {
+        return ERR_ECO_POINTER;
+    }
+
+    pCMe->m_Name = name;
+    return ERR_ECO_SUCCESES;
+}
+
+/*
+ *
+ * <summary>
+ *   get_Flags Function
+ * </summary>
+ *
+ * <description>
+ *   Function
+ * </description>
+ *
+ */
+static uint8_t ECOCALLMETHOD CEcoTypeLib1Method_01434A0B_get_Flags(/* in */ IEcoMethodDescriptor1Ptr_t me) {
+    CEcoTypeLib1Method_01434A0B* pCMe = (CEcoTypeLib1Method_01434A0B*)me;
+
+    if (me == 0) {
+        return ERR_ECO_POINTER;
+    }
+
+    return pCMe->m_Flags;
+}
+
+/*
+ *
+ * <summary>
+ *   set_Flags Function
+ * </summary>
+ *
+ * <description>
+ *   Function
+ * </description>
+ *
+ */
+static int16_t ECOCALLMETHOD CEcoTypeLib1Method_01434A0B_set_Flags(/* in */ IEcoMethodDescriptor1Ptr_t me, /* in */ uint8_t flags) {
+    CEcoTypeLib1Method_01434A0B* pCMe = (CEcoTypeLib1Method_01434A0B*)me;
+
+    if (me == 0) {
+        return ERR_ECO_POINTER;
+    }
+
+    pCMe->m_Flags = flags;
+    return ERR_ECO_SUCCESES;
+}
+
+/*
+ *
+ * <summary>
+ *   AddParameter Function
+ * </summary>
+ *
+ * <description>
+ *   Function
+ * </description>
+ *
+ */
+static int16_t ECOCALLMETHOD CEcoTypeLib1Method_01434A0B_AddParameter(/* in */ IEcoMethodDescriptor1Ptr_t me, /* in */ struct IEcoParamDescriptor1* pIParam) {
+    CEcoTypeLib1Method_01434A0B* pCMe = (CEcoTypeLib1Method_01434A0B*)me;
+
+    if (me == 0) {
+        return ERR_ECO_POINTER;
+    }
+
+    pCMe->m_pIParamList->pVTbl->Add(pCMe->m_pIParamList, (void*)pIParam);
+    return ERR_ECO_SUCCESES;
+}
+
+/*
+ *
+ * <summary>
+ *   get_ParamCount Function
+ * </summary>
+ *
+ * <description>
+ *   Function
+ * </description>
+ *
+ */
+static uint8_t ECOCALLMETHOD CEcoTypeLib1Method_01434A0B_get_ParamCount(/* in */ IEcoMethodDescriptor1Ptr_t me) {
+    CEcoTypeLib1Method_01434A0B* pCMe = (CEcoTypeLib1Method_01434A0B*)me;
+
+    if (me == 0) {
+        return ERR_ECO_POINTER;
+    }
+
+    return pCMe->m_pIParamList->pVTbl->Count(pCMe->m_pIParamList);
+}
+
+/*
+ *
+ * <summary>
+ *   GetParamAtIndex Function
+ * </summary>
+ *
+ * <description>
+ *   Function
+ * </description>
+ *
+ */
+static int16_t ECOCALLMETHOD CEcoTypeLib1Method_01434A0B_GetParamAtIndex(/* in */ IEcoMethodDescriptor1Ptr_t me, /* in */ uint8_t index, /* out */ struct IEcoParamDescriptor1** ppIParam) {
+    CEcoTypeLib1Method_01434A0B* pCMe = (CEcoTypeLib1Method_01434A0B*)me;
+
+    if (me == 0 || ppIParam == 0) {
+        return ERR_ECO_POINTER;
+    }
+
+    *ppIParam = (struct IEcoParamDescriptor1*) pCMe->m_pIParamList->pVTbl->Item(pCMe->m_pIParamList, index);
+    return ERR_ECO_SUCCESES;
+}
+
+/*
+ *
+ * <summary>
+ *   set_Result Function
+ * </summary>
+ *
+ * <description>
+ *   Function
+ * </description>
+ *
+ */
+static int16_t ECOCALLMETHOD CEcoTypeLib1Method_01434A0B_set_Result(/* in */ IEcoMethodDescriptor1Ptr_t me, /* in */ struct IEcoParamDescriptor1* pIParam) {
+    CEcoTypeLib1Method_01434A0B* pCMe = (CEcoTypeLib1Method_01434A0B*)me;
+
+    if (me == 0) {
+        return ERR_ECO_POINTER;
+    }
+
+    pCMe->m_pIParamResult = pIParam;
+    return ERR_ECO_SUCCESES;
+}
+
+/*
+ *
+ * <summary>
+ *   get_Result Function
+ * </summary>
+ *
+ * <description>
+ *   Function
+ * </description>
+ *
+ */
+static int16_t ECOCALLMETHOD CEcoTypeLib1Method_01434A0B_get_Result(/* in */ IEcoMethodDescriptor1Ptr_t me, /* out */ struct IEcoParamDescriptor1** ppIParam) {
+    CEcoTypeLib1Method_01434A0B* pCMe = (CEcoTypeLib1Method_01434A0B*)me;
+
+    if (me == 0 || ppIParam == 0) {
+        return ERR_ECO_POINTER;
+    }
+
+    *ppIParam = pCMe->m_pIParamResult;
     return ERR_ECO_SUCCESES;
 }
 
@@ -191,6 +352,8 @@ static int16_t ECOCALLMETHOD initCEcoTypeLib1Method_01434A0B(/*in*/ CEcoTypeLib1
         result = ERR_ECO_GET_MEMORY_ALLOCATOR;
     }
 
+    pIBus->pVTbl->QueryComponent(pIBus, &CID_EcoList1, 0, &IID_IEcoList1, (void**) &pCMe->m_pIParamList);
+
 
 
     /* Freeing */
@@ -239,8 +402,9 @@ static void ECOCALLMETHOD deleteCEcoTypeLib1Method_01434A0B(/* in */ CEcoTypeLib
     if (pCMe != 0 ) {
         pIMem = pCMe->m_pIMem;
         /* Freeing */
-        if ( pCMe->m_Name != 0 ) {
-            pIMem->pVTbl->Free(pIMem, pCMe->m_Name);
+        if ( pCMe->m_pIParamList != 0 ) {
+            pCMe->m_pIParamList->pVTbl->Clear(pCMe->m_pIParamList);
+            pCMe->m_pIParamList->pVTbl->Release(pCMe->m_pIParamList);
         }
         if ( pCMe->m_pISys != 0 ) {
             pCMe->m_pISys->pVTbl->Release(pCMe->m_pISys);
@@ -254,7 +418,16 @@ static void ECOCALLMETHOD deleteCEcoTypeLib1Method_01434A0B(/* in */ CEcoTypeLib
 IEcoMethodDescriptor1VTbl g_x74D2637AE0CE41B18876038E40CBC64EVTbl_01434A0B = {
     CEcoTypeLib1Method_01434A0B_QueryInterface,
     CEcoTypeLib1Method_01434A0B_AddRef,
-    CEcoTypeLib1Method_01434A0B_Release
+    CEcoTypeLib1Method_01434A0B_Release,
+    CEcoTypeLib1Method_01434A0B_get_Name,
+    CEcoTypeLib1Method_01434A0B_set_Name,
+    CEcoTypeLib1Method_01434A0B_get_Flags,
+    CEcoTypeLib1Method_01434A0B_set_Flags,
+    CEcoTypeLib1Method_01434A0B_AddParameter,
+    CEcoTypeLib1Method_01434A0B_get_ParamCount,
+    CEcoTypeLib1Method_01434A0B_GetParamAtIndex,
+    CEcoTypeLib1Method_01434A0B_set_Result,
+    CEcoTypeLib1Method_01434A0B_get_Result
 };
 
 
@@ -268,5 +441,8 @@ CEcoTypeLib1Method_01434A0B g_xCEcoTypeLib1Method_01434A0B = {
     1, /* m_cRef */
     0, /* m_pISys */
     0, /* m_pISys */
-    0  /* m_Name */
+    0, /* m_Name */
+    0, /* m_Flags */
+    0, /* m_pIParamList */
+    0  /* m_pIParamResult */
 };

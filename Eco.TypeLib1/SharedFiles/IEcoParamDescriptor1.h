@@ -43,12 +43,14 @@ typedef struct IEcoParamDescriptor1VTbl {
     /* IEcoParamDescriptor1 */
  
     /* get_/set_ для базовых свойств */
-    int16_t (ECOCALLMETHOD *get_Name)(/* in */ IEcoParamDescriptor1Ptr_t me, char** ppName);
-    int16_t (ECOCALLMETHOD *get_Type)(/* in */ IEcoParamDescriptor1Ptr_t me, uint16_t* pTypeTag, UGUID* pIID);
+    int16_t (ECOCALLMETHOD *get_Name)(/* in */ IEcoParamDescriptor1Ptr_t me, /* out */ char_t** ppName);
+    int16_t (ECOCALLMETHOD *set_Name)(/* in */ IEcoParamDescriptor1Ptr_t me, /* in */ char_t* name);
+    int16_t (ECOCALLMETHOD *get_Type)(/* in */ IEcoParamDescriptor1Ptr_t me, /* out */ uint16_t* pTypeTag);
+    int16_t (ECOCALLMETHOD *set_Type)(/* in */ IEcoParamDescriptor1Ptr_t me, /* in */ uint16_t typeTag);
     
     /* Работа с флагами через маску */
     uint8_t (ECOCALLMETHOD *get_Flags)(/* in */ IEcoParamDescriptor1Ptr_t me);
-    int16_t (ECOCALLMETHOD *set_Flags)(/* in */ IEcoParamDescriptor1Ptr_t me, uint8_t flags);
+    int16_t (ECOCALLMETHOD *set_Flags)(/* in */ IEcoParamDescriptor1Ptr_t me, /* in */ uint8_t flags);
 
 } IEcoParamDescriptor1VTbl, *IEcoParamDescriptor1VTblPtr_t;
 
