@@ -6,10 +6,32 @@ Use these decorators on classes that contain field annotations.
 import inspect
 from typing import TypeVar, dataclass_transform
 
-from eco_python2acom.decorators.utils import eco_class
+from eco_python2acom.decorators.utils import _eco_class
 from eco_python2acom.types.core import CStructure, CUnion
 
 C = TypeVar("C", bound=type)
+
+
+def _validate_layout_body(cls: type) -> None:
+    """Validate body of a `@model` or `@union` class.
+
+    Args:
+        cls: The class being decorated.
+
+    Raises:
+        TypeError: If a bare attribute without annotation is found.
+    """
+    annotations = getattr(cls, "__annotations__", {}) or {}
+    for key, value in cls.__dict__.items():
+        if key.startswith("__") and key.endswith("__"):
+            continue
+        if key in annotations:
+            continue
+        if isinstance(value, classmethod | staticmethod | property):
+            continue
+        if callable(value):
+            continue
+        raise TypeError(f"'{cls.__name__}.{key}' has no type annotation")
 
 
 @dataclass_transform()
@@ -28,11 +50,12 @@ def model(cls: C) -> C:
     Raises:
         TypeError: If the class uses multiple inheritance or inherits from a non-structure base.
     """
-    return eco_class(
+    return _eco_class(
         cls,
         base=CStructure,
         frame=inspect.currentframe().f_back,
         extra={"_eco_model_": True},
+        validator=_validate_layout_body,
     )  # type: ignore
 
 
@@ -52,11 +75,12 @@ def union(cls: C) -> C:
     Raises:
         TypeError: If the class uses multiple inheritance or inherits from a non-structure base.
     """
-    return eco_class(
+    return _eco_class(
         cls,
         base=CUnion,
         frame=inspect.currentframe().f_back,
         extra={"_eco_union_": True},
+        validator=_validate_layout_body,
     )  # type: ignore
 
 

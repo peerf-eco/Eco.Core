@@ -9,7 +9,7 @@ from __future__ import annotations
 from collections.abc import Iterable, Iterator
 from typing import TYPE_CHECKING, Generic, TypeVar, overload
 
-from eco_python2acom.types.core import TYPE_NAMES, CLayout
+from eco_python2acom.types.core import TYPE_NAMES
 from eco_python2acom.types.utils import addressof
 
 T = TypeVar("T")
@@ -162,10 +162,9 @@ else:
             if not isinstance(element_type, type):
                 raise TypeError(f"Array element type must be a type, got '{element_type}'")
 
-            if issubclass(element_type, CLayout) and element_type not in CLayout.__args__:
-                from eco_python2acom.decorators.utils import finalize
+            from eco_python2acom.decorators.utils import finalize
 
-                finalize(element_type)
+            finalize(element_type)
 
             # Check cache
             key = (element_type, size)

@@ -43,18 +43,11 @@ def lib_filename_to_guid(filename: str) -> Optional[UGUID]:
     Returns:
         UGUID if parsing succeeds, None otherwise.
     """
-    lib_filename = Path(filename)
-
-    if lib_filename.suffix.lower() != LIB_EXTENSION:
+    if not is_eco_lib(filename):
         return None
-    try:
-        data = bytes.fromhex(lib_filename.stem)
-        if len(data) != 0x10:
-            return None
 
-        return UGUID(data=data)
-    except (ValueError, TypeError):
-        return None
+    data = bytes.fromhex(Path(filename).stem)
+    return UGUID(data=data)
 
 
 def is_eco_lib(filename: str) -> bool:

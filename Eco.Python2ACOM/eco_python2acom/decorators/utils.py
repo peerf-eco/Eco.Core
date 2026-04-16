@@ -3,8 +3,9 @@
 This module provides helper tools for building EcoOS structure and interface classes.
 """
 
+import inspect
 from collections.abc import Callable
-from types import FrameType, NoneType
+from types import FrameType, NoneType, UnionType
 from typing import Any, ClassVar, Optional, Union, get_args, get_origin, get_type_hints
 
 from eco_python2acom.types.core import CData, CFuncType, CLayout, Int16, Void
@@ -47,7 +48,7 @@ def normalize(hint: type) -> type:
     Raises:
         TypeError: If union has more than one non-None type.
     """
-    if get_origin(hint) is Union:
+    if get_origin(hint) in (Union, UnionType):
         args = [arg for arg in get_args(hint) if arg is not type(None)]
         if len(args) != 1:
             raise TypeError(f"Invalid EcoOS union type: '{hint}'")
@@ -76,7 +77,7 @@ def _resolve_fields(cls: type) -> list[tuple[str, type]]:
     )
 
     return [
-        (name, validate(normalize(hints[name])))
+        (name, finalize(validate(normalize(hints[name]))))
         for name in getattr(cls, "__annotations__", {})
         if get_origin(hints.get(name)) is not ClassVar
     ]
@@ -102,7 +103,7 @@ def _resolve_methods(cls: type) -> list[tuple[str, type]]:
     for name, value in cls.__dict__.items():
         if name.startswith("__") and name.endswith("__"):
             continue
-        if not callable(value):
+        if not inspect.isfunction(value):
             continue
 
         hints = get_type_hints(
@@ -113,10 +114,12 @@ def _resolve_methods(cls: type) -> list[tuple[str, type]]:
 
         return_type = validate(normalize(hints.pop("return", Int16)))
         param_names, param_types = [], []
-        for key, hint in hints.items():
-            if key not in ("self", "cls"):
-                param_types.append(validate(normalize(hint)))
-                param_names.append(key)
+
+        params = iter(inspect.signature(value).parameters.values())
+        next(params)  # Skip implicit 'self' / instance parameter
+        for param in params:
+            param_types.append(validate(normalize(hints[param.name])))
+            param_names.append(param.name)
 
         func_type = CFuncType(return_type, Ptr[Void], *param_types)  # type: ignore
         field_name = f"_func_{name}"
@@ -221,20 +224,26 @@ def _install_dispatchers(cls: type, methods: list[tuple[str, type]]) -> None:
 # -----------------------------------------------------------------------------
 
 
-def finalize(cls: type) -> None:
-    """Finalize an EcoOS structure or interface class.
+def finalize(cls: type) -> type:
+    """Finalize an EcoOS structure, union, or interface class.
 
     Resolves field and method annotations, validates the class layout,
-    and prepares it for use with EcoOS.
+    and prepares it for use with EcoOS. No-op for non-layout types.
 
     Args:
         cls: The class to finalize.
 
+    Returns:
+        The same class, finalized if applicable.
+
     Raises:
         TypeError: If field or method types cannot be resolved.
     """
+    if not (isinstance(cls, type) and issubclass(cls, CLayout) and cls not in CLayout.__args__):
+        return cls
+
     if cls.__dict__.get("_eco_ready_"):
-        return
+        return cls
 
     methods = _apply_resolver(cls, "_eco_interface_", _resolve_methods)
     model_fields = _apply_resolver(cls, "_eco_model_", _resolve_fields)
@@ -246,12 +255,33 @@ def finalize(cls: type) -> None:
     if methods:
         _install_dispatchers(cls, methods)
 
+    return cls
+
 
 # -----------------------------------------------------------------------------
 # Metaclass for EcoOS structures and unions
 # -----------------------------------------------------------------------------
 
 _eco_layout_meta_cache: dict[type, type] = {}
+
+
+def _inherits_dunder(bases: tuple[type, ...], name: str) -> bool:
+    """Check whether a dunder method is inherited from base classes.
+
+    Args:
+        bases: Tuple of base classes to inspect.
+        name: Name of the dunder method.
+
+    Returns:
+        True if the method is found in any base class in the MRO, False otherwise.
+    """
+    for base in bases:
+        for cls in base.__mro__:
+            if cls is object:
+                continue
+            if name in cls.__dict__:
+                return True
+    return False
 
 
 def _struct_eq(self, other: Any) -> bool:
@@ -280,11 +310,8 @@ def _struct_repr(self) -> str:
     for field_name, _ in fields:
         if field_name.startswith("_func_"):
             continue
-        try:
-            value = getattr(self, field_name)
-            field_strs.append(f"{field_name}={value!r}")
-        except Exception:
-            field_strs.append(f"{field_name}=<error>")
+        value = getattr(self, field_name)
+        field_strs.append(f"{field_name}={value!r}")
 
     return f"{cls.__name__}({', '.join(field_strs)})"
 
@@ -316,12 +343,11 @@ def _get_eco_layout_meta(base: type) -> type:
         ) -> type:
             """Create the class and finalize bases."""
             for base in reversed(bases):
-                if issubclass(base, CLayout) and base not in CLayout.__args__:
-                    finalize(base)
+                finalize(base)
 
-            if "__eq__" not in namespace:
+            if "__eq__" not in namespace and not _inherits_dunder(bases, "__eq__"):
                 namespace["__eq__"] = _struct_eq
-            if "__repr__" not in namespace:
+            if "__repr__" not in namespace and not _inherits_dunder(bases, "__repr__"):
                 namespace["__repr__"] = _struct_repr
 
             return super().__new__(cls, name, bases, namespace, **kwargs)  # type: ignore
@@ -426,11 +452,12 @@ def _register_class(frame: FrameType, cls: type) -> None:
     cls.__decl_globalns__ = frame.f_globals  # type: ignore
 
 
-def eco_class(
+def _eco_class(
     cls: type,
     base: type,
     frame: FrameType | None,
     extra: dict[str, Any] | None = None,
+    validator: Callable[[type], None] | None = None,
 ) -> type:
     """Create an `EcoLayoutMeta` class from a decorated class.
 
@@ -439,10 +466,14 @@ def eco_class(
         base: The default base type.
         frame: Caller's frame for namespace registration.
         extra: Additional attributes to add to namespace.
+        validator: Optional function validating the class body before creation.
 
     Returns:
         The new class created by `EcoLayoutMeta`.
     """
+    if validator is not None:
+        validator(cls)
+
     base_cls = _resolve_base(cls, base)
     namespace = _build_namespace(cls, extra)
     meta = _get_eco_layout_meta(base)
@@ -454,4 +485,4 @@ def eco_class(
     return new_class  # type: ignore
 
 
-__all__ = ["eco_class", "finalize", "normalize", "validate"]
+__all__ = ["finalize", "normalize", "validate"]
