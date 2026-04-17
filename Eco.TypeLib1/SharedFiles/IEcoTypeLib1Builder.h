@@ -138,6 +138,14 @@ typedef struct IEcoTypeLib1BuilderVTbl {
         /* out */ struct IEcoConstDescriptor1** ppIConst
     );
 
+    /* Создание аннотации */
+    int16_t (ECOCALLMETHOD *CreateAnnotation)(
+        /* in */ IEcoTypeLib1BuilderPtr_t me, 
+        /* in */ const char_t* key,
+        /* in */ const char_t* value,
+        /* out */ struct IEcoAnnotationDescriptor1** ppIAnnotation
+    );
+
     /* Создание дескриптора интерфейса */
     int16_t (ECOCALLMETHOD *CreateInterfaceDescriptor)(
         /* in */ IEcoTypeLib1BuilderPtr_t me,

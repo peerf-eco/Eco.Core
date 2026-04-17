@@ -25,6 +25,7 @@
 #include "CEcoTypeLib1Parameter.h"
 #include "CEcoTypeLib1Method.h"
 #include "CEcoTypeLib1Const.h"
+#include "CEcoTypeLib1Annotation.h"
 #include "CEcoTypeLib1Interface.h"
 #include "CEcoTypeLib1DirectoryEntry.h"
 #include "CEcoTypeLib1Directory.h"
@@ -54,6 +55,7 @@ const uint32_t ECO_TYPE_SIZE[] = {
 extern CEcoTypeLib1Parameter_01434A0B g_xCEcoTypeLib1Parameter_01434A0B;
 extern CEcoTypeLib1Method_01434A0B g_xCEcoTypeLib1Method_01434A0B;
 extern CEcoTypeLib1Const_01434A0B g_xCEcoTypeLib1Const_01434A0B;
+extern CEcoTypeLib1Annotation_01434A0B g_xCEcoTypeLib1Annotation_01434A0B;
 extern CEcoTypeLib1Interface_01434A0B g_xCEcoTypeLib1Interface_01434A0B;
 extern CEcoTypeLib1DirectoryEntry_01434A0B g_xCEcoTypeLib1DirectoryEntry_01434A0B;
 extern CEcoTypeLib1Directory_01434A0B g_xCEcoTypeLib1Directory_01434A0B;
@@ -80,6 +82,14 @@ static void AllocEcoTypeLib1Const(IEcoMemoryAllocator1* pIMem, IEcoUnknown* pIUn
     pCConst->Create(pCConst, pIUnkSystem, 0);
     pCConst->Init(pCConst, pIUnkSystem);
     *ppIConst = (IEcoConstDescriptor1*) pCConst;
+}
+
+static void AllocEcoTypeLib1Annotation(IEcoMemoryAllocator1* pIMem, IEcoUnknown* pIUnkSystem, IEcoAnnotationDescriptor1** ppIAnnotation) {
+    CEcoTypeLib1Annotation_01434A0B* pCAnnotation = (CEcoTypeLib1Annotation_01434A0B*) pIMem->pVTbl->Alloc(pIMem, sizeof(CEcoTypeLib1Annotation_01434A0B));
+    pIMem->pVTbl->Copy(pIMem, (void*)pCAnnotation, &g_xCEcoTypeLib1Annotation_01434A0B, sizeof(CEcoTypeLib1Annotation_01434A0B));
+    pCAnnotation->Create(pCAnnotation, pIUnkSystem, 0);
+    pCAnnotation->Init(pCAnnotation, pIUnkSystem);
+    *ppIAnnotation = (IEcoAnnotationDescriptor1*) pCAnnotation;
 }
 
 static void AllocEcoTypeLib1Interface(IEcoMemoryAllocator1* pIMem, IEcoUnknown* pIUnkSystem, IEcoInterfaceDescriptor1** ppIDesc) {
@@ -246,6 +256,30 @@ static int16_t ECOCALLMETHOD CEcoTypeLib1Builder_01434A0B_CreateMethod(/* in */ 
  *
  * <summary>
  *   CreateConstant Function
+ * </summary>
+ *
+ * <description>
+ *   Function
+ * </description>
+ *
+ */
+static int16_t ECOCALLMETHOD CEcoTypeLib1Builder_01434A0B_CreateAnnotation(/* in */ IEcoTypeLib1BuilderPtr_t me, /* in */ const char_t* key, /* in */ const char_t* value, /* out */ struct IEcoAnnotationDescriptor1** ppIAnnotation) {
+    CEcoTypeLib1Builder_01434A0B* pCMe = (CEcoTypeLib1Builder_01434A0B*)me;
+
+    if (me == 0 || ppIAnnotation == 0) {
+        return ERR_ECO_POINTER;
+    }
+
+    AllocEcoTypeLib1Annotation(pCMe->m_pIMem, pCMe->m_pISys, ppIAnnotation);
+    (*ppIAnnotation)->pVTbl->set_Key(*ppIAnnotation, key);
+    (*ppIAnnotation)->pVTbl->set_Value(*ppIAnnotation, value);
+    return ERR_ECO_SUCCESES;
+}
+
+/*
+ *
+ * <summary>
+ *   CreateAnnotation Function
  * </summary>
  *
  * <description>
@@ -446,6 +480,7 @@ IEcoTypeLib1BuilderVTbl g_x8B8B4F5C12BB4E448C694F35D95BABA1VTbl_01434A0B = {
     CEcoTypeLib1Builder_01434A0B_CreateParameter,
     CEcoTypeLib1Builder_01434A0B_CreateMethod,
     CEcoTypeLib1Builder_01434A0B_CreateConstant,
+    CEcoTypeLib1Builder_01434A0B_CreateAnnotation,
     CEcoTypeLib1Builder_01434A0B_CreateInterfaceDescriptor,
     CEcoTypeLib1Builder_01434A0B_CreateInterfaceDirectoryEntry,
     CEcoTypeLib1Builder_01434A0B_CreateInterfaceDirectory

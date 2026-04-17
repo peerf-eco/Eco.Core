@@ -167,7 +167,7 @@ void SaveListTypeLib(IEcoTypeLib1* pTypeLib, const char* fileName) {
 
     /* --- Описываем метод: uint32_t Count() --- */
     pBuilder->pVTbl->CreateMethod(pBuilder, "Count", 0, &pMethod);
-    pBuilder->pVTbl->CreateParameter(pBuilder, "result", ECO_TYPE_UINT32, ECO_PARAM_OUT, &pParam);
+    pBuilder->pVTbl->CreateParameter(pBuilder, "", ECO_TYPE_UINT32, ECO_PARAM_OUT, &pParam);
     pMethod->pVTbl->set_Result(pMethod, pParam);
     pDesc->pVTbl->AddMethod(pDesc, pMethod);
 
@@ -175,7 +175,7 @@ void SaveListTypeLib(IEcoTypeLib1* pTypeLib, const char* fileName) {
     pBuilder->pVTbl->CreateMethod(pBuilder, "Item", 0, &pMethod);
     pBuilder->pVTbl->CreateParameter(pBuilder, "index", ECO_TYPE_UINT32, ECO_PARAM_IN, &pParam);
     pMethod->pVTbl->AddParameter(pMethod, pParam);
-    pBuilder->pVTbl->CreateParameter(pBuilder, "result", ECO_TYPE_VOIDPTR, ECO_PARAM_OUT, &pParam);
+    pBuilder->pVTbl->CreateParameter(pBuilder, "", ECO_TYPE_VOIDPTR, ECO_PARAM_OUT, &pParam);
     pMethod->pVTbl->set_Result(pMethod, pParam);
     pDesc->pVTbl->AddMethod(pDesc, pMethod);
 
@@ -183,7 +183,7 @@ void SaveListTypeLib(IEcoTypeLib1* pTypeLib, const char* fileName) {
     pBuilder->pVTbl->CreateMethod(pBuilder, "Add", 0, &pMethod);
     pBuilder->pVTbl->CreateParameter(pBuilder, "value", ECO_TYPE_VOIDPTR, ECO_PARAM_IN, &pParam);
     pMethod->pVTbl->AddParameter(pMethod, pParam);
-    pBuilder->pVTbl->CreateParameter(pBuilder, "result", ECO_TYPE_UINT32, ECO_PARAM_OUT, &pParam);
+    pBuilder->pVTbl->CreateParameter(pBuilder, "", ECO_TYPE_UINT32, ECO_PARAM_OUT, &pParam);
     pMethod->pVTbl->set_Result(pMethod, pParam);
     pDesc->pVTbl->AddMethod(pDesc, pMethod);
 
@@ -191,7 +191,7 @@ void SaveListTypeLib(IEcoTypeLib1* pTypeLib, const char* fileName) {
     pBuilder->pVTbl->CreateMethod(pBuilder, "IndexOf", 0, &pMethod);
     pBuilder->pVTbl->CreateParameter(pBuilder, "value", ECO_TYPE_VOIDPTR, ECO_PARAM_IN, &pParam);
     pMethod->pVTbl->AddParameter(pMethod, pParam);
-    pBuilder->pVTbl->CreateParameter(pBuilder, "result", ECO_TYPE_UINT32, ECO_PARAM_OUT, &pParam);
+    pBuilder->pVTbl->CreateParameter(pBuilder, "", ECO_TYPE_UINT32, ECO_PARAM_OUT, &pParam);
     pMethod->pVTbl->set_Result(pMethod, pParam);
     pDesc->pVTbl->AddMethod(pDesc, pMethod);
 
@@ -201,7 +201,7 @@ void SaveListTypeLib(IEcoTypeLib1* pTypeLib, const char* fileName) {
     pMethod->pVTbl->AddParameter(pMethod, pParam);
     pBuilder->pVTbl->CreateParameter(pBuilder, "value", ECO_TYPE_VOIDPTR, ECO_PARAM_IN, &pParam);
     pMethod->pVTbl->AddParameter(pMethod, pParam);
-    pBuilder->pVTbl->CreateParameter(pBuilder, "result", ECO_TYPE_VOID, ECO_PARAM_OUT, &pParam);
+    pBuilder->pVTbl->CreateParameter(pBuilder, "", ECO_TYPE_VOID, ECO_PARAM_OUT, &pParam);
     pMethod->pVTbl->set_Result(pMethod, pParam);
     pDesc->pVTbl->AddMethod(pDesc, pMethod);
 
@@ -209,7 +209,7 @@ void SaveListTypeLib(IEcoTypeLib1* pTypeLib, const char* fileName) {
     pBuilder->pVTbl->CreateMethod(pBuilder, "Remove", 0, &pMethod);
     pBuilder->pVTbl->CreateParameter(pBuilder, "value", ECO_TYPE_VOIDPTR, ECO_PARAM_IN, &pParam);
     pMethod->pVTbl->AddParameter(pMethod, pParam);
-    pBuilder->pVTbl->CreateParameter(pBuilder, "result", ECO_TYPE_VOID, ECO_PARAM_OUT, &pParam);
+    pBuilder->pVTbl->CreateParameter(pBuilder, "", ECO_TYPE_VOID, ECO_PARAM_OUT, &pParam);
     pMethod->pVTbl->set_Result(pMethod, pParam);
     pDesc->pVTbl->AddMethod(pDesc, pMethod);
 
@@ -217,13 +217,13 @@ void SaveListTypeLib(IEcoTypeLib1* pTypeLib, const char* fileName) {
     pBuilder->pVTbl->CreateMethod(pBuilder, "RemoveAt", 0, &pMethod);
     pBuilder->pVTbl->CreateParameter(pBuilder, "index", ECO_TYPE_UINT32, ECO_PARAM_IN, &pParam);
     pMethod->pVTbl->AddParameter(pMethod, pParam);
-    pBuilder->pVTbl->CreateParameter(pBuilder, "result", ECO_TYPE_VOID, ECO_PARAM_OUT, &pParam);
+    pBuilder->pVTbl->CreateParameter(pBuilder, "", ECO_TYPE_VOID, ECO_PARAM_OUT, &pParam);
     pMethod->pVTbl->set_Result(pMethod, pParam);
     pDesc->pVTbl->AddMethod(pDesc, pMethod);
 
     /* --- Описываем метод: void Clear() --- */
     pBuilder->pVTbl->CreateMethod(pBuilder, "Clear", 0, &pMethod);
-    pBuilder->pVTbl->CreateParameter(pBuilder, "result", ECO_TYPE_VOID, ECO_PARAM_OUT, &pParam);
+    pBuilder->pVTbl->CreateParameter(pBuilder, "", ECO_TYPE_VOID, ECO_PARAM_OUT, &pParam);
     pMethod->pVTbl->set_Result(pMethod, pParam);
     pDesc->pVTbl->AddMethod(pDesc, pMethod);
 

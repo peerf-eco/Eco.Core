@@ -52,6 +52,7 @@ typedef struct CEcoTypeLib1Directory_01434A0B {
 
     /* Instance data */
     IEcoList1* m_pIEntryList;
+    IEcoList1* m_pIAnnotationList;
 
 } CEcoTypeLib1Directory_01434A0B;
 

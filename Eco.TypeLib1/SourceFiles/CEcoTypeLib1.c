@@ -243,6 +243,27 @@ static int16_t LoadMethod(IEcoTypeLib1File* pIFile, IEcoTypeLib1Builder* pIBuild
     return (*ppIMethod)->pVTbl->set_Result(*ppIMethod, pIParam);
 }
 
+static int16_t LoadAnnotation(IEcoTypeLib1File* pIFile, IEcoTypeLib1Builder* pIBuilder, uint32_t* pOffset, IEcoAnnotationDescriptor1** ppIAnnotation) {
+    char_t* key = 0;
+    char_t* value = 0;
+    uint32_t size = 0;
+    int16_t result = 0;
+
+    result = pIFile->pVTbl->ReadString(pIFile, *pOffset, &size, &key);
+    if (result != 0) {
+        return result;
+    }
+    *pOffset += size;
+
+    result = pIFile->pVTbl->ReadString(pIFile, *pOffset, &size, &value);
+    if (result != 0) {
+        return result;
+    }
+    *pOffset += size;
+
+    return pIBuilder->pVTbl->CreateAnnotation(pIBuilder, key, value, ppIAnnotation);
+}
+
 static int16_t LoadInterfaceDescriptor(IEcoTypeLib1File* pIFile, IEcoTypeLib1Builder* pIBuilder, IEcoMemoryAllocator1* pIMem, uint32_t* pOffset, IEcoInterfaceDescriptor1** ppIDesc) {
     uint16_t parentIndex = 0;
     uint8_t flags = 0;
@@ -400,6 +421,24 @@ static int16_t ECOCALLMETHOD CEcoTypeLib1_01434A0B_LoadFile(/* in */ IEcoTypeLib
         count--;
     }
 
+    result = pCMe->m_pIFile->pVTbl->Read(pCMe->m_pIFile, 0, 2, &count);
+    if (result != 0) {
+        goto LoadRelease;
+    }
+
+    while (count != 0) {
+        IEcoAnnotationDescriptor1* pIAnnotation = 0;
+        result = LoadAnnotation(pCMe->m_pIFile, pCMe->m_pIBuilder, &offset, &pIAnnotation);
+        if (result != 0) {
+            goto LoadRelease;
+        }
+        result = (*ppIDirectory)->pVTbl->AddAnnotation(*ppIDirectory, -1, pIAnnotation);
+        if (result != 0) {
+            goto LoadRelease;
+        }
+        count--;
+    }
+
 LoadRelease:
     pCMe->m_pIFile->pVTbl->Close(pCMe->m_pIFile);
     return result;
@@ -524,6 +563,31 @@ static int16_t SaveMethod(IEcoTypeLib1File* pIFile, uint32_t* pOffset, IEcoMetho
         return result;
     }
     return SaveParameter(pIFile, pOffset, pIParam);
+}
+
+static int16_t SaveAnnotation(IEcoTypeLib1File* pIFile, uint32_t* pOffset, IEcoAnnotationDescriptor1* pIAnnotation) {
+    char_t* string = 0;
+    uint32_t size = 0;
+    int16_t result = 0;
+
+    result = pIAnnotation->pVTbl->get_Key(pIAnnotation, &string);
+    if (result != 0) {
+        return result;
+    }
+    result = pIFile->pVTbl->WriteString(pIFile, *pOffset, &size, string);
+    if (result != 0) {
+        return result;
+    }
+    *pOffset += size;
+
+    result = pIAnnotation->pVTbl->get_Value(pIAnnotation, &string);
+    if (result != 0) {
+        return result;
+    }
+    result = pIFile->pVTbl->WriteString(pIFile, *pOffset, &size, string);
+    *pOffset += size;
+
+    return result;
 }
 
 static int16_t SaveInterfaceDescriptor(IEcoTypeLib1File* pIFile, IEcoMemoryAllocator1* pIMem, uint32_t* pOffset, IEcoInterfaceDescriptor1* pIDesc) {
@@ -675,7 +739,7 @@ static int16_t ECOCALLMETHOD CEcoTypeLib1_01434A0B_SaveFile(/* in */ IEcoTypeLib
         goto SaveRelease;
     }
 
-    while (index < count) {
+    for (index = 0; index < count; index++) {
         IEcoInterfaceDirectoryEntry1* pIEntry = 0;
         result = pIDirectory->pVTbl->GetEntryAtIndex(pIDirectory, index, &pIEntry);
         if (result != 0) {
@@ -685,7 +749,25 @@ static int16_t ECOCALLMETHOD CEcoTypeLib1_01434A0B_SaveFile(/* in */ IEcoTypeLib
         if (result != 0) {
             goto SaveRelease;
         }
-        index++;
+    }
+
+    count = pIDirectory->pVTbl->get_AnnotationCount(pIDirectory);
+    result = pCMe->m_pIFile->pVTbl->Write(pCMe->m_pIFile, offset, 2, &count);
+    if (result != 0) {
+        goto SaveRelease;
+    }
+    offset += 2;
+
+    for (index = 0; index < count; index++) {
+        IEcoAnnotationDescriptor1* pIAnnotation = 0;
+        result = pIDirectory->pVTbl->GetAnnotationAtIndex(pIDirectory, index, &pIAnnotation);
+        if (result != 0) {
+            goto SaveRelease;
+        }
+        result = SaveAnnotation(pCMe->m_pIFile, &offset, pIAnnotation);
+        if (result != 0) {
+            goto SaveRelease;
+        }
     }
 
 SaveRelease:
