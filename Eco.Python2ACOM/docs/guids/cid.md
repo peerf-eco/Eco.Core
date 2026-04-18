@@ -8,4 +8,3 @@ Component identifiers uniquely identify component implementations.
         - CID_EcoInterfaceBus1
         - CID_EcoMemoryManager1
         - CID_EcoFileSystemManagement1
-        - get_component_name

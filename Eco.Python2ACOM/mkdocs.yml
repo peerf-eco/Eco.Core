@@ -2,14 +2,14 @@ site_name: eco-python2acom
 site_description: Python bridge for ACOM component technology (EcoOS)
 repo_url: https://github.com/peerf-eco/Eco.Core
 repo_name: Eco.Core
-copyright: Copyright &copy; 2024 Sergei Vdovenkov
+copyright: Copyright &copy; 2026 Sergei Vdovenkov
 
 theme:
   name: material
   palette:
     - scheme: slate
       primary: deep purple
-      accent: deep orange
+      accent: deep purple
   font:
     text: Inter
     code: JetBrains Mono
@@ -31,6 +31,8 @@ theme:
     - search.suggest
     - content.code.copy
     - content.code.annotate
+    - content.code.select
+    - content.tabs.link
 
 extra_css:
   - stylesheets/extra.css
@@ -55,6 +57,7 @@ plugins:
             members_order: source
             docstring_style: google
             filters:
+              - "^__init__$"
               - "!^_"
             show_signature_annotations: true
             separate_signature: true
@@ -63,6 +66,17 @@ plugins:
 markdown_extensions:
   - toc:
       toc_depth: 4
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.superfences
+  - pymdownx.snippets
+  - admonition
+  - pymdownx.details
+  - attr_list
+  - md_in_html
 
 nav:
   - Home: index.md
@@ -84,7 +98,8 @@ nav:
     - EcoSystem: runtime/system.md
     - Loader: runtime/loader.md
   - Interfaces:
-    - Base: interfaces/base.md
+    - Unknown: interfaces/unknown.md
+    - Factory: interfaces/factory.md
     - System: interfaces/system.md
     - Connections: interfaces/connections.md
     - Interface Bus: interfaces/interface_bus.md

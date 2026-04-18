@@ -1,25 +1,86 @@
-/* ── Code blocks ── */
+/* ═══════════════════════════════════════════════════════════
+   Code
+   ═══════════════════════════════════════════════════════════ */
+
 .md-typeset code {
   font-size: 0.85em;
 }
 
-/* ── API: attribute values (GUID constants etc.) ── */
-.doc-attribute .doc-heading code {
-  font-size: 0.78em;
-  opacity: 0.75;
+/* Inline code in headings */
+.md-typeset h1 code,
+.md-typeset h2 code,
+.md-typeset h3 code,
+.md-typeset h4 code {
+  font-size: 0.82em;
+  background: var(--md-code-bg-color);
+  padding: 0.1em 0.3em;
+  border-radius: 4px;
 }
 
-/* ── Navigation ── */
+/* Signature block font bump */
+.doc-signature,
+.doc-md-description pre,
+[class*="doc-"] .highlight pre {
+  font-size: 1.0em;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   API docs — object name colours
+   ═══════════════════════════════════════════════════════════ */
+
+.doc-class > .doc-heading > .doc-object-name {
+  color: var(--md-primary-fg-color);
+}
+
+.doc-function > .doc-heading > .doc-object-name,
+.doc-method   > .doc-heading > .doc-object-name {
+  color: var(--md-primary-fg-color);
+}
+
+.doc-attribute > .doc-heading > .doc-object-name {
+  color: var(--md-accent-fg-color);
+}
+
+/* IID / GUID attribute values */
+.doc-attribute .doc-heading code {
+  font-size: 0.84em;
+  opacity: 0.88;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   API docs — class block separator
+   ═══════════════════════════════════════════════════════════ */
+
+.doc-class {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 1px solid var(--md-default-fg-color--lightest);
+}
+
+.doc-class .doc-heading {
+  margin-top: 1rem;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Navigation — primary
+   ═══════════════════════════════════════════════════════════ */
+
 .md-nav__title {
   font-weight: 600;
 }
 
-/* ── Admonitions ── */
-.md-typeset .admonition {
-  border-radius: 6px;
+.md-nav__link {
+  transition: color 0.15s ease;
 }
 
-/* ── Table of Contents ── */
+.md-nav__link:hover {
+  color: var(--md-accent-fg-color);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Navigation — Table of Contents (secondary)
+   ═══════════════════════════════════════════════════════════ */
+
 .md-nav--secondary .md-nav__title {
   font-size: 0.7rem;
   font-weight: 700;
@@ -33,13 +94,18 @@
 
 .md-nav--secondary .md-nav__link {
   font-size: 0.72rem;
+  transition: color 0.15s ease;
+}
+
+.md-nav--secondary .md-nav__link:hover {
+  color: var(--md-accent-fg-color);
 }
 
 .md-nav--secondary .md-nav__link--active {
   color: var(--md-accent-fg-color);
   font-weight: 600;
-  border-left: 2px solid var(--md-accent-fg-color);
-  padding-left: 0.4rem;
+  box-shadow: inset 2px 0 0 var(--md-accent-fg-color);
+  padding-left: 0.5rem;
 }
 
 .md-nav--secondary .md-nav__item .md-nav__item .md-nav__link {
@@ -48,12 +114,37 @@
   padding-left: 1rem;
 }
 
-/* ── Tables ── */
+/* ═══════════════════════════════════════════════════════════
+   Tables
+   ═══════════════════════════════════════════════════════════ */
+
 .md-typeset table:not([class]) {
   font-size: 0.85em;
+  border-radius: 6px;
+  overflow: hidden;
 }
 
 .md-typeset table:not([class]) th {
   background-color: var(--md-primary-fg-color--dark);
   color: var(--md-primary-bg-color);
+}
+
+.md-typeset table:not([class]) tr:hover td {
+  background-color: rgba(255, 255, 255, 0.03);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Admonitions
+   ═══════════════════════════════════════════════════════════ */
+
+.md-typeset .admonition {
+  border-radius: 6px;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Content area
+   ═══════════════════════════════════════════════════════════ */
+
+.md-content__inner {
+  max-width: 880px;
 }

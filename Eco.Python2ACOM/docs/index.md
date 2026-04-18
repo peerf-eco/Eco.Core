@@ -24,12 +24,12 @@ Provides declarative decorators for defining and consuming `EcoOS` interfaces fr
 from eco_python2acom.runtime.system import EcoSystem
 from eco_python2acom.types.pointer import Ptr
 from eco_python2acom.types.core import Void
-from eco_python2acom.types.utils import byref
+from eco_python2acom.types.utils import byref, cast
 
 with EcoSystem(runtime_path="/path/to/rt", user_lib_dir="/path/to/components") as eco:
     ppv = Ptr[Void]()
     eco.bus.QueryComponent(byref(cid), None, byref(iid), byref(ppv))
-    calc = IEcoCalculatorX(ppv)
+    calc = cast(ppv, Ptr[IEcoCalculatorX])
     result = calc.Addition(10, 20)
     calc.Release()
 ```

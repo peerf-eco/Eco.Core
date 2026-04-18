@@ -49,7 +49,7 @@ class UGUID:
 
         # Pass to ACOM methods via `byref`
         from eco_python2acom.types.utils import byref
-        bus.obj.QueryComponent(bus, byref(cid), None, byref(iid), byref(ppv))
+        bus.obj.QueryComponent(byref(cid), None, byref(iid), byref(ppv))
         ```
     """
 
@@ -143,8 +143,7 @@ class UGUID:
             with_hyphens: If True, add hyphens between the parts of the GUID.
 
         Returns:
-            GUID string in format "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
-            or "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" if `with_hyphens` is False.
+            GUID in format "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX" or without dashes.
         """
         data = self.to_bytes()
         if with_hyphens:

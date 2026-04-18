@@ -25,4 +25,3 @@ Interface identifiers uniquely identify interface types in the ACOM system.
         - IID_IEcoConnectionPointContainer
         - IID_IEcoEnumConnectionPoints
         - IID_IEcoEnumConnections
-        - get_interface_name
