@@ -4,19 +4,20 @@ This module provides functionality to load libraries and extract
 component factories.
 
 Classes:
-    EcoLib: Information about a loaded EcoOS library.
-    EcoLibLoader: Loader for EcoOS component libraries.
+    `EcoLib`: Information about a loaded EcoOS library.
+    `EcoLibLoader`: Loader for EcoOS component libraries.
 """
 
 from dataclasses import dataclass
 from pathlib import Path
 
-from eco_python2acom.interfaces.base import IEcoComponentFactory
+from eco_python2acom.interfaces.factory import IEcoComponentFactory
 from eco_python2acom.runtime.utils import guid_to_lib_filename
 from eco_python2acom.types.core import CDLL, Void
 from eco_python2acom.types.errors import EcoError, EcoErrorCode
 from eco_python2acom.types.guid import UGUID
 from eco_python2acom.types.pointer import Ptr
+from eco_python2acom.types.utils import cast
 
 
 @dataclass
@@ -26,12 +27,12 @@ class EcoLib:
     Attributes:
         path: Full path to the library file.
         handle: Library handle.
-        factory: The component factory interface.
+        factory: Pointer to the component factory interface.
     """
 
     path: Path
     handle: CDLL
-    factory: IEcoComponentFactory
+    factory: Ptr[IEcoComponentFactory]
 
 
 class EcoLibLoader:
@@ -73,7 +74,7 @@ class EcoLibLoader:
             get_factory = handle.GetIEcoComponentFactoryPtr
             get_factory.restype = Ptr[Void]
             get_factory.argtypes = []
-            factory_ptr = get_factory()
+            factory_ptr: Ptr[Void] = get_factory()
         except AttributeError as err:
             raise EcoError(
                 EcoErrorCode.COMPONENT_NOTFOUND,
@@ -83,7 +84,7 @@ class EcoLibLoader:
         return EcoLib(
             path=path,
             handle=handle,
-            factory=IEcoComponentFactory(factory_ptr),
+            factory=cast(factory_ptr, Ptr[IEcoComponentFactory]),
         )
 
     def load_by_cid(self, cid: UGUID, search_paths: list[Path]) -> EcoLib:
@@ -106,6 +107,4 @@ class EcoLibLoader:
             if lib_path.exists():
                 return self.load(lib_path)
 
-        raise FileNotFoundError(
-            f"Library not found for CID '{cid.to_string()}' in paths: {search_paths}"
-        )
+        raise FileNotFoundError(f"Library not found for CID '{cid}' in paths: {search_paths}")

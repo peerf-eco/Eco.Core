@@ -3,16 +3,14 @@
 The `InterfaceBus` is the central registry for components in EcoOS.
 
 Interfaces:
-    IEcoInterfaceBus1: Core interface bus for component management.
-    IEcoInterfaceBus1MemExt: Memory extension for heap configuration.
-    IEcoInterfaceBus1FileExt: File extension for auto-loading.
+    `IEcoInterfaceBus1`: Core interface bus for component management.
+    `IEcoInterfaceBus1MemExt`: Memory extension for heap configuration.
+    `IEcoInterfaceBus1FileExt`: File extension for auto-loading.
 
 Reference:
     Based on `IEcoInterfaceBus1.h`, `IEcoInterfaceBus1MemExt.h`,
     `IEcoInterfaceBus1FileExt.h` from `Eco.InterfaceBus1/SharedFiles`.
 """
-
-from __future__ import annotations
 
 from typing import Optional
 
@@ -23,7 +21,7 @@ from eco_python2acom.guids.iid import (
     IID_IEcoInterfaceBus1MemExt,
     IID_IEcoInterfaceBus1NetExt,
 )
-from eco_python2acom.interfaces.base import IEcoUnknown
+from eco_python2acom.interfaces.unknown import IEcoUnknown
 from eco_python2acom.types.core import Bool, CString, Int16, UInt32, Void
 from eco_python2acom.types.guid import UGUID
 from eco_python2acom.types.pointer import Ptr
@@ -73,7 +71,7 @@ class IEcoInterfaceBus1(IEcoUnknown):
         """
         ...
 
-    def UnregisterComponent(self, cid: Ptr[UGUID]) -> Int16:
+    def UnRegisterComponent(self, cid: Ptr[UGUID]) -> Int16:
         """Unregister a component by CID.
 
         Args:
@@ -267,7 +265,7 @@ class IEcoInterfaceBus1NetExt(IEcoUnknown):
         """
         ...
 
-    def QueryRemoteComponent(
+    def QueryComponent(
         self,
         network_name: CString,
         cid: Ptr[UGUID],

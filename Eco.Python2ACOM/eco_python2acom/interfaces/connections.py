@@ -5,30 +5,33 @@ which allows connectable objects to expose outgoing interfaces (sinks)
 and clients to establish or tear down connections.
 
 Interfaces:
-    IEcoConnectionPoint: A single connection point; manage advise/unadvise.
-    IEcoConnectionPointContainer: Container of connection points; find or enumerate.
-    IEcoEnumConnectionPoints: Enumerator over connection points.
-    IEcoEnumConnections: Enumerator over active connections (sink + cookie).
+    `IEcoConnectionPoint`: A single connection point (advise / unadvise).
+    `IEcoConnectionPointContainer`: Container of connection points (find / enumerate).
+    `IEcoEnumConnectionPoints`: Enumerator over connection points.
+    `IEcoEnumConnections`: Enumerator over active connections (sink + cookie).
 
 Reference:
     Based on `IEcoConnectionPoint.h`, `IEcoConnectionPointContainer.h`,
     `IEcoEnumConnectionPoints.h`, `IEcoEnumConnections.h` from `Eco.Core1/SharedFiles`.
 """
 
-from __future__ import annotations
-
 from eco_python2acom.decorators.interface import interface
-from eco_python2acom.decorators.layout import model
+from eco_python2acom.decorators.layout import model, stub
 from eco_python2acom.guids.iid import (
     IID_IEcoConnectionPoint,
     IID_IEcoConnectionPointContainer,
     IID_IEcoEnumConnectionPoints,
     IID_IEcoEnumConnections,
 )
-from eco_python2acom.interfaces.base import IEcoUnknown
-from eco_python2acom.types.core import Int16, UInt32, Void
+from eco_python2acom.interfaces.unknown import IEcoUnknown
+from eco_python2acom.types.core import Int16, UInt32
 from eco_python2acom.types.guid import UGUID
 from eco_python2acom.types.pointer import Ptr
+
+IEcoConnectionPoint = stub("IEcoConnectionPoint")
+IEcoConnectionPointContainer = stub("IEcoConnectionPointContainer")
+IEcoEnumConnectionPoints = stub("IEcoEnumConnectionPoints")
+IEcoEnumConnections = stub("IEcoEnumConnections")
 
 # =============================================================================
 # EcoConnectionData
@@ -41,10 +44,10 @@ class EcoConnectionData:
 
     Attributes:
         ptr: Pointer to the sink's `IEcoUnknown` (client-side object).
-        cookie: Connection cookie returned by Advise.
+        cookie: Connection cookie returned by `Advise`.
     """
 
-    ptr: Ptr[Void]
+    ptr: Ptr[IEcoUnknown]
     cookie: UInt32
 
 
@@ -61,7 +64,7 @@ class IEcoConnectionPoint(IEcoUnknown):
     the outgoing interface, and to enumerate current connections.
     """
 
-    def get_ConnectionInterface(self, iid: Ptr[UGUID]) -> Int16:
+    def GetConnectionInterface(self, iid: Ptr[UGUID]) -> Int16:
         """Get the IID of the outgoing interface supported by this point.
 
         Args:
@@ -72,8 +75,9 @@ class IEcoConnectionPoint(IEcoUnknown):
         """
         ...
 
-    def get_ConnectionPointContainer(
-        self, container: Ptr[Ptr[IEcoConnectionPointContainer]]
+    def GetConnectionPointContainer(
+        self,
+        container: Ptr[Ptr[IEcoConnectionPointContainer]],
     ) -> Int16:
         """Get the connection point container that owns this point.
 

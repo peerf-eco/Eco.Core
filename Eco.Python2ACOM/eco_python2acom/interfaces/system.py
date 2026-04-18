@@ -8,11 +8,9 @@ Reference:
     Based on `IEcoSystem1.h` from `Eco.Core1/SharedFiles`.
 """
 
-from __future__ import annotations
-
 from eco_python2acom.decorators.interface import interface
 from eco_python2acom.guids.gid import GID_IEcoSystem
-from eco_python2acom.interfaces.base import IEcoUnknown
+from eco_python2acom.interfaces.unknown import IEcoUnknown
 from eco_python2acom.types.core import Void
 from eco_python2acom.types.pointer import Ptr
 

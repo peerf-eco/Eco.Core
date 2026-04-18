@@ -1,15 +1,12 @@
 """Generic fixed-size array implementation for EcoOS/ACOM.
 
-This module provides the `Array[T, N]` generic type for type-safe fixed-size
-array operations.
+This module provides the `Array[T, N]` generic type for type-safe fixed-size array operations.
 """
-
-from __future__ import annotations
 
 from collections.abc import Iterable, Iterator
 from typing import TYPE_CHECKING, Generic, TypeVar, overload
 
-from eco_python2acom.types.core import TYPE_NAMES
+from eco_python2acom.types.core import Void
 from eco_python2acom.types.utils import addressof
 
 T = TypeVar("T")
@@ -119,10 +116,6 @@ else:
     class _ArrayMeta(type):
         """Metaclass that enables Array[T, N] subscript syntax.
 
-        This metaclass intercepts `__getitem__` calls on the `Array` class to
-        dynamically create typed array classes. It maintains a cache to avoid
-        recreating the same array type multiple times.
-
         The subscript must be a tuple of (type, size), where size is a
         non-negative integer.
 
@@ -142,45 +135,37 @@ else:
 
             Returns:
                 An array class for the specified type and size.
-
-            Raises:
-                TypeError: If params is not a 2-tuple or size is invalid.
-
-            Examples:
-                >>> IntArray5 = Array[Int32, 5]
-                >>> arr = IntArray5(1, 2, 3, 4, 5)
             """
             # Validate parameters
             if not isinstance(params, tuple) or len(params) != 2:
-                raise TypeError(f"Array requires 2 parameters: Array[Type, Size], got '{params}'")
+                raise ValueError(f"Array requires 2 parameters: Array[Type, Size], got '{params}'")
 
             element_type, size = params
 
             if not isinstance(size, int) or size < 0:
-                raise TypeError(f"Array size must be a non-negative integer, got '{size}'")
+                raise ValueError(f"Array size must be a non-negative integer, got '{size}'")
 
             if not isinstance(element_type, type):
-                raise TypeError(f"Array element type must be a type, got '{element_type}'")
+                raise TypeError(
+                    f"Array element type must be a type, got '{type(element_type).__name__}'"
+                )
 
-            from eco_python2acom.decorators.utils import finalize
-
-            finalize(element_type)
+            if element_type is Void:
+                raise ValueError("Cannot create array of 'Void': element type has no size")
 
             # Check cache
             key = (element_type, size)
             if key in cls._cache:
                 return cls._cache[key]
 
+            # Get display name
+            type_name = getattr(element_type, "__name__", str(element_type))
+
             # Create array type
             try:
                 array_type = element_type * size
             except TypeError as err:
-                raise TypeError(f"Cannot create array of '{element_type}': {err}") from err
-
-            # Get display name
-            type_name = TYPE_NAMES.get(
-                element_type, getattr(element_type, "__name__", str(element_type))
-            )
+                raise ValueError(f"Cannot create array of '{type_name}': {err}") from err
 
             # Create smart array wrapper class
             class SmartArray(array_type):
@@ -191,11 +176,9 @@ else:
 
                 def __repr__(self) -> str:
                     """String representation with type and address."""
-                    try:
-                        addr = addressof(self)
-                        return f"<Array[{type_name}, {size}] 0x{addr:X}>"
-                    except Exception:
-                        return f"<Array[{type_name}, {size}]>"
+                    if not bool(self):
+                        return f"<Array[{type_name}, {self._size_}] NULL>"
+                    return f"<Array[{type_name}, {self._size_}] 0x{addressof(self):X}>"
 
                 def __eq__(self, other: object) -> bool:
                     """Compare two arrays for equality."""
@@ -209,10 +192,8 @@ else:
                         yield self[i]
 
                 def __bytes__(self) -> bytes:
-                    """Convert array to bytes."""
-                    return bytes(int(self[i]) for i in range(self._size_))
-
-                __hash__ = None  # mutable container, unhashable
+                    """Convert array to raw bytes."""
+                    return bytes(memoryview(self).cast("B"))
 
             SmartArray.__name__ = f"Array[{type_name}, {size}]"
             SmartArray.__qualname__ = f"Array[{type_name}, {size}]"
@@ -224,12 +205,27 @@ else:
     class Array(metaclass=_ArrayMeta):
         """Generic fixed-size array type.
 
-        This is the runtime class that uses `_ArrayMeta` to enable
-        Array[T, N] syntax.
+        `Array[T, N]` is the Python equivalent of a C fixed-size array `T arr[N]`.
+        Subscripting creates a concrete array class.
 
-        Note:
-            Arrays are fixed-size and allocated on creation. Use Ptr[Array[T, N]]
-            for dynamic array pointers.
+        Type Parameters:
+            T: The element type (EcoOS-compatible type).
+            N: The array size (non-negative integer literal).
+
+        Attributes:
+            _element_type_: The type of array elements.
+            _size_: The number of elements in the array.
+
+        Example:
+            ```python
+            from eco_python2acom.types.array import Array
+            from eco_python2acom.types.core import Int32
+
+            arr = Array[Int32, 4](10, 20, 30, 40)
+            print(arr[0].value)   # 10
+            print(bytes(arr))     # raw 16-byte representation
+            arr[-1] = Int32(10)
+            ```
         """
 
         pass

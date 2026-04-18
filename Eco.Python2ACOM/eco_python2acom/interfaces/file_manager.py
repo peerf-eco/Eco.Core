@@ -3,17 +3,19 @@
 The `FileSystemManagement` component provides file system operations.
 
 Interfaces:
-    IEcoFileSystemManagement1: Top-level manager providing sub-managers.
-    IEcoFileManager1: File operations (create, open, close).
-    IEcoDirectoryManager1: Directory operations.
-    IEcoDriveManager1: Drive/volume operations.
+    `IEcoFileSystemManagement1`: Top-level manager providing sub-managers.
+    `IEcoFileManager1`: File operations (create, open, close).
+    `IEcoFile1`: Handle to an open file (read, write, seek, close).
+    `IEcoFileInfo1`: File metadata (identifier).
+    `IEcoDirectoryManager1`: Directory operations (create, delete).
+    `IEcoDirectoryInfo1`: Directory metadata (identifier).
+    `IEcoDriveManager1`: Drive/volume operations (lookup by name).
+    `IEcoDriveInfo1`: Drive metadata (identifier).
 
 Reference:
     Based on `IEcoFileSystemManagement1.h` and related headers
     from `Eco.FileSystemManagement1/SharedFiles`.
 """
-
-from __future__ import annotations
 
 from eco_python2acom.decorators.interface import interface
 from eco_python2acom.guids.iid import (
@@ -26,7 +28,7 @@ from eco_python2acom.guids.iid import (
     IID_IEcoFileManager1,
     IID_IEcoFileSystemManagement1,
 )
-from eco_python2acom.interfaces.base import IEcoUnknown
+from eco_python2acom.interfaces.unknown import IEcoUnknown
 from eco_python2acom.types.core import CString, Int16, Int32, UInt32, Void
 from eco_python2acom.types.guid import UGUID
 from eco_python2acom.types.pointer import Ptr
@@ -64,7 +66,7 @@ class IEcoFile1(IEcoUnknown):
     Provides methods to read, write, seek, and get file information.
     """
 
-    def get_Size(self) -> Int32:
+    def get_Size(self) -> UInt32:
         """Get the size of the file.
 
         Returns:
@@ -136,7 +138,7 @@ class IEcoFile1(IEcoUnknown):
         """
         ...
 
-    def get_Descriptor(self) -> Int32:
+    def get_Descriptor(self) -> UInt32:
         """Get the file descriptor.
 
         Returns:
@@ -234,7 +236,7 @@ class IEcoDirectoryManager1(IEcoUnknown):
         """
         ...
 
-    def Delete(self, name: CString) -> Int16:
+    def Delete(self, name: CString) -> Int32:
         """Delete an existing directory.
 
         Args:

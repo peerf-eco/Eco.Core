@@ -54,5 +54,6 @@ repos:
         entry: bash -c 'cd Eco.Python2ACOM && poetry run pytest'
         language: system
         pass_filenames: false
+        stages: [pre-push]
         types: [python]
         files: ^Eco\.Python2ACOM/

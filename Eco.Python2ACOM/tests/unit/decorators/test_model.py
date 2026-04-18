@@ -6,14 +6,12 @@ forward references, `ClassVar` handling, `Optional` types, and error reporting
 for invalid or unresolved annotations.
 """
 
-from __future__ import annotations
-
 from typing import ClassVar, Optional, Self
 
 import pytest
 
 from eco_python2acom.decorators.layout import model, union
-from eco_python2acom.decorators.utils import finalize
+from eco_python2acom.decorators.utils import _finalize
 from eco_python2acom.types.array import Array
 from eco_python2acom.types.core import (
     CStructure,
@@ -294,7 +292,7 @@ class TestModelInvalidAnnotations:
             value: "DoesNotExist"  # type: ignore
 
         with pytest.raises(TypeError, match="unresolved types"):
-            Broken = finalize(Broken)
+            Broken = _finalize(Broken)
 
     def test_non_eco_type_raises(self) -> None:
         """Annotations that aren't EcoOS data types raise `TypeError`."""
@@ -305,7 +303,7 @@ class TestModelInvalidAnnotations:
             class Bad:
                 value: str
 
-            Bad = finalize(Bad)
+            Bad = _finalize(Bad)
 
     def test_union_with_multiple_types_raises(self) -> None:
         """A Union with more than one non-None type raises `TypeError`."""
@@ -315,7 +313,7 @@ class TestModelInvalidAnnotations:
             value: Int32 | Int16
 
         with pytest.raises(TypeError):
-            BadUnion = finalize(BadUnion)
+            BadUnion = _finalize(BadUnion)
 
 
 class TestModelEqualityAndRepr:

@@ -3,9 +3,8 @@
 import ctypes
 from typing import Any, TypeVar
 
-from eco_python2acom.types.core import CData, CPointer
+from eco_python2acom.types.core import CPointer
 
-# TypeVar for cast target
 U = TypeVar("U")
 
 
@@ -84,12 +83,7 @@ def sizeof(obj_or_type: Any) -> int:
     Returns:
         Size in bytes.
     """
-    from eco_python2acom.decorators.utils import finalize
-
-    if isinstance(obj_or_type, CData):
-        obj_or_type = type(obj_or_type)
-
-    return ctypes.sizeof(finalize(obj_or_type))
+    return ctypes.sizeof(obj_or_type)
 
 
 __all__ = ["pointer_type", "pointer", "cast", "byref", "addressof", "sizeof"]

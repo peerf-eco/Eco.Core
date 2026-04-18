@@ -7,7 +7,7 @@ Environment Variables:
     ECO_FRAMEWORK_RT: Path to EcoOS runtime libraries (required).
 """
 
-__version__ = "0.9.0"
+__version__ = "0.10.0"
 __author__ = "Sergei Vdovenkov"
 __email__ = "sivdovenkov.it@gmail.com"
 

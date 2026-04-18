@@ -15,10 +15,22 @@ from eco_python2acom.types.core import Int16
 
 
 class EcoErrorCode(IntEnum):
-    """ACOM/EcoOS error codes.
+    """ACOM/EcoOS error codes from `ErrEcoCodes.h`.
 
-    These codes correspond to the definitions in `ErrEcoCodes.h`.
-    Success is indicated by 0x0000, errors by other values.
+    All ACOM interface methods return a 16-bit status code. Zero means success -
+    any other value signals an error. The constants cover all codes defined
+    in the standard EcoOS header.
+
+    Example:
+        ```python
+        result = bus.obj.RegisterComponent(byref(cid), factory)
+        if result.value != EcoErrorCode.SUCCESS:
+            raise EcoError(result, "RegisterComponent failed")
+        ```
+
+    Note:
+        `OK` is an alias for `SUCCESS` (both equal `0x0000`).
+        User-defined codes start at `USER = 0x0002`.
     """
 
     # Success
@@ -70,7 +82,27 @@ ERROR_MESSAGES: dict[EcoErrorCode, str] = {
 
 
 class EcoError(Exception):
-    """Exception raised for ACOM/EcoOS errors."""
+    """Exception raised when an ACOM/EcoOS operation returns a non-zero status code.
+
+    Wraps a raw `Int16` (or plain `int` / `EcoErrorCode`) returned by any vtable
+    method into a structured Python exception with a human-readable message.
+
+    Attributes:
+        code: Normalised `EcoErrorCode` value.
+        message: Human-readable description of the failure.
+        operation: Name of the ACOM operation that failed, if provided.
+
+    Example:
+        ```python
+        result = factory.obj.Alloc(None, None, byref(iid), byref(ppv))
+        if result.value != 0:
+            raise EcoError(result, "Failed to create component instance")
+        ```
+
+    Note:
+        Unknown error codes (not in `EcoErrorCode`) are normalised to
+        `EcoErrorCode.FAIL` rather than raising a secondary exception.
+    """
 
     def __init__(
         self,
@@ -126,9 +158,5 @@ class EcoError(Exception):
             and self.operation == other.operation
         )
 
-    def __hash__(self) -> int:
-        """Hash the EcoError exception."""
-        return hash((self.code, self.message, self.operation))
 
-
-__all__ = ["EcoErrorCode", "EcoError", "ERROR_MESSAGES"]
+__all__ = ["EcoErrorCode", "EcoError"]

@@ -3,22 +3,20 @@
 The `MemoryManager` provides heap memory management for EcoOS components.
 
 Interfaces:
-    IEcoMemoryManager1: Low-level manager for heap initialization.
-    IEcoMemoryAllocator1: User-facing allocator for memory operations.
+    `IEcoMemoryManager1`: Low-level manager for heap initialization.
+    `IEcoMemoryAllocator1`: User-facing allocator for memory operations.
 
 Reference:
     Based on `IEcoMemoryManager1.h` and `IEcoMemoryAllocator1.h`
     from `Eco.MemoryManager1/SharedFiles`.
 """
 
-from __future__ import annotations
-
 from typing import Optional
 
 from eco_python2acom.decorators.interface import interface
 from eco_python2acom.decorators.layout import model
 from eco_python2acom.guids.iid import IID_IEcoMemoryAllocator1, IID_IEcoMemoryManager1
-from eco_python2acom.interfaces.base import IEcoUnknown
+from eco_python2acom.interfaces.unknown import IEcoUnknown
 from eco_python2acom.types.core import Char, Int16, UInt32, Void
 from eco_python2acom.types.pointer import Ptr
 
@@ -99,7 +97,7 @@ class IEcoMemoryManager1(IEcoUnknown):
         """Get descriptors of used memory blocks.
 
         Args:
-            blocks: Output array of EcoMemoryManager1Block structures.
+            blocks: Output array of `EcoMemoryManager1Block` structures.
             size_in_blocks: Input size of the array; output number of blocks written.
 
         Returns:

@@ -17,10 +17,8 @@ The bootstrap sequence mirrors `createCEcoSystem1` from C:
 Example:
     >>> with EcoSystem() as eco:
     ...     ppv = Ptr[Void]()
-    ...     eco.bus.QueryComponent(byref(cid), None, byref(iid), byref(ppv))
-    ...     calc = IEcoCalculatorX(ppv)
-    ...     calc.Addition(10, 20)
-    ...     calc.Release()
+    ...     bus = eco.bus
+    ...     bus.obj.QueryComponent(byref(cid), None, byref(iid), byref(ppv))
 """
 
 import os
@@ -40,13 +38,14 @@ from eco_python2acom.guids.iid import (
     IID_IEcoMemoryAllocator1,
     IID_IEcoMemoryManager1,
 )
-from eco_python2acom.interfaces.base import IEcoComponentFactory, IEcoUnknown
+from eco_python2acom.interfaces.factory import IEcoComponentFactory
 from eco_python2acom.interfaces.interface_bus import (
     IEcoInterfaceBus1,
     IEcoInterfaceBus1FileExt,
     IEcoInterfaceBus1MemExt,
 )
 from eco_python2acom.interfaces.memory_manager import IEcoMemoryAllocator1, IEcoMemoryManager1
+from eco_python2acom.interfaces.unknown import IEcoUnknown
 from eco_python2acom.runtime.loader import EcoLib, EcoLibLoader
 from eco_python2acom.runtime.utils import is_eco_lib, lib_filename_to_guid
 from eco_python2acom.types.core import Bool, UInt32, Void
@@ -63,20 +62,19 @@ class EcoSystem:
     optionally `FileSystemManagement`), auto-registers user component
     libraries.
 
-    Usage as a context manager:
-
+    Example:
+        ```python
         with EcoSystem() as eco:
             ppv = Ptr[Void]()
-            eco.bus.QueryComponent(byref(cid), None, byref(iid), byref(ppv))
-            calc = IEcoCalculatorX(ppv)
-            calc.Addition(10, 20)
-            calc.Release()
+            bus = eco.bus
+            bus.obj.QueryComponent(byref(cid), None, byref(iid), byref(ppv))
+        ```
 
     Attributes:
         initialized: Whether the system has been initialized.
-        bus: The initialized `IEcoInterfaceBus1` instance.
-        mem_manager: The initialized `IEcoMemoryManager1` instance.
-        mem_allocator: The initialized `IEcoMemoryAllocator1` instance.
+        bus: Pointer to the initialized `IEcoInterfaceBus1`.
+        mem_manager: Pointer to the initialized `IEcoMemoryManager1`.
+        mem_allocator: Pointer to the initialized `IEcoMemoryAllocator1`.
         gid: The generation ID (GID) of the system.
         runtime_path: The path to the runtime libraries.
     """
@@ -108,10 +106,10 @@ class EcoSystem:
         self._gid = gid or GID_IEcoSystem
 
         # Initialize internal references (set during init, released during cleanup)
-        self._bus_factory: Optional[IEcoComponentFactory] = None
-        self._bus: Optional[IEcoInterfaceBus1] = None
-        self._mem_manager: Optional[IEcoMemoryManager1] = None
-        self._mem_allocator: Optional[IEcoMemoryAllocator1] = None
+        self._bus_factory: Optional[Ptr[IEcoComponentFactory]] = None
+        self._bus: Optional[Ptr[IEcoInterfaceBus1]] = None
+        self._mem_manager: Optional[Ptr[IEcoMemoryManager1]] = None
+        self._mem_allocator: Optional[Ptr[IEcoMemoryAllocator1]] = None
         self._system_cids = frozenset(
             bytes(cid.data)
             for cid in (CID_EcoInterfaceBus1, CID_EcoMemoryManager1, CID_EcoFileSystemManagement1)
@@ -135,22 +133,22 @@ class EcoSystem:
         return self._initialized
 
     @property
-    def bus(self) -> IEcoInterfaceBus1:
-        """The initialized interface bus."""
+    def bus(self) -> Ptr[IEcoInterfaceBus1]:
+        """Pointer to the initialized interface bus."""
         if not self._initialized or self._bus is None:
             raise RuntimeError("Access to 'bus' requires initialized EcoSystem")
         return self._bus
 
     @property
-    def mem_manager(self) -> IEcoMemoryManager1:
-        """The initialized memory manager."""
+    def mem_manager(self) -> Ptr[IEcoMemoryManager1]:
+        """Pointer to the initialized memory manager."""
         if not self._initialized or self._mem_manager is None:
             raise RuntimeError("Access to 'mem_manager' requires initialized EcoSystem")
         return self._mem_manager
 
     @property
-    def mem_allocator(self) -> IEcoMemoryAllocator1:
-        """The initialized memory allocator."""
+    def mem_allocator(self) -> Ptr[IEcoMemoryAllocator1]:
+        """Pointer to the initialized memory allocator."""
         if not self._initialized or self._mem_allocator is None:
             raise RuntimeError("Access to 'mem_allocator' requires initialized EcoSystem")
         return self._mem_allocator
@@ -223,7 +221,8 @@ class EcoSystem:
 
         # Step 8: Finalize bus factory
         if self._bus_factory is not None and self._bus is not None:
-            self._bus_factory.Init(None, self._bus.ptr)
+            factory = self._bus_factory
+            factory.obj.Init(None, cast(self._bus, Ptr[Void]))
 
         self._initialized = True
 
@@ -238,82 +237,87 @@ class EcoSystem:
         self._bus_factory = loaded.factory
 
         bus_ptr = Ptr[Void]()
-        result = self._bus_factory.Alloc(None, None, byref(IID_IEcoInterfaceBus1), byref(bus_ptr))
+        result = self._bus_factory.obj.Alloc(
+            None, None, byref(IID_IEcoInterfaceBus1), byref(bus_ptr)
+        )
         if result.value != 0 or not bus_ptr.value:
-            raise EcoError(result, "Failed to create `InterfaceBus` instance")
+            raise EcoError(result.value, "Failed to create `InterfaceBus` instance")
 
-        self._bus = IEcoInterfaceBus1(bus_ptr)
+        self._bus = cast(bus_ptr, Ptr[IEcoInterfaceBus1])
 
     def _register_memory_manager(self, runtime_path: Path) -> None:
         """Load `MemoryManager` component and register its factory with the bus."""
         loaded = self._loader.load_by_cid(CID_EcoMemoryManager1, [runtime_path])
         self._loaded_libs.append(loaded)
 
-        result = self._bus.RegisterComponent(
-            byref(CID_EcoMemoryManager1),
-            cast(loaded.factory.ptr, Ptr[IEcoUnknown]),
+        result = self._bus.obj.RegisterComponent(
+            byref(CID_EcoMemoryManager1), cast(loaded.factory, Ptr[IEcoUnknown])
         )
         if result.value != 0:
-            raise EcoError(result, "Failed to register `MemoryManager`")
+            raise EcoError(result.value, "Failed to register `MemoryManager`")
 
     def _configure_mem_ext(self) -> None:
         """Configure `InterfaceBus` memory extension."""
         mem_ext_ptr = Ptr[Void]()
-        result = self._bus.QueryInterface(byref(IID_IEcoInterfaceBus1MemExt), byref(mem_ext_ptr))
+        result = self._bus.obj.QueryInterface(
+            byref(IID_IEcoInterfaceBus1MemExt), byref(mem_ext_ptr)
+        )
         if result.value == 0 and mem_ext_ptr.value:
-            mem_ext = IEcoInterfaceBus1MemExt(mem_ext_ptr)
-            mem_ext.set_Manager(byref(CID_EcoMemoryManager1))
-            mem_ext.set_ExpandPool(Bool(True))
-            mem_ext.Release()
+            mem_ext = cast(mem_ext_ptr, Ptr[IEcoInterfaceBus1MemExt])
+            mem_ext.obj.set_Manager(byref(CID_EcoMemoryManager1))
+            mem_ext.obj.set_ExpandPool(Bool(True))
+            mem_ext.obj.Release()
 
     def _init_memory_manager(self) -> None:
         """Query and initialize `MemoryManager` with heap."""
         mgr_ptr = Ptr[Void]()
-        result = self._bus.QueryComponent(
+        result = self._bus.obj.QueryComponent(
             byref(CID_EcoMemoryManager1),
             None,
             byref(IID_IEcoMemoryManager1),
             byref(mgr_ptr),
         )
         if result.value != 0 or not mgr_ptr.value:
-            raise EcoError(result, "Failed to get `MemoryManager` interface")
+            raise EcoError(result.value, "Failed to get `MemoryManager` interface")
 
-        self._mem_manager = IEcoMemoryManager1(mgr_ptr)
-        self._mem_manager.Init(None, self._heap_size)
+        self._mem_manager = cast(mgr_ptr, Ptr[IEcoMemoryManager1])
+        self._mem_manager.obj.Init(None, self._heap_size)
 
-        # Also get IEcoMemoryAllocator1 for convenience
+        # Also get `IEcoMemoryAllocator1`` for convenience
         alloc_ptr = Ptr[Void]()
-        result = self._bus.QueryComponent(
+        result = self._bus.obj.QueryComponent(
             byref(CID_EcoMemoryManager1),
             None,
             byref(IID_IEcoMemoryAllocator1),
             byref(alloc_ptr),
         )
         if result.value != 0 or not alloc_ptr.value:
-            raise EcoError(result, "Failed to get `MemoryAllocator` interface")
+            raise EcoError(result.value, "Failed to get `MemoryAllocator` interface")
 
-        self._mem_allocator = IEcoMemoryAllocator1(alloc_ptr)
+        self._mem_allocator = cast(alloc_ptr, Ptr[IEcoMemoryAllocator1])
 
     def _register_file_system(self, runtime_path: Path) -> None:
         """Load `FileSystemManagement` component and register with bus."""
         loaded = self._loader.load_by_cid(CID_EcoFileSystemManagement1, [runtime_path])
         self._loaded_libs.append(loaded)
 
-        result = self._bus.RegisterComponent(
-            byref(CID_EcoFileSystemManagement1),
-            cast(loaded.factory.ptr, Ptr[IEcoUnknown]),
+        result = self._bus.obj.RegisterComponent(
+            byref(CID_EcoFileSystemManagement1), cast(loaded.factory, Ptr[IEcoUnknown])
         )
         if result.value != 0:
-            raise EcoError(result, "Failed to register `FileSystemManagement`")
+            raise EcoError(result.value, "Failed to register `FileSystemManagement`")
 
     def _configure_file_ext(self) -> None:
         """Configure `InterfaceBus` file extension."""
         file_ext_ptr = Ptr[Void]()
-        result = self._bus.QueryInterface(byref(IID_IEcoInterfaceBus1FileExt), byref(file_ext_ptr))
+        result = self._bus.obj.QueryInterface(
+            byref(IID_IEcoInterfaceBus1FileExt),
+            byref(file_ext_ptr),
+        )
         if result.value == 0 and file_ext_ptr.value:
-            file_ext = IEcoInterfaceBus1FileExt(file_ext_ptr)
-            file_ext.set_Manager(byref(CID_EcoFileSystemManagement1))
-            file_ext.Release()
+            file_ext = cast(file_ext_ptr, Ptr[IEcoInterfaceBus1FileExt])
+            file_ext.obj.set_Manager(byref(CID_EcoFileSystemManagement1))
+            file_ext.obj.Release()
 
     def _scan_and_register_user_libs(self) -> None:
         """Scan user paths for EcoOS libraries and register each with the bus.
@@ -349,12 +353,12 @@ class EcoSystem:
             loaded = self._loader.load(lib_file)
             self._loaded_libs.append(loaded)
 
-            result = self._bus.RegisterComponent(
+            result = self._bus.obj.RegisterComponent(
                 byref(cid),
-                cast(loaded.factory.ptr, Ptr[IEcoUnknown]),
+                cast(loaded.factory, Ptr[IEcoUnknown]),
             )
             if result.value != 0:
-                raise EcoError(result, f"Failed to register component: '{lib_file.name}'")
+                raise EcoError(result.value, f"Failed to register component: '{lib_file.name}'")
 
     # =========================================================================
     # Cleanup
@@ -366,17 +370,11 @@ class EcoSystem:
             return
 
         # Release in reverse initialization order
-        for iface in (
-            self._mem_allocator,
-            self._mem_manager,
-            self._bus,
-            self._bus_factory,
-        ):
-            if iface is not None:
-                try:
-                    iface.Release()
-                except Exception:
-                    pass
+        for iface_ptr in (self._mem_allocator, self._mem_manager, self._bus, self._bus_factory):
+            try:
+                iface_ptr.obj.Release()
+            except Exception:
+                pass
 
         self._loaded_libs.clear()
         self._initialized = False

@@ -2,19 +2,17 @@
 
 This module provides the UGUID class for working with EcoOS component
 and interface identifiers. UGUID is an 18-byte structure consisting of:
-- Preamble (1 byte): Version/format indicator
-- Length (1 byte): Length of the data portion
-- Data (16 bytes): The actual GUID data
+- `Preamble` (1 byte): Version/format indicator
+- `Length` (1 byte): Length of the data portion
+- `Data` (16 bytes): The actual GUID data
 
 Note:
     The UGUID structure is defined in `IEcoBase1.h`.
     Standard format: {XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX}
 """
 
-from __future__ import annotations
-
 import re
-from typing import ClassVar, Optional
+from typing import ClassVar, Optional, Self
 
 from eco_python2acom.decorators.layout import model
 from eco_python2acom.types.array import Array
@@ -23,10 +21,36 @@ from eco_python2acom.types.core import UInt8
 
 @model
 class UGUID:
-    """ACOM Universal GUID structure.
+    """ACOM Universal GUID structure (18 bytes).
 
-    An 18-byte structure used for component and interface identification
-    in the EcoOS/ACOM system.
+    Used for component (`CID`) and interface (`IID`) identification in EcoOS.
+    Consists of a 1-byte preamble, 1-byte length, and 16 bytes of GUID data.
+
+    Attributes:
+        preamble: Version/format indicator (default `0x01`).
+        length: Length of the data portion (default `0x10`).
+        data: 16-byte GUID payload as `Array[UInt8, 16]`.
+
+    Example:
+        ```python
+        from eco_python2acom.types.guid import UGUID
+
+        # From a standard GUID string
+        iid = UGUID("93221116-2248-4742-AE06-82819447843D")
+        print(iid.to_string())   # 93221116-2248-4742-AE06-82819447843D
+
+        # From raw bytes (as in C headers)
+        cid = UGUID.from_raw(
+            preamble=0x01,
+            length=0x10,
+            data=[0x93, 0x22, 0x11, 0x16, 0x22, 0x48, 0x47, 0x42,
+                  0xAE, 0x06, 0x82, 0x81, 0x94, 0x47, 0x84, 0x3D],
+        )
+
+        # Pass to ACOM methods via `byref`
+        from eco_python2acom.types.utils import byref
+        bus.obj.QueryComponent(bus, byref(cid), None, byref(iid), byref(ppv))
+        ```
     """
 
     preamble: UInt8
@@ -85,10 +109,7 @@ class UGUID:
         """
         match = self.GUID_PATTERN.match(guid_string)
         if not match:
-            raise ValueError(
-                f"Invalid GUID format: {guid_string!r}. "
-                "Expected format: XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
-            )
+            raise ValueError(f"Invalid GUID format: {guid_string!r}")
 
         hex_str = "".join(match.groups())
         self.data[:] = [UInt8(byte) for byte in bytes.fromhex(hex_str)]
@@ -100,7 +121,7 @@ class UGUID:
             data: 16-byte GUID data.
 
         Raises:
-            ValueError: If data length is not 0x10 (16 bytes).
+            ValueError: If data length is not `0x10` (16 bytes).
         """
         if len(data) != 0x10:
             raise ValueError(f"GUID data must be 16 bytes, got {len(data)}")
@@ -108,7 +129,7 @@ class UGUID:
         self.data[:] = [UInt8(byte) for byte in data]
 
     def to_bytes(self) -> bytes:
-        """Convert the 'data' field to bytes.
+        """Convert the `data` field to bytes.
 
         Returns:
             The 16-byte GUID data.
@@ -149,28 +170,19 @@ class UGUID:
             and self.to_bytes() == other.to_bytes()
         )
 
-    def __hash__(self) -> int:
-        """Return hash of the UGUID."""
-        return hash((self.preamble, self.length, self.to_bytes()))
-
     def __str__(self) -> str:
         """Return string representation."""
         return self.to_string()
 
     def __repr__(self) -> str:
         """Return detailed representation."""
-        return (
-            f"UGUID(preamble=0x{self.preamble:02X}, "
-            f"length=0x{self.length:02X}, "
-            f"data={self.to_string()!r})"
-        )
+        return f"UGUID(preamble=0x{self.preamble:02X}, length=0x{self.length:02X}, data={self.to_string()})"
 
     @classmethod
-    def from_raw(cls, preamble: int, length: int, data: list[int]) -> UGUID:
+    def from_raw(cls, preamble: int, length: int, data: list[int]) -> Self:
         """Create UGUID from raw components (as defined in C headers).
 
-        This method matches the C-style initialization:
-        `{ 0x01, 0x10, {0x93, 0x22, ...} }`
+        This method matches the C-style initialization: `{ 0x01, 0x10, {0x93, 0x22, ...} }`
 
         Args:
             preamble: Preamble byte.
@@ -183,12 +195,11 @@ class UGUID:
         return cls(data=bytes(data), preamble=preamble, length=length)
 
     @classmethod
-    def from_string(cls, guid_string: str) -> UGUID:
+    def from_string(cls, guid_string: str) -> Self:
         """Create UGUID from a GUID string.
 
         Args:
-            guid_string: GUID in format "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
-                or without dashes.
+            guid_string: GUID in format "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX" or without dashes.
 
         Returns:
             A new UGUID instance.
