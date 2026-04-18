@@ -163,9 +163,10 @@ def _resolve_methods(cls: type) -> list[tuple[str, type]]:
     self_ptr_type = Ptr[cls]  # type: ignore
     methods: list[tuple[str, type]] = []
     method_params: dict[str, list[str]] = {}
+    method_returns: dict[str, type] = {}
     seen: set[str] = set()
 
-    for field_name, restype, param_types, param_names in (
+    for field_name, return_type, param_types, param_names in (
         *_inherited_slots(cls),
         *_declared_slots(cls),
     ):
@@ -175,11 +176,13 @@ def _resolve_methods(cls: type) -> list[tuple[str, type]]:
                 f"'{cls.__name__}.{method_name}' is already defined by an ancestor interface"
             )
         seen.add(field_name)
-        func_type = CFuncType(restype, self_ptr_type, *param_types)  # type: ignore
+        func_type = CFuncType(return_type, self_ptr_type, *param_types)  # type: ignore
         methods.append((field_name, func_type))
         method_params[field_name] = param_names
+        method_returns[field_name] = return_type
 
     cls._eco_method_params_ = method_params
+    cls._eco_method_returns_ = method_returns
     return methods
 
 
@@ -218,10 +221,12 @@ def _install_dispatchers(cls: type, methods: list[tuple[str, type]]) -> None:
         methods: List of tuples with method names and EcoOS types.
     """
     method_params = getattr(cls, "_eco_method_params_", {})
+    method_returns = getattr(cls, "_eco_method_returns_", {})
 
     for field_name, _ in methods:
         method_name = field_name.removeprefix("_func_")
         param_names = method_params.get(field_name, [])
+        return_type = method_returns.get(field_name)
         original = cls.__dict__.get(method_name)
         docstring = getattr(original, "__doc__", None) if callable(original) else None
 
@@ -229,6 +234,7 @@ def _install_dispatchers(cls: type, methods: list[tuple[str, type]]) -> None:
             field_name: str,
             method_name: str,
             param_names: list[str],
+            return_type: Optional[type] = None,
             docstring: Optional[str] = None,
         ) -> Callable[..., Any]:
             """Create a dispatcher closure for a specific method."""
@@ -247,14 +253,19 @@ def _install_dispatchers(cls: type, methods: list[tuple[str, type]]) -> None:
                             raise TypeError(
                                 f"'{method_name}' missing required argument: '{param_name}'"
                             )
-                    return func_ptr(self_ptr, *full_args)
-                return func_ptr(self_ptr, *args)
+                    result = func_ptr(self_ptr, *full_args)
+                else:
+                    result = func_ptr(self_ptr, *args)
+
+                if return_type is not None and result is not None:
+                    return return_type(result)
+                return result
 
             dispatch.__name__ = method_name
             dispatch.__doc__ = docstring
             return dispatch
 
-        dispatcher = make_dispatch(field_name, method_name, param_names, docstring)
+        dispatcher = make_dispatch(field_name, method_name, param_names, return_type, docstring)
         setattr(cls, method_name, dispatcher)
 
 

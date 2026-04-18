@@ -6,7 +6,7 @@ This module provides the `Array[T, N]` generic type for type-safe fixed-size arr
 from collections.abc import Iterable, Iterator
 from typing import TYPE_CHECKING, Generic, TypeVar, overload
 
-from eco_python2acom.types.core import Void
+from eco_python2acom.types.core import TYPE_NAMES, Void
 from eco_python2acom.types.utils import addressof
 
 T = TypeVar("T")
@@ -159,7 +159,9 @@ else:
                 return cls._cache[key]
 
             # Get display name
-            type_name = getattr(element_type, "__name__", str(element_type))
+            type_name = TYPE_NAMES.get(
+                element_type, getattr(element_type, "__name__", str(element_type))
+            )
 
             # Create array type
             try:

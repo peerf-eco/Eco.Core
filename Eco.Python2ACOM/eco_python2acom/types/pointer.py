@@ -5,7 +5,7 @@ This module provides the `Ptr[T]` generic type for type-safe pointer operations.
 
 from typing import TYPE_CHECKING, Any, Generic, TypeVar
 
-from eco_python2acom.types.core import Void, VoidPtr
+from eco_python2acom.types.core import TYPE_NAMES, Void, VoidPtr
 from eco_python2acom.types.utils import addressof, pointer_type
 
 T = TypeVar("T")
@@ -149,7 +149,7 @@ else:
                 return SmartVoidPtr
 
             # Get display name
-            type_name = getattr(item, "__name__", str(item))
+            type_name = TYPE_NAMES.get(item, getattr(item, "__name__", str(item)))
 
             # Create pointer type
             try:

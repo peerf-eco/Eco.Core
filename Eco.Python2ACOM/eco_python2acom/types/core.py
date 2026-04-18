@@ -31,6 +31,7 @@ from ctypes import _CFuncPtr as CFuncPtr
 from ctypes import _Pointer as CPointer
 from ctypes import _SimpleCData as CSimpleData
 from ctypes import (
+    c_bool,
     c_char,
     c_char_p,
     c_double,
@@ -41,6 +42,7 @@ from ctypes import (
     c_int32,
     c_int64,
     c_long,
+    c_longdouble,
     c_longlong,
     c_short,
     c_size_t,
@@ -81,12 +83,12 @@ Use this to load EcoOS DLLs on Windows.
 # =============================================================================
 
 
-class Bool(c_uint8):
-    """Boolean type (bool_t in EcoOS).
+Bool: TypeAlias = c_bool
+"""Boolean type (bool_t in EcoOS).
 
-    In EcoOS, booleans are 8-bit unsigned integers where 0 is false and
-    any non-zero value is true.
-    """
+In EcoOS, booleans are 8-bit unsigned integers where 0 is false and
+any non-zero value is true.
+"""
 
 
 # =============================================================================
@@ -94,26 +96,26 @@ class Bool(c_uint8):
 # =============================================================================
 
 
-class Byte(c_uint8):
-    """Unsigned 8-bit integer (byte_t in EcoOS)."""
+Byte: TypeAlias = c_uint8
+"""Unsigned 8-bit integer (byte_t in EcoOS)."""
 
 
-class Int8(c_int8):
-    """Signed 8-bit integer (int8_t in EcoOS).
+Int8: TypeAlias = c_int8
+"""Signed 8-bit integer (int8_t in EcoOS).
 
-    Range: -128 to 127
-    """
-
-
-class UInt8(c_uint8):
-    """Unsigned 8-bit integer (uint8_t in EcoOS).
-
-    Range: 0 to 255
-    """
+Range: -128 to 127
+"""
 
 
-class UByte(c_ubyte):
-    """Alternative unsigned 8-bit type."""
+UInt8: TypeAlias = c_uint8
+"""Unsigned 8-bit integer (uint8_t in EcoOS).
+
+Range: 0 to 255
+"""
+
+
+UByte: TypeAlias = c_ubyte
+"""Alternative unsigned 8-bit type."""
 
 
 # =============================================================================
@@ -121,22 +123,22 @@ class UByte(c_ubyte):
 # =============================================================================
 
 
-class Char(c_char):
-    """Single-byte character (char_t in EcoOS).
+Char: TypeAlias = c_char
+"""Single-byte character (char_t in EcoOS).
 
-    Used for ASCII/ANSI text. For wide characters, use WChar.
-    """
-
-
-class UChar(c_uint8):
-    """Unsigned character (uchar_t in EcoOS)."""
+Used for ASCII/ANSI text. For wide characters, use WChar.
+"""
 
 
-class WChar(c_wchar):
-    """Wide character (wchar_t in C).
+UChar: TypeAlias = c_ubyte
+"""Unsigned character (uchar_t in EcoOS)."""
 
-    Used for Unicode text (UTF-16 on Windows).
-    """
+
+WChar: TypeAlias = c_wchar
+"""Wide character (wchar_t in C).
+
+Used for Unicode text (UTF-16 on Windows).
+"""
 
 
 # =============================================================================
@@ -144,26 +146,26 @@ class WChar(c_wchar):
 # =============================================================================
 
 
-class Short(c_short):
-    """Short integer (typically 16-bit)."""
+Short: TypeAlias = c_short
+"""Short integer (typically 16-bit)."""
 
 
-class UShort(c_ushort):
-    """Unsigned short integer (typically 16-bit)."""
+UShort: TypeAlias = c_ushort
+"""Unsigned short integer (typically 16-bit)."""
 
 
-class Int16(c_int16):
-    """Signed 16-bit integer (int16_t in EcoOS).
+Int16: TypeAlias = c_int16
+"""Signed 16-bit integer (int16_t in EcoOS).
 
-    Range: -32,768 to 32,767
-    """
+Range: -32,768 to 32,767
+"""
 
 
-class UInt16(c_uint16):
-    """Unsigned 16-bit integer (uint16_t in EcoOS).
+UInt16: TypeAlias = c_uint16
+"""Unsigned 16-bit integer (uint16_t in EcoOS).
 
-    Range: 0 to 65,535
-    """
+Range: 0 to 65,535
+"""
 
 
 # =============================================================================
@@ -171,26 +173,26 @@ class UInt16(c_uint16):
 # =============================================================================
 
 
-class Int(c_int):
-    """Platform-dependent signed integer (typically 32-bit)."""
+Int: TypeAlias = c_int
+"""Platform-dependent signed integer (typically 32-bit)."""
 
 
-class UInt(c_uint):
-    """Platform-dependent unsigned integer (typically 32-bit)."""
+UInt: TypeAlias = c_uint
+"""Platform-dependent unsigned integer (typically 32-bit)."""
 
 
-class Int32(c_int32):
-    """Signed 32-bit integer (int32_t in EcoOS).
+Int32: TypeAlias = c_int32
+"""Signed 32-bit integer (int32_t in EcoOS).
 
-    Range: -2,147,483,648 to 2,147,483,647
-    """
+Range: -2,147,483,648 to 2,147,483,647
+"""
 
 
-class UInt32(c_uint32):
-    """Unsigned 32-bit integer (uint32_t in EcoOS).
+UInt32: TypeAlias = c_uint32
+"""Unsigned 32-bit integer (uint32_t in EcoOS).
 
-    Range: 0 to 4,294,967,295
-    """
+Range: 0 to 4,294,967,295
+"""
 
 
 # =============================================================================
@@ -198,18 +200,18 @@ class UInt32(c_uint32):
 # =============================================================================
 
 
-class Int64(c_int64):
-    """Signed 64-bit integer (int64_t in EcoOS).
+Int64: TypeAlias = c_int64
+"""Signed 64-bit integer (int64_t in EcoOS).
 
-    Range: -9,223,372,036,854,775,808 to 9,223,372,036,854,775,807
-    """
+Range: -9,223,372,036,854,775,808 to 9,223,372,036,854,775,807
+"""
 
 
-class UInt64(c_uint64):
-    """Unsigned 64-bit integer (uint64_t in EcoOS).
+UInt64: TypeAlias = c_uint64
+"""Unsigned 64-bit integer (uint64_t in EcoOS).
 
-    Range: 0 to 18,446,744,073,709,551,615
-    """
+Range: 0 to 18,446,744,073,709,551,615
+"""
 
 
 # =============================================================================
@@ -217,31 +219,31 @@ class UInt64(c_uint64):
 # =============================================================================
 
 
-class Long(c_long):
-    """Platform-dependent long integer.
+Long: TypeAlias = c_long
+"""Platform-dependent long integer.
 
-    32-bit on Windows, 64-bit on Linux x64.
-    """
-
-
-class ULong(c_ulong):
-    """Platform-dependent unsigned long integer."""
+32-bit on Windows, 64-bit on Linux x64.
+"""
 
 
-class LongLong(c_longlong):
-    """64-bit long long integer."""
+ULong: TypeAlias = c_ulong
+"""Platform-dependent unsigned long integer."""
 
 
-class ULongLong(c_ulonglong):
-    """64-bit unsigned long long integer."""
+LongLong: TypeAlias = c_longlong
+"""64-bit long long integer."""
 
 
-class SizeT(c_size_t):
-    """size_t - unsigned integer for sizes (platform word size)."""
+ULongLong: TypeAlias = c_ulonglong
+"""64-bit unsigned long long integer."""
 
 
-class SSizeT(c_ssize_t):
-    """ssize_t - signed integer for sizes (platform word size)."""
+SizeT: TypeAlias = c_size_t
+"""size_t - unsigned integer for sizes (platform word size)."""
+
+
+SSizeT: TypeAlias = c_ssize_t
+"""ssize_t - signed integer for sizes (platform word size)."""
 
 
 # =============================================================================
@@ -249,18 +251,25 @@ class SSizeT(c_ssize_t):
 # =============================================================================
 
 
-class Float(c_float):
-    """Single-precision floating-point (float_t in EcoOS).
+Float: TypeAlias = c_float
+"""Single-precision floating-point (float_t in EcoOS).
 
-    32-bit IEEE 754 floating-point number.
-    """
+32-bit IEEE 754 floating-point number.
+"""
 
 
-class Double(c_double):
-    """Double-precision floating-point (double_t in EcoOS).
+Double: TypeAlias = c_double
+"""Double-precision floating-point (double_t in EcoOS).
 
-    64-bit IEEE 754 floating-point number.
-    """
+64-bit IEEE 754 floating-point number.
+"""
+
+
+LongDouble: TypeAlias = c_longdouble
+"""Extended-precision floating-point (long double in C).
+
+Platform-dependent size: 64-bit on Windows, 80-bit on Linux x86.
+"""
 
 
 # =============================================================================
@@ -292,71 +301,18 @@ Generic pointer that can point to any type. Use Ptr[T] for type-safe pointers.
 # =============================================================================
 
 
-class CString(c_char_p):
-    """Pointer to null-terminated ANSI/ASCII string (char* in C).
+CString: TypeAlias = c_char_p
+"""Pointer to null-terminated ANSI/ASCII string (char* in C).
 
-    Used for ANSI/ASCII C strings.
-    """
-
-
-class WString(c_wchar_p):
-    """Pointer to null-terminated wide string (wchar_t* in C).
-
-    Used for Unicode strings (UTF-16 on Windows).
-    """
+Used for ANSI/ASCII C strings.
+"""
 
 
-# =============================================================================
-# Value-based equality for simple C types
-# =============================================================================
+WString: TypeAlias = c_wchar_p
+"""Pointer to null-terminated wide string (wchar_t* in C).
 
-
-def _simple_eq(self, other: object) -> bool:
-    """Compare simple C data by `.value` rather than identity."""
-    if isinstance(other, CSimpleData):
-        return bool(self.value == other.value)
-    if isinstance(other, int | float | bytes | str | bool):
-        return bool(self.value == other)
-    return NotImplemented  # type: ignore
-
-
-def _simple_hash(self) -> int:
-    """Hash simple C data by `.value`."""
-    return hash(self.value)
-
-
-for _cls in (
-    Bool,
-    Byte,
-    Int8,
-    UInt8,
-    UByte,
-    Char,
-    UChar,
-    WChar,
-    Short,
-    UShort,
-    Int16,
-    UInt16,
-    Int,
-    UInt,
-    Int32,
-    UInt32,
-    Int64,
-    UInt64,
-    Long,
-    ULong,
-    LongLong,
-    ULongLong,
-    SizeT,
-    SSizeT,
-    Float,
-    Double,
-    CString,
-    WString,
-):
-    _cls.__eq__ = _simple_eq  # type: ignore
-    _cls.__hash__ = _simple_hash  # type: ignore
+Used for Unicode strings (UTF-16 on Windows).
+"""
 
 
 # =============================================================================
@@ -386,6 +342,35 @@ CLayout: TypeAlias = CStructure | CUnion
 
 This includes structures and unions, which have a defined memory layout.
 """
+
+# Canonical EcoOS names for display
+TYPE_NAMES: dict[type, str] = {
+    # Boolean
+    Bool: "Bool",
+    # 8-bit
+    UInt8: "UInt8",  # Also `Byte`, `UChar`
+    Int8: "Int8",
+    Char: "Char",
+    # 16-bit
+    Int16: "Int16",  # Also `Short`
+    UInt16: "UInt16",  # Also `UShort`
+    WChar: "WChar",
+    # 32-bit
+    Int32: "Int32",  # Also `Int`, `Long`
+    UInt32: "UInt32",  # Also `UInt`, `ULong`
+    # 64-bit
+    Int64: "Int64",  # Also `LongLong`, `SSizeT`
+    UInt64: "UInt64",  # Also `ULongLong`, `SizeT`
+    # Floating-point
+    Float: "Float",
+    Double: "Double",
+    LongDouble: "LongDouble",
+    # Strings
+    CString: "CString",
+    WString: "WString",
+    # Void
+    Void: "Void",
+}
 
 # =============================================================================
 # Public API
@@ -429,6 +414,7 @@ __all__ = [
     # Floating-point
     "Float",
     "Double",
+    "LongDouble",
     # Void and pointers
     "Void",
     # String pointers

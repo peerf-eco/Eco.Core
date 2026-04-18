@@ -57,8 +57,8 @@ plugins:
             members_order: source
             docstring_style: google
             filters:
-              - "^__init__$"
               - "!^_"
+              - "^__init__$"
             show_signature_annotations: true
             separate_signature: true
             line_length: 90
