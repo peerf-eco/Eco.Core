@@ -238,7 +238,7 @@ def _install_dispatchers(cls: type, methods: list[tuple[str, type]]) -> None:
             """Create a dispatcher closure for a specific method."""
 
             def dispatch(self, *args: Any, **kwargs: Any) -> Any:
-                func_ptr = getattr(self.vtbl.contents, field_name)
+                func_ptr = getattr(self.vtbl.obj, field_name)
                 self_ptr = pointer(self)
                 if kwargs:
                     full_args = list(args)

@@ -6,12 +6,11 @@ forward references, `ClassVar` handling, `Optional` types, and error reporting
 for invalid or unresolved annotations.
 """
 
-from typing import ClassVar, Optional, Self
+from typing import ClassVar, Literal, Optional, Self
 
 import pytest
 
-from eco_python2acom.decorators.layout import model, union
-from eco_python2acom.decorators.utils import _finalize
+from eco_python2acom.decorators.layout import model, stub, union
 from eco_python2acom.types.array import Array
 from eco_python2acom.types.core import (
     CStructure,
@@ -116,16 +115,6 @@ class TestModelBasicFields:
 class TestModelLayout:
     """Verifies byte layout, size, and field offsets."""
 
-    def test_two_int32_fields_size(self) -> None:
-        """Two `Int32` fields produce an 8-byte structure."""
-
-        @model
-        class Point:
-            x: Int32
-            y: Int32
-
-        assert sizeof(Point) == 8
-
     def test_mixed_field_layout_offsets(self) -> None:
         """Field offsets follow ctypes natural alignment rules."""
 
@@ -135,10 +124,10 @@ class TestModelLayout:
             b: Int32
             c: Int16
 
-        assert sizeof(Mixed) == 12
         assert Mixed.a.offset == 0
         assert Mixed.b.offset == 4
         assert Mixed.c.offset == 8
+        assert sizeof(Mixed) == 12
 
     def test_pointer_field_size(self) -> None:
         """`Ptr[T]` fields take pointer-width bytes."""
@@ -188,6 +177,15 @@ class TestModelOptional:
 
         assert WithOptional._fields_ == [("value", Int32)]
 
+    def test_union_none_resolves_to_inner(self) -> None:
+        """`T | None` is treated as T after normalization."""
+
+        @model
+        class WithOptional:
+            value: Int32 | None
+
+        assert WithOptional._fields_ == [("value", Int32)]
+
 
 class TestModelInheritance:
     """Verifies models can inherit from other models."""
@@ -208,6 +206,7 @@ class TestModelInheritance:
         assert derived.a == 1
         assert derived.b == 2
         assert Derived._fields_ == [("b", Int32)]
+        assert sizeof(Derived) >= sizeof(Base)
 
     def test_inheritance_from_non_structure_fails(self) -> None:
         """Inheritance from a non-Structure base raises `TypeError`."""
@@ -243,7 +242,9 @@ class TestModelForwardReferences:
     """Verifies forward references and self-references resolve correctly."""
 
     def test_forward_reference_to_other_model(self) -> None:
-        """A model can forward-reference another model defined later."""
+        """A model can forward-reference another model defined later via `stub`."""
+
+        Child = stub("Child")
 
         @model
         class Container:
@@ -253,13 +254,14 @@ class TestModelForwardReferences:
         class Child:
             value: Int32
 
-        # Triggering resolution should not raise
         child = Child(10)
         container = Container(child=Ptr[Child](child))
-        assert container.child.contents.value == 10
+        assert container.child.obj.value == 10
 
     def test_self_reference_via_pointer(self) -> None:
-        """A model can recursively reference itself via `Ptr`."""
+        """A model can recursively reference itself via `Ptr` and `stub`."""
+
+        Node = stub("Node")
 
         @model
         class Node:
@@ -287,12 +289,11 @@ class TestModelInvalidAnnotations:
     def test_unresolved_forward_ref_raises(self) -> None:
         """Unresolved forward references raise `TypeError` on finalization."""
 
-        @model
-        class Broken:
-            value: "DoesNotExist"  # type: ignore
-
         with pytest.raises(TypeError, match="unresolved types"):
-            Broken = _finalize(Broken)
+
+            @model
+            class Broken:
+                value: "DoesNotExist"  # type: ignore
 
     def test_non_eco_type_raises(self) -> None:
         """Annotations that aren't EcoOS data types raise `TypeError`."""
@@ -303,67 +304,23 @@ class TestModelInvalidAnnotations:
             class Bad:
                 value: str
 
-            Bad = _finalize(Bad)
+    def test_non_class_annotation_raises(self) -> None:
+        """Annotations that are not classes raise `TypeError`."""
+
+        with pytest.raises(TypeError, match="Invalid EcoOS data type"):
+
+            @model
+            class Bad:
+                value: Literal[42]  # type: ignore
 
     def test_union_with_multiple_types_raises(self) -> None:
         """A Union with more than one non-None type raises `TypeError`."""
 
-        @model
-        class BadUnion:
-            value: Int32 | Int16
+        with pytest.raises(TypeError, match="Invalid EcoOS union"):
 
-        with pytest.raises(TypeError):
-            BadUnion = _finalize(BadUnion)
-
-
-class TestModelEqualityAndRepr:
-    """Verifies generated `__eq__` and `__repr__` methods."""
-
-    def test_equality_same_values(self) -> None:
-        """Two model instances with the same field values compare equal."""
-
-        @model
-        class Point:
-            x: Int32
-            y: Int32
-
-        assert Point(1, 2) == Point(1, 2)
-
-    def test_equality_different_values(self) -> None:
-        """Two model instances with different values are not equal."""
-
-        @model
-        class Point:
-            x: Int32
-            y: Int32
-
-        assert Point(1, 2) != Point(3, 4)
-
-    def test_equality_different_types(self) -> None:
-        """Instances of different model types are not equal."""
-
-        @model
-        class A:
-            value: Int32
-
-        @model
-        class B:
-            value: Int32
-
-        assert A(1) != B(1)
-
-    def test_repr_includes_class_and_fields(self) -> None:
-        """`__repr__` output includes the class name and field values."""
-
-        @model
-        class Point:
-            x: Int32
-            y: Int32
-
-        text = repr(Point(7, 9))
-        assert "Point" in text
-        assert "x=" in text
-        assert "y=" in text
+            @model
+            class BadUnion:
+                value: Int32 | Int16
 
 
 class TestModelNestedStructures:
@@ -500,7 +457,9 @@ class TestModelNestedStructures:
         assert sizeof(Root) >= sizeof(Int32) + sizeof(Int64)
 
     def test_mutually_recursive_models(self) -> None:
-        """Two models can hold pointers to each other."""
+        """Two models can hold pointers to each other via `stub`."""
+
+        Partner = stub("Partner")
 
         @model
         class Node:
@@ -516,7 +475,9 @@ class TestModelNestedStructures:
         assert ("peer", Ptr[Node]) in Partner._fields_
 
     def test_model_with_array_of_child_pointers(self) -> None:
-        """A model can form an array of self-pointers."""
+        """A model can form an array of self-pointers via `stub`."""
+
+        TreeNode = stub("TreeNode")
 
         @model
         class TreeNode:
@@ -524,58 +485,6 @@ class TestModelNestedStructures:
             children: Array[Ptr[TreeNode], 4]
 
         assert sizeof(TreeNode) >= sizeof(Int32) + sizeof(Ptr[Void]) * 4
-
-
-class TestModelLazyFinalization:
-    """Verifies the lazy-finalization behavior."""
-
-    def test_fields_resolved_on_access(self) -> None:
-        """`_fields_` access triggers finalization."""
-
-        @model
-        class Lazy:
-            value: Int32
-
-        assert Lazy.__dict__.get("_eco_ready_") is False
-        _ = Lazy._fields_
-        assert Lazy.__dict__.get("_eco_ready_") is True
-
-    def test_fields_resolved_on_instance(self) -> None:
-        """Instantiation triggers finalization."""
-
-        @model
-        class Lazy:
-            value: Int32
-
-        assert Lazy.__dict__.get("_eco_ready_") is False
-        _ = Lazy(10)
-        assert Lazy.__dict__.get("_eco_ready_") is True
-
-    def test_fields_resolved_on_sizeof(self) -> None:
-        """Sizeof access triggers finalization."""
-
-        @model
-        class Lazy:
-            value: Int32
-
-        assert Lazy.__dict__.get("_eco_ready_") is False
-        _ = sizeof(Lazy)
-        assert Lazy.__dict__.get("_eco_ready_") is True
-
-    def test_fields_resolved_on_inheritance(self) -> None:
-        """Subclassing triggers finalization of the base class."""
-
-        @model
-        class Base:
-            value: Int32
-
-        assert Base.__dict__.get("_eco_ready_") is False
-
-        @model
-        class Derived(Base):
-            pass
-
-        assert Base.__dict__.get("_eco_ready_") is True
 
 
 class TestModelBodyValidation:

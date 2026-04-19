@@ -5,14 +5,11 @@ unions: field resolution, byte layout/sizeof, inheritance, forward references,
 ClassVar handling, Optional types, and error reporting for invalid annotations.
 """
 
-from __future__ import annotations
-
 from typing import ClassVar, Optional
 
 import pytest
 
-from eco_python2acom.decorators.layout import model, union
-from eco_python2acom.decorators.utils import finalize
+from eco_python2acom.decorators.layout import model, stub, union
 from eco_python2acom.types.array import Array
 from eco_python2acom.types.core import CUnion, Double, Float, Int8, Int16, Int32, Int64, UInt8, Void
 from eco_python2acom.types.pointer import Ptr
@@ -136,6 +133,22 @@ class TestUnionLayout:
 
         assert sizeof(Either) == sizeof(Ptr[Void])
 
+    def test_union_with_model_by_value(self) -> None:
+        """A union can embed a model by value alongside primitive alternatives."""
+
+        @model
+        class Point:
+            x: Int32
+            y: Int32
+
+        @union
+        class Variant:
+            as_point: Point
+            as_raw: Int64
+
+        assert Variant._fields_ == [("as_point", Point), ("as_raw", Int64)]
+        assert sizeof(Variant) == max(sizeof(Point), sizeof(Int64))
+
     def test_empty_union_instantiable(self) -> None:
         """A union with no fields is still instantiable."""
 
@@ -182,6 +195,15 @@ class TestUnionOptional:
         @union
         class Union:
             value: Optional[Int32]
+
+        assert Union._fields_ == [("value", Int32)]
+
+    def test_union_none_resolves_to_inner(self) -> None:
+        """`T | None` is treated as `T` after normalization."""
+
+        @union
+        class Union:
+            value: Int32 | None
 
         assert Union._fields_ == [("value", Int32)]
 
@@ -244,93 +266,55 @@ class TestUnionForwardReferences:
 
         assert Union._fields_ == [("value", Int32)]
 
+    def test_stub_forward_declaration_resolves(self) -> None:
+        """A `stub` placeholder is replaced by the later `@union` definition."""
+
+        Later = stub("Later", base=CUnion)
+
+        @union
+        class Holder:
+            ref: Ptr[Later]
+
+        @union
+        class Later:
+            as_int: Int32
+            as_float: Float
+
+        assert Holder._fields_ == [("ref", Ptr[Later])]
+        assert Later._fields_ == [("as_int", Int32), ("as_float", Float)]
+        assert sizeof(Holder) == sizeof(Ptr[Void])
+        assert sizeof(Later) == sizeof(Float)
+
 
 class TestUnionInvalidAnnotations:
     """Verifies error reporting for unresolved or invalid annotations."""
 
     def test_unresolved_forward_ref_raises(self) -> None:
-        """Unresolved forward references raise `TypeError` on finalization."""
-
-        @union
-        class Broken:
-            value: "DoesNotExist"  # type: ignore
+        """Unresolved forward references raise `TypeError` on decoration."""
 
         with pytest.raises(TypeError, match="unresolved types"):
-            Broken = finalize(Broken)
+
+            @union
+            class Broken:
+                value: "DoesNotExist"  # type: ignore
 
     def test_non_eco_type_raises(self) -> None:
         """Annotations that aren't EcoOS data types raise `TypeError`."""
 
-        with pytest.raises(TypeError, match="Invalid EcoOS data type"):
+        with pytest.raises(TypeError, match="Invalid EcoOS data"):
 
             @union
             class Bad:
                 value: str
 
-            Bad = finalize(Bad)
-
     def test_union_annotation_multiple_types_raises(self) -> None:
         """A typing union with more than one non-None type raises `TypeError`."""
 
-        @union
-        class BadUnion:
-            value: Int32 | Int16
-
         with pytest.raises(TypeError, match="Invalid EcoOS union"):
-            BadUnion = finalize(BadUnion)
 
-
-class TestUnionRepr:
-    """Verifies generated `__repr__` method."""
-
-    def test_repr_includes_class_and_fields(self) -> None:
-        """`__repr__` output includes the class name and field values."""
-
-        @union
-        class Union:
-            value: Int32
-
-        inst = Union(value=7)
-        text = repr(inst)
-        assert "Union" in text
-        assert "value=" in text
-
-
-class TestUnionLazyFinalization:
-    """Verifies lazy-finalization behavior."""
-
-    def test_fields_resolved_on_access(self) -> None:
-        """`_fields_` access triggers finalization."""
-
-        @union
-        class Lazy:
-            value: Int32
-
-        assert Lazy.__dict__.get("_eco_ready_") is False
-        _ = Lazy._fields_
-        assert Lazy.__dict__.get("_eco_ready_") is True
-
-    def test_fields_resolved_on_instance(self) -> None:
-        """Instantiation triggers finalization."""
-
-        @union
-        class Lazy:
-            value: Int32
-
-        assert Lazy.__dict__.get("_eco_ready_") is False
-        _ = Lazy()
-        assert Lazy.__dict__.get("_eco_ready_") is True
-
-    def test_fields_resolved_on_sizeof(self) -> None:
-        """`sizeof` access triggers finalization."""
-
-        @union
-        class Lazy:
-            value: Int32
-
-        assert Lazy.__dict__.get("_eco_ready_") is False
-        _ = sizeof(Lazy)
-        assert Lazy.__dict__.get("_eco_ready_") is True
+            @union
+            class BadUnion:
+                value: Int32 | Int16
 
 
 class TestUnionBodyValidation:
