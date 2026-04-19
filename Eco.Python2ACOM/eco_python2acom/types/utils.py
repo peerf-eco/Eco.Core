@@ -3,9 +3,8 @@
 import ctypes
 from typing import Any, TypeVar
 
-from eco_python2acom.types.core import CData, CPointer, CStructure
+from eco_python2acom.types.core import CPointer
 
-# TypeVar for cast target
 U = TypeVar("U")
 
 
@@ -18,7 +17,7 @@ def pointer_type(base_type: type[U]) -> type[CPointer]:
     """Create a pointer type for an EcoOS data type.
 
     Args:
-        base_type: The EcoOS data type to create a pointer type for.
+        base_type: The EcoOS data type.
 
     Returns:
         A pointer type (class) for the given type.
@@ -30,7 +29,7 @@ def pointer(obj: U) -> CPointer:
     """Create a pointer to an EcoOS object.
 
     Args:
-        obj: The EcoOS object to create a pointer to.
+        obj: The EcoOS object.
 
     Returns:
         An EcoOS pointer to the object.
@@ -43,7 +42,7 @@ def cast(obj: Any, target_type: type[U]) -> U:
 
     Args:
         obj: The pointer or object to cast.
-        target_type: The target EcoOS type to cast to.
+        target_type: The target EcoOS type.
 
     Returns:
         The object cast to the new type.
@@ -55,7 +54,7 @@ def byref(obj: Any) -> Any:
     """Pass an EcoOS object by reference.
 
     Args:
-        obj: The EcoOS object to pass by reference.
+        obj: The EcoOS object.
 
     Returns:
         A lightweight reference to the object.
@@ -84,12 +83,6 @@ def sizeof(obj_or_type: Any) -> int:
     Returns:
         Size in bytes.
     """
-    if isinstance(obj_or_type, CData):
-        obj_or_type = type(obj_or_type)
-    if issubclass(obj_or_type, CStructure):
-        from eco_python2acom.decorators.utils import finalize
-
-        finalize(obj_or_type)
     return ctypes.sizeof(obj_or_type)
 
 
