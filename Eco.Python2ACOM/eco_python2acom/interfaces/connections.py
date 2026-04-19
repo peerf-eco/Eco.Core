@@ -2,36 +2,37 @@
 
 This module defines ACOM interfaces for the connection point pattern,
 which allows connectable objects to expose outgoing interfaces (sinks)
-and clients to establish or tear down connections.
+and clients to establish or tear down connections. The model is
+analogous to COM's IConnectionPoint and IConnectionPointContainer.
 
 Interfaces:
-    `IEcoConnectionPoint`: A single connection point (advise / unadvise).
-    `IEcoConnectionPointContainer`: Container of connection points (find / enumerate).
-    `IEcoEnumConnectionPoints`: Enumerator over connection points.
-    `IEcoEnumConnections`: Enumerator over active connections (sink + cookie).
+    IEcoConnectionPoint: A single connection point; manage Advise/Unadvise.
+    IEcoConnectionPointContainer: Container of connection points; find or enumerate.
+    IEcoEnumConnectionPoints: Enumerator over connection points.
+    IEcoEnumConnections: Enumerator over active connections (sink + cookie).
+
+Structures:
+    EcoConnectionData: Pair of sink pointer and connection cookie.
 
 Reference:
-    Based on `IEcoConnectionPoint.h`, `IEcoConnectionPointContainer.h`,
-    `IEcoEnumConnectionPoints.h`, `IEcoEnumConnections.h` from `Eco.Core1/SharedFiles`.
+    Based on IEcoConnectionPoint.h, IEcoConnectionPointContainer.h,
+    IEcoEnumConnectionPoints.h, IEcoEnumConnections.h from Eco.Core1/SharedFiles.
 """
 
+from __future__ import annotations
+
 from eco_python2acom.decorators.interface import interface
-from eco_python2acom.decorators.layout import model, stub
+from eco_python2acom.decorators.model import model
 from eco_python2acom.guids.iid import (
     IID_IEcoConnectionPoint,
     IID_IEcoConnectionPointContainer,
     IID_IEcoEnumConnectionPoints,
     IID_IEcoEnumConnections,
 )
-from eco_python2acom.interfaces.unknown import IEcoUnknown
-from eco_python2acom.types.core import Int16, UInt32
+from eco_python2acom.interfaces.base import IEcoUnknown
+from eco_python2acom.types.core import Int16, UInt32, Void
 from eco_python2acom.types.guid import UGUID
 from eco_python2acom.types.pointer import Ptr
-
-IEcoConnectionPoint = stub("IEcoConnectionPoint")
-IEcoConnectionPointContainer = stub("IEcoConnectionPointContainer")
-IEcoEnumConnectionPoints = stub("IEcoEnumConnectionPoints")
-IEcoEnumConnections = stub("IEcoEnumConnections")
 
 # =============================================================================
 # EcoConnectionData
@@ -42,13 +43,16 @@ IEcoEnumConnections = stub("IEcoEnumConnections")
 class EcoConnectionData:
     """Data for one active connection (sink + cookie).
 
+    Used by IEcoEnumConnections.Next to return the list of
+    connected sinks and their cookies.
+
     Attributes:
-        ptr: Pointer to the sink's `IEcoUnknown` (client-side object).
-        cookie: Connection cookie returned by `Advise`.
+        pUnk: Pointer to the sink's IEcoUnknown (client-side object).
+        cCookie: Connection cookie returned by Advise.
     """
 
-    ptr: Ptr[IEcoUnknown]
-    cookie: UInt32
+    pUnk: Ptr[Void]
+    cCookie: UInt32
 
 
 # =============================================================================
@@ -60,63 +64,65 @@ class EcoConnectionData:
 class IEcoConnectionPoint(IEcoUnknown):
     """Single connection point for one outgoing interface.
 
-    Allows clients to establish or terminate connections to sinks implementing
-    the outgoing interface, and to enumerate current connections.
+    A connectable object implements one IEcoConnectionPoint per
+    outgoing interface (IID). Clients call Advise with their sink
+    to receive callbacks; Unadvise(cookie) disconnects.
+
+    Inherits:
+        IEcoUnknown: QueryInterface, AddRef, Release
     """
 
-    def GetConnectionInterface(self, iid: Ptr[UGUID]) -> Int16:
+    def GetConnectionInterface(self, pIID: Ptr[UGUID]) -> Int16:
         """Get the IID of the outgoing interface supported by this point.
 
         Args:
-            iid: Output pointer to receive the interface ID.
+            pIID: Output pointer to receive the interface ID.
 
         Returns:
             0 on success, error code otherwise.
         """
         ...
 
-    def GetConnectionPointContainer(
-        self,
-        container: Ptr[Ptr[IEcoConnectionPointContainer]],
-    ) -> Int16:
+    def GetConnectionPointContainer(self, ppCPC: Ptr[Ptr[IEcoConnectionPointContainer]]) -> Int16:
         """Get the connection point container that owns this point.
 
         Args:
-            container: Output pointer to receive `IEcoConnectionPointContainer`.
+            ppCPC: Output pointer to receive IEcoConnectionPointContainer.
 
         Returns:
             0 on success, error code otherwise.
         """
         ...
 
-    def Advise(self, sink: Ptr[IEcoUnknown], cookie: Ptr[UInt32]) -> Int16:
+    def Advise(self, pUnkSink: Ptr[IEcoUnknown], pcCookie: Ptr[UInt32]) -> Int16:
         """Establish a connection between this point and the client's sink.
 
         Args:
-            sink: Pointer to the client's sink.
-            cookie: Output cookie identifying this connection.
+            pUnkSink: Pointer to the client's sink.
+            pcCookie: Output cookie identifying this connection; pass to
+                Unadvise to disconnect.
 
         Returns:
             0 on success, error code otherwise.
         """
         ...
 
-    def Unadvise(self, cookie: UInt32) -> Int16:
-        """Terminate a connection identified by the given cookie.
+    def Unadvise(self, cCookie: UInt32) -> Int16:
+        """Terminate a connection previously established by Advise.
 
         Args:
-            cookie: Cookie identifying the connection to terminate.
+            cCookie: Cookie returned by Advise.
 
         Returns:
             0 on success, error code otherwise.
         """
         ...
 
-    def EnumConnections(self, enum: Ptr[Ptr[IEcoEnumConnections]]) -> Int16:
+    def EnumConnections(self, ppEnum: Ptr[Ptr[IEcoEnumConnections]]) -> Int16:
         """Create an enumerator over current connections.
 
         Args:
-            enum: Output pointer to receive `IEcoEnumConnections`.
+            ppEnum: Output pointer to receive IEcoEnumConnections.
 
         Returns:
             0 on success, error code otherwise.
@@ -135,25 +141,28 @@ class IEcoConnectionPointContainer(IEcoUnknown):
 
     Allows clients to find a connection point by IID or enumerate
     all connection points.
+
+    Inherits:
+        IEcoUnknown: QueryInterface, AddRef, Release
     """
 
-    def EnumConnectionPoints(self, enum: Ptr[Ptr[IEcoEnumConnectionPoints]]) -> Int16:
+    def EnumConnectionPoints(self, ppEnum: Ptr[Ptr[IEcoEnumConnectionPoints]]) -> Int16:
         """Create an enumerator over all connection points.
 
         Args:
-            enum: Output pointer to receive `IEcoEnumConnectionPoints`.
+            ppEnum: Output pointer to receive IEcoEnumConnectionPoints.
 
         Returns:
             0 on success, error code otherwise.
         """
         ...
 
-    def FindConnectionPoint(self, iid: Ptr[UGUID], point: Ptr[Ptr[IEcoConnectionPoint]]) -> Int16:
+    def FindConnectionPoint(self, riid: Ptr[UGUID], ppCP: Ptr[Ptr[IEcoConnectionPoint]]) -> Int16:
         """Find the connection point for a given outgoing interface IID.
 
         Args:
-            iid: Interface ID of the outgoing interface.
-            point: Output pointer to receive `IEcoConnectionPoint`.
+            riid: Interface ID of the outgoing interface.
+            ppCP: Output pointer to receive IEcoConnectionPoint.
 
         Returns:
             0 on success, error code otherwise.
@@ -168,28 +177,37 @@ class IEcoConnectionPointContainer(IEcoUnknown):
 
 @interface(iid=IID_IEcoEnumConnectionPoints)
 class IEcoEnumConnectionPoints(IEcoUnknown):
-    """Enumerator over connection points."""
+    """Enumerator over connection points.
+
+    Standard enumeration interface: Next, Skip, Reset, Clone.
+
+    Inherits:
+        IEcoUnknown: QueryInterface, AddRef, Release
+    """
 
     def Next(
-        self, count: UInt32, points: Ptr[Ptr[IEcoConnectionPoint]], fetched: Ptr[UInt32]
+        self,
+        cConnections: UInt32,
+        ppCP: Ptr[Ptr[IEcoConnectionPoint]],
+        pcFetched: Ptr[UInt32],
     ) -> Int16:
         """Retrieve the next connection point(s).
 
         Args:
-            count: Number of connection points to fetch.
-            points: Output array of `IEcoConnectionPoint` pointers.
-            fetched: Output number of pointers actually returned.
+            cConnections: Number of connection points to fetch (typically 1).
+            ppCP: Output array of IEcoConnectionPoint pointers.
+            pcFetched: Output number of pointers actually returned.
 
         Returns:
             0 on success, error code otherwise.
         """
         ...
 
-    def Skip(self, count: UInt32) -> Int16:
-        """Skip the next elements in the enumeration.
+    def Skip(self, cConnections: UInt32) -> Int16:
+        """Skip the next cConnections elements in the enumeration.
 
         Args:
-            count: Number of elements to skip.
+            cConnections: Number of elements to skip.
 
         Returns:
             0 on success, error code otherwise.
@@ -204,11 +222,11 @@ class IEcoEnumConnectionPoints(IEcoUnknown):
         """
         ...
 
-    def Clone(self, enum: Ptr[Ptr[IEcoEnumConnectionPoints]]) -> Int16:
+    def Clone(self, ppEnum: Ptr[Ptr[IEcoEnumConnectionPoints]]) -> Int16:
         """Create a copy of the enumerator with the same state.
 
         Args:
-            enum: Output pointer to receive `IEcoEnumConnectionPoints`.
+            ppEnum: Output pointer to receive IEcoEnumConnectionPoints.
 
         Returns:
             0 on success, error code otherwise.
@@ -223,31 +241,38 @@ class IEcoEnumConnectionPoints(IEcoUnknown):
 
 @interface(iid=IID_IEcoEnumConnections)
 class IEcoEnumConnections(IEcoUnknown):
-    """Enumerator over active connections (sink + cookie pairs)."""
+    """Enumerator over active connections (sink + cookie pairs).
+
+    Returned by IEcoConnectionPoint.EnumConnections. Each element
+    is an EcoConnectionData (pUnk, cCookie).
+
+    Inherits:
+        IEcoUnknown: QueryInterface, AddRef, Release
+    """
 
     def Next(
         self,
-        count: UInt32,
-        data: Ptr[EcoConnectionData],
-        fetched: Ptr[UInt32],
+        cConnections: UInt32,
+        rgcd: Ptr[EcoConnectionData],
+        pcFetched: Ptr[UInt32],
     ) -> Int16:
         """Retrieve the next connection data element(s).
 
         Args:
-            count: Number of elements to fetch.
-            data: Output array of `EcoConnectionData` structures.
-            fetched: Output number of elements actually returned.
+            cConnections: Number of elements to fetch.
+            rgcd: Output array of EcoConnectionData structures.
+            pcFetched: Output number of elements actually returned.
 
         Returns:
             0 on success, error code otherwise.
         """
         ...
 
-    def Skip(self, count: UInt32) -> Int16:
-        """Skip the next elements in the enumeration.
+    def Skip(self, cConnections: UInt32) -> Int16:
+        """Skip the next cConnections elements.
 
         Args:
-            count: Number of elements to skip.
+            cConnections: Number of elements to skip.
 
         Returns:
             0 on success, error code otherwise.
@@ -262,11 +287,11 @@ class IEcoEnumConnections(IEcoUnknown):
         """
         ...
 
-    def Clone(self, enum: Ptr[Ptr[IEcoEnumConnections]]) -> Int16:
+    def Clone(self, ppEnum: Ptr[Ptr[IEcoEnumConnections]]) -> Int16:
         """Create a copy of the enumerator with the same state.
 
         Args:
-            enum: Output pointer to receive `IEcoEnumConnections`.
+            ppEnum: Output pointer to receive IEcoEnumConnections.
 
         Returns:
             0 on success, error code otherwise.

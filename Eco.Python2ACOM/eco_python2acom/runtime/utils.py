@@ -3,10 +3,12 @@
 This module provides utility functions used across the runtime package.
 
 Functions:
-    guid_to_lib_filename: Convert UGUID to hex filename.
-    lib_filename_to_guid: Parse hex filename to UGUID.
-    is_eco_lib: Check if filename matches EcoOS library pattern.
+    guid_to_filename: Convert UGUID to hex filename.
+    filename_to_guid: Parse hex filename to UGUID.
+    is_eco_dll: Check if filename matches EcoOS DLL pattern.
 """
+
+from __future__ import annotations
 
 import re
 from pathlib import Path
@@ -14,46 +16,53 @@ from typing import Optional
 
 from eco_python2acom.types.guid import UGUID
 
-# Library extension
-LIB_EXTENSION = ".dll"
+# Pattern for EcoOS DLL filenames: 32 hex characters
+ECO_DLL_PATTERN = re.compile(r"^[0-9A-Fa-f]{32}\.dll$")
 
-# Pattern for EcoOS library filenames: 32 hex characters
-ECO_LIB_PATTERN = re.compile(rf"^[0-9A-Fa-f]{{32}}{re.escape(LIB_EXTENSION)}$")
+# DLL extension for Windows
+DLL_EXTENSION = ".dll"
 
 
-def guid_to_lib_filename(guid: UGUID) -> str:
+def guid_to_filename(guid: UGUID) -> str:
     """Convert UGUID to hex filename format used by EcoOS.
+
+    EcoOS names DLL files using the hex representation of the
+    component's CID or system GID.
 
     Args:
         guid: The UGUID to convert.
 
     Returns:
-        Filename like "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX.dll"
+        Filename like "00000000000000000000000042757331.dll"
     """
-    hex_str = bytes(guid.data).hex().upper()
-    return hex_str + LIB_EXTENSION
+    hex_str = bytes(guid.Data).hex().upper()
+    return hex_str + DLL_EXTENSION
 
 
-def lib_filename_to_guid(filename: str) -> Optional[UGUID]:
+def filename_to_guid(filename: str) -> Optional[UGUID]:
     """Parse a hex filename to extract UGUID.
 
     Args:
-        filename: Filename like "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX.dll"
+        filename: Filename like "00000000000000000000000042757331.dll"
 
     Returns:
         UGUID if parsing succeeds, None otherwise.
     """
-    if not is_eco_lib(filename):
+    name = Path(filename).stem
+    try:
+        data = bytes.fromhex(name)
+        if len(data) != 0x10:
+            return None
+
+        return UGUID(data=data)
+    except (ValueError, TypeError):
         return None
 
-    data = bytes.fromhex(Path(filename).stem)
-    return UGUID(data=data)
 
+def is_eco_dll(filename: str) -> bool:
+    """Check if filename matches EcoOS DLL naming pattern.
 
-def is_eco_lib(filename: str) -> bool:
-    """Check if filename matches EcoOS library naming pattern.
-
-    EcoOS library files are named with 32 hex characters representing
+    EcoOS DLLs are named with 32 hex characters representing
     the component's CID.
 
     Args:
@@ -62,4 +71,4 @@ def is_eco_lib(filename: str) -> bool:
     Returns:
         True if filename matches pattern, False otherwise.
     """
-    return bool(ECO_LIB_PATTERN.match(Path(filename).name))
+    return bool(ECO_DLL_PATTERN.match(Path(filename).name))
