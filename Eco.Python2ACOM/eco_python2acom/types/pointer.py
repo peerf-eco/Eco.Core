@@ -1,17 +1,12 @@
 """Generic smart pointer implementation for EcoOS/ACOM.
 
-This module provides the Ptr[T] generic type for type-safe pointer operations
-with ctypes.
+This module provides the `Ptr[T]` generic type for type-safe pointer operations.
 """
 
-from __future__ import annotations
-
-from typing import TYPE_CHECKING, Any, Generic, TypeVar
+from typing import TYPE_CHECKING, Any, Generic, Optional, TypeVar
 
 from eco_python2acom.types.core import TYPE_NAMES, Void, VoidPtr
 from eco_python2acom.types.utils import addressof, pointer_type
-
-__all__ = ["Ptr"]
 
 T = TypeVar("T")
 
@@ -21,26 +16,29 @@ if TYPE_CHECKING:
     class Ptr(Generic[T]):
         """Generic smart pointer type.
 
+        - For `Ptr[Void]`, the primary way to access the pointer is property `value`.
+        - For other types, use property `obj` to dereference.
+
         Type Parameters:
             T: The type being pointed to.
         """
 
         _type_: type[T]
 
-        def __init__(self, value: int | T | None = None) -> None:
+        def __init__(self, value: Optional[int | T] = None) -> None:
             """Initialize pointer.
 
             Args:
                 value: Optional value to point to. Can be:
                     - None: creates NULL pointer
-                    - int: creates pointer with this address (for Void)
+                    - int: creates pointer with this address (for `Void`)
                     - Instance of T: creates pointer to that instance
                     - Value convertible to T: wraps and creates pointer
             """
             ...
 
         @property
-        def contents(self) -> T:
+        def obj(self) -> T:
             """Dereference pointer to access the pointed-to value.
 
             Returns:
@@ -48,24 +46,21 @@ if TYPE_CHECKING:
             """
             ...
 
-        @contents.setter
-        def contents(self, value: T) -> None:
+        @obj.setter
+        def obj(self, value: T) -> None:
             """Set the pointed-to value.
 
             Args:
                 value: New value to store at pointer location.
 
             Raises:
-                AttributeError: If T is Void.
+                AttributeError: If T is `Void`.
             """
             ...
 
         @property
-        def value(self) -> int | None:
+        def value(self) -> Optional[int]:
             """Get raw pointer address.
-
-            For Ptr[Void], this is the primary way to access the pointer.
-            For other types, use .contents instead.
 
             Returns:
                 Integer address or None for NULL.
@@ -73,7 +68,7 @@ if TYPE_CHECKING:
             ...
 
         @value.setter
-        def value(self, addr: int | None) -> None:
+        def value(self, addr: Optional[int]) -> None:
             """Set raw pointer address.
 
             Args:
@@ -86,6 +81,15 @@ if TYPE_CHECKING:
 
             Returns:
                 True if pointer is non-NULL, False otherwise.
+            """
+            ...
+
+        def __eq__(self, other: object) -> bool:
+            """Compare two pointers by address.
+
+            Returns:
+                True if both pointers reference the same address
+                or NULL, False otherwise.
             """
             ...
 
@@ -103,8 +107,8 @@ else:
         """Metaclass that enables Ptr[T] subscript syntax.
 
         Handles special cases:
-            - Ptr[Void]: Returns wrapper over c_void_p (no .contents)
-            - Ptr[T]: Returns wrapper over POINTER(T) (with .contents)
+            - Ptr[Void]: Returns wrapper for void pointers (with `.value`)
+            - Ptr[T]: Returns wrapper for pointers to T (with `.obj`)
             - Ptr[Ptr[T]]: Recursive pointers work correctly
 
         Attributes:
@@ -121,41 +125,31 @@ else:
 
             Returns:
                 A pointer class for the specified type.
-
-            Raises:
-                TypeError: If item cannot be made into a pointer.
-
-            Note:
-                Results are cached for performance.
             """
+            if not isinstance(item, type):
+                raise TypeError(f"Ptr element type must be a type, got '{type(item).__name__}'")
+
             # Check cache first
             if item in cls._cache:
                 return cls._cache[item]
 
-            # Special case: Ptr[Void] wraps c_void_p (no .contents)
+            # Special case: Ptr[Void]
             if item is Void:
 
                 class SmartVoidPtr(VoidPtr):
-                    """Smart void pointer wrapper (no `.contents` - void has no size)."""
+                    """Smart void pointer wrapper (no `.obj` - void has no size)."""
 
                     def __repr__(self) -> str:
-                        """String representation."""
+                        """String representation with address."""
                         if self.value is not None:
                             return f"<Ptr[Void] 0x{self.value:X}>"
                         return "<Ptr[Void] NULL>"
 
                     def __eq__(self, other: object) -> bool:
-                        """Compare two pointers for equality.
-
-                        Comparison is done on the value of the pointers.
-                        """
+                        """Compare two void pointers by address."""
                         if not isinstance(other, SmartVoidPtr):
                             return NotImplemented
                         return self.value == other.value
-
-                    def __hash__(self) -> int:
-                        """Hash the pointer."""
-                        return hash(self.value)
 
                 SmartVoidPtr.__name__ = "Ptr[Void]"
                 SmartVoidPtr.__qualname__ = "Ptr[Void]"
@@ -166,22 +160,19 @@ else:
             # Get display name
             type_name = TYPE_NAMES.get(item, getattr(item, "__name__", str(item)))
 
-            # Create ctypes pointer type
+            # Create pointer type
             try:
-                ctypes_ptr = pointer_type(item)
+                ptr_type = pointer_type(item)
             except TypeError as err:
-                raise TypeError(f"Cannot create pointer to {item}: {err}") from err
+                raise ValueError(f"Cannot create pointer to '{type_name}': {err}") from err
 
             # Create smart pointer wrapper class
-            class SmartPtr(ctypes_ptr):
-                """Runtime smart pointer implementation.
-
-                This class wraps a ctypes pointer type.
-                """
+            class SmartPtr(ptr_type):
+                """Runtime smart pointer implementation."""
 
                 _type_ = item
 
-                def __init__(self, value: Any | None = None) -> None:
+                def __init__(self, value: Optional[Any] = None) -> None:
                     """Initialize pointer from value."""
                     if value is None:
                         super().__init__()
@@ -190,29 +181,36 @@ else:
                     else:
                         try:
                             super().__init__(item(value))
-                        except Exception:
-                            super().__init__()
+                        except Exception as err:
+                            raise ValueError(
+                                f"Cannot initialize Ptr[{type_name}] from '{type(value).__name__}'"
+                            ) from err
+
+                @property
+                def obj(self) -> T:
+                    """Dereference pointer to access the pointed-to value."""
+                    return self.contents
+
+                @obj.setter
+                def obj(self, value: T) -> None:
+                    """Set the pointed-to value."""
+                    self.contents = value
 
                 def __repr__(self) -> str:
-                    """String representation."""
-                    try:
-                        addr = addressof(self.contents)
-                        return f"<Ptr[{type_name}] 0x{addr:X}>"
-                    except Exception:
+                    """String representation with address."""
+                    if not bool(self):
                         return f"<Ptr[{type_name}] NULL>"
+                    return f"<Ptr[{type_name}] 0x{addressof(self.contents):X}>"
 
                 def __eq__(self, other: object) -> bool:
-                    """Compare two pointers for equality.
-
-                    Comparison is done on the value of the pointers.
-                    """
+                    """Compare two pointers by address."""
                     if not isinstance(other, SmartPtr):
                         return NotImplemented
+                    self_null = not bool(self)
+                    other_null = not bool(other)
+                    if self_null or other_null:
+                        return self_null and other_null
                     return addressof(self.contents) == addressof(other.contents)
-
-                def __hash__(self) -> int:
-                    """Hash the pointer."""
-                    return hash(addressof(self.contents))
 
             SmartPtr.__name__ = f"Ptr[{type_name}]"
             SmartPtr.__qualname__ = f"Ptr[{type_name}]"
@@ -224,7 +222,40 @@ else:
     class Ptr(metaclass=_PtrMeta):
         """Generic smart pointer type.
 
-        This is the runtime class that uses _PtrMeta to enable Ptr[T] syntax.
+        `Ptr[T]` is the Python equivalent of a C pointer `T*`. Subscripting
+        creates a concrete pointer class.
+
+        Type Parameters:
+            T: The type being pointed to (EcoOS-compatible type).
+
+        Attributes:
+            _type_: The pointed-to type.
+
+        - `Ptr[Void]` — void pointer; use `.value` to read/write the raw address.
+        - `Ptr[T]` — typed pointer; use `.obj` to dereference and access the value.
+        - `Ptr[Ptr[T]]` — double pointer; works recursively.
+
+        Example:
+            ```python
+            from eco_python2acom.types.pointer import Ptr
+            from eco_python2acom.types.core import Int32, Void
+
+            # Typed pointer
+            x = Int32(42)
+            p = Ptr[Int32](x)
+            print(p.obj.value)   # 42
+
+            # Void pointer (raw address only)
+            vp = Ptr[Void]()
+            print(bool(vp))      # False — NULL
+
+            # Double pointer (output parameter pattern)
+            ppv = Ptr[Void]()
+            bus.obj.QueryComponent(byref(cid), None, byref(iid), byref(ppv))
+            ```
         """
 
         pass
+
+
+__all__ = ["Ptr"]

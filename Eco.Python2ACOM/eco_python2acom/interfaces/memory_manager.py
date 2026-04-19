@@ -1,24 +1,22 @@
-"""Memory Manager interfaces for EcoOS.
+"""Memory manager interfaces for EcoOS.
 
-The Memory Manager provides heap memory management for EcoOS components.
+The `MemoryManager` provides heap memory management for EcoOS components.
 
 Interfaces:
-    IEcoMemoryManager1: Low-level manager for heap initialization.
-    IEcoMemoryAllocator1: User-facing allocator for memory operations.
+    `IEcoMemoryManager1`: Low-level manager for heap initialization.
+    `IEcoMemoryAllocator1`: User-facing allocator for memory operations.
 
 Reference:
-    Based on IEcoMemoryManager1.h and IEcoMemoryAllocator1.h
-    from Eco.MemoryManager1/SharedFiles.
+    Based on `IEcoMemoryManager1.h` and `IEcoMemoryAllocator1.h`
+    from `Eco.MemoryManager1/SharedFiles`.
 """
-
-from __future__ import annotations
 
 from typing import Optional
 
 from eco_python2acom.decorators.interface import interface
-from eco_python2acom.decorators.model import model
+from eco_python2acom.decorators.layout import model
 from eco_python2acom.guids.iid import IID_IEcoMemoryAllocator1, IID_IEcoMemoryManager1
-from eco_python2acom.interfaces.base import IEcoUnknown
+from eco_python2acom.interfaces.unknown import IEcoUnknown
 from eco_python2acom.types.core import Char, Int16, UInt32, Void
 from eco_python2acom.types.pointer import Ptr
 
@@ -27,17 +25,14 @@ from eco_python2acom.types.pointer import Ptr
 class EcoMemoryManager1Block:
     """Descriptor of a single memory block in the manager's heap.
 
-    Used by IEcoMemoryManager1.get_UsedBlocks to return information
-    about allocated blocks (address range and size).
-
     Attributes:
-        lowAddr: Low (start) address of the block.
-        highAddr: High (end) address of the block.
+        low_addr: Low (start) address of the block.
+        high_addr: High (end) address of the block.
         size: Size of the block in bytes.
     """
 
-    lowAddr: UInt32
-    highAddr: UInt32
+    low_addr: UInt32
+    high_addr: UInt32
     size: UInt32
 
 
@@ -45,22 +40,19 @@ class EcoMemoryManager1Block:
 class EcoMemoryManager1Status:
     """Current status of the memory manager heap.
 
-    Filled by IEcoMemoryManager1.get_Status with aggregate information
-    about the heap: address range, total/free size, and number of used blocks.
-
     Attributes:
-        lowAddr: Low (start) address of the heap.
-        highAddr: High (end) address of the heap.
-        totalSize: Total heap size in bytes.
-        freeSize: Free (unused) size in bytes.
-        usedBlocks: Number of allocated blocks.
+        low_addr: Low (start) address of the heap.
+        high_addr: High (end) address of the heap.
+        total_size: Total heap size in bytes.
+        free_size: Free (unused) size in bytes.
+        used_blocks: Number of allocated blocks.
     """
 
-    lowAddr: UInt32
-    highAddr: UInt32
-    totalSize: UInt32
-    freeSize: UInt32
-    usedBlocks: UInt32
+    low_addr: UInt32
+    high_addr: UInt32
+    total_size: UInt32
+    free_size: UInt32
+    used_blocks: UInt32
 
 
 # =============================================================================
@@ -72,18 +64,15 @@ class EcoMemoryManager1Status:
 class IEcoMemoryManager1(IEcoUnknown):
     """Memory manager interface for heap initialization.
 
-    Used internally by EcoSystem to set up the memory heap
+    Used internally by `EcoSystem` to set up the memory heap
     before allocations can be made.
-
-    Inherits:
-        IEcoUnknown: QueryInterface, AddRef, Release
     """
 
-    def Init(self, startAddress: Optional[Ptr[Void]], size: UInt32) -> Int16:
+    def Init(self, start: Optional[Ptr[Void]], size: UInt32) -> Int16:
         """Initialize the memory manager with heap.
 
         Args:
-            startAddress: Start of heap memory (NULL for auto).
+            start: Start of heap memory (NULL for auto).
             size: Size of heap in bytes.
 
         Returns:
@@ -108,7 +97,7 @@ class IEcoMemoryManager1(IEcoUnknown):
         """Get descriptors of used memory blocks.
 
         Args:
-            blocks: Output array of EcoMemoryManager1Block structures.
+            blocks: Output array of `EcoMemoryManager1Block` structures.
             size_in_blocks: Input size of the array; output number of blocks written.
 
         Returns:
@@ -128,9 +117,6 @@ class IEcoMemoryAllocator1(IEcoUnknown):
 
     Provides standard memory operations: alloc, free, realloc,
     copy, fill, compare, and size retrieval.
-
-    Inherits:
-        IEcoUnknown: QueryInterface, AddRef, Release
     """
 
     def Alloc(self, size: UInt32) -> Ptr[Void]:
@@ -164,11 +150,11 @@ class IEcoMemoryAllocator1(IEcoUnknown):
         """
         ...
 
-    def Copy(self, dest: Ptr[Void], src: Ptr[Void], size: UInt32) -> Ptr[Void]:
+    def Copy(self, dst: Ptr[Void], src: Ptr[Void], size: UInt32) -> Ptr[Void]:
         """Copy memory from source to destination.
 
         Args:
-            dest: Destination pointer.
+            dst: Destination pointer.
             src: Source pointer.
             size: Number of bytes to copy.
 
@@ -177,11 +163,11 @@ class IEcoMemoryAllocator1(IEcoUnknown):
         """
         ...
 
-    def Fill(self, dest: Ptr[Void], value: Char, size: UInt32) -> Ptr[Void]:
+    def Fill(self, dst: Ptr[Void], value: Char, size: UInt32) -> Ptr[Void]:
         """Fill memory with a byte value.
 
         Args:
-            dest: Destination pointer.
+            dst: Destination pointer.
             value: Byte value to fill with.
             size: Number of bytes to fill.
 
@@ -190,16 +176,16 @@ class IEcoMemoryAllocator1(IEcoUnknown):
         """
         ...
 
-    def Compare(self, ptr1: Ptr[Void], ptr2: Ptr[Void], size: UInt32) -> Int16:
+    def Compare(self, first: Ptr[Void], second: Ptr[Void], size: UInt32) -> Int16:
         """Compare two memory blocks.
 
         Args:
-            ptr1: First memory block.
-            ptr2: Second memory block.
+            first: First memory block.
+            second: Second memory block.
             size: Number of bytes to compare.
 
         Returns:
-            0 if equal, negative if ptr1 < ptr2, positive if ptr1 > ptr2.
+            0 if equal, negative if first < second, positive if first > second.
         """
         ...
 
