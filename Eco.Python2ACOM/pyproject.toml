@@ -1,8 +1,8 @@
 [tool.poetry]
 name = "eco-python2acom"
-version = "0.10.0"
+version = "0.6.0"
 description = "Python bridge for ACOM component technology (EcoOS)"
-authors = ["Sergei Vdovenkov <sivdovenkov.it@gmail.com>"]
+authors = ["Sergei Vdovenkov <vdovenkov2000@gmail.com>"]
 readme = "README.md"
 license = "MIT"
 packages = [{include = "eco_python2acom"}]
@@ -19,6 +19,7 @@ classifiers = [
 
 [tool.poetry.dependencies]
 python = "^3.11"
+rich = {version = "^13.0.0"}
 
 [tool.poetry.group.dev.dependencies]
 black = "^23.0.0"
@@ -29,11 +30,6 @@ pytest = "^7.4.0"
 pytest-sugar = "^0.9.7"
 pytest-cov = "^4.1.0"
 pre-commit = "^3.4.0"
-mkdocs = "^1.6.1"
-mkdocs-material = "^9.7.6"
-mkdocstrings = {extras = ["python"], version = "^1.0.3"}
-rich = "^15.0.0"
-allure-pytest = "^2.15.3"
 
 [build-system]
 requires = ["poetry-core"]
@@ -92,7 +88,6 @@ ignore = [
 
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401"]
-"tests/**/*.py" = ["F821", "UP037"]
 
 [tool.mypy]
 python_version = "3.11"
@@ -110,28 +105,28 @@ warn_unreachable = true
 strict_equality = true
 show_error_codes = true
 ignore_missing_imports = true
-disable_error_code = ["attr-defined", "empty-body", "valid-type", "type-var", "union-attr", "no-redef"]
-exclude = '^(tests|examples)/'
+disable_error_code = ["attr-defined", "empty-body", "valid-type", "type-var", "union-attr"]
+
+[[tool.mypy.overrides]]
+module = [
+    "tests.*",
+    "examples.*",
+]
+disallow_untyped_defs = false
 
 [tool.pytest.ini_options]
 minversion = "7.0"
-addopts = "-q --strict-markers --tb=short --cache-clear --color=yes"
+addopts = "-ra -q --strict-markers"
 testpaths = ["tests"]
 python_files = ["test_*.py", "*_test.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
-markers = [
-    "unit: fast isolated tests",
-    "integration: requires external resources",
-]
 
 [tool.coverage.run]
 source = ["eco_python2acom"]
 omit = [
     "*/tests/*",
     "*/test_*.py",
-    "*/interfaces/*",
-    "*/guids/*",
 ]
 
 [tool.coverage.report]

@@ -1,9 +1,6 @@
 """Generation IDs (GID) for EcoOS architectures.
 
-GIDs identify the target architecture/platform for runtime libraries.
-
-Note:
-    GID format is UGUID: {XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX}
+GIDs identify the target architecture/platform for runtime DLLs.
 """
 
 import struct
@@ -12,10 +9,10 @@ import sys
 from eco_python2acom.types.guid import UGUID
 
 # x86 32 bit GID = {00000000-0000-0000-0000-000014C00200}
-GID_IEcoSystem_x86_32 = UGUID("00000000-0000-0000-0000-000014C00200")
+GID_IEcoSystem_x86_32 = UGUID.from_string("00000000-0000-0000-0000-000014C00200")
 
 # x86 64 bit (AMD64) GID = {00000000-0000-0000-0000-000086640300}
-GID_IEcoSystem_x86_64 = UGUID("00000000-0000-0000-0000-000086640300")
+GID_IEcoSystem_x86_64 = UGUID.from_string("00000000-0000-0000-0000-000086640300")
 
 
 # =============================================================================

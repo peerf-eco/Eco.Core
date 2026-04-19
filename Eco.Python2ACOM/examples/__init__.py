@@ -1,1 +1,1 @@
-"""Examples for `eco_python2acom` library."""
+"""Examples for eco_python2acom library."""

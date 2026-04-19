@@ -1,11 +1,11 @@
 """Error codes and exceptions for ACOM/EcoOS.
 
-This module provides error code constants matching `ErrEcoCodes.h`
+This module provides error code constants matching 'ErrEcoCodes.h'
 and a custom exception class for ACOM operations.
 
 Note:
-    Error codes are based on the EcoOS `ErrEcoCodes.h` header file.
-    Values are 16-bit integers.
+    Error codes are based on the EcoOS 'ErrEcoCodes.h' header file.
+    Values are 16-bit integers (int16_t).
 """
 
 from enum import IntEnum
@@ -15,22 +15,10 @@ from eco_python2acom.types.core import Int16
 
 
 class EcoErrorCode(IntEnum):
-    """ACOM/EcoOS error codes from `ErrEcoCodes.h`.
+    """ACOM/EcoOS error codes.
 
-    All ACOM interface methods return a 16-bit status code. Zero means success -
-    any other value signals an error. The constants cover all codes defined
-    in the standard EcoOS header.
-
-    Example:
-        ```python
-        result = bus.obj.RegisterComponent(byref(cid), factory)
-        if result.value != EcoErrorCode.SUCCESS:
-            raise EcoError(result, "RegisterComponent failed")
-        ```
-
-    Note:
-        `OK` is an alias for `SUCCESS` (both equal `0x0000`).
-        User-defined codes start at `USER = 0x0002`.
+    These codes correspond to the definitions in 'ErrEcoCodes.h'.
+    Success is indicated by 0x0000, errors by other values.
     """
 
     # Success
@@ -82,27 +70,7 @@ ERROR_MESSAGES: dict[EcoErrorCode, str] = {
 
 
 class EcoError(Exception):
-    """Exception raised when an ACOM/EcoOS operation returns a non-zero status code.
-
-    Wraps a raw `Int16` (or plain `int` / `EcoErrorCode`) returned by any vtable
-    method into a structured Python exception with a human-readable message.
-
-    Attributes:
-        code: Normalised `EcoErrorCode` value.
-        message: Human-readable description of the failure.
-        operation: Name of the ACOM operation that failed, if provided.
-
-    Example:
-        ```python
-        result = factory.obj.Alloc(None, None, byref(iid), byref(ppv))
-        if result.value != 0:
-            raise EcoError(result, "Failed to create component instance")
-        ```
-
-    Note:
-        Unknown error codes (not in `EcoErrorCode`) are normalised to
-        `EcoErrorCode.FAIL` rather than raising a secondary exception.
-    """
+    """Exception raised for ACOM/EcoOS errors."""
 
     def __init__(
         self,
@@ -121,9 +89,9 @@ class EcoError(Exception):
             if isinstance(code, EcoErrorCode):
                 self.code = code
             elif isinstance(code, Int16):
-                self.code = EcoErrorCode(code.value & 0xFFFF)
+                self.code = EcoErrorCode(code.value)
             else:
-                self.code = EcoErrorCode(int(code) & 0xFFFF)
+                self.code = EcoErrorCode(code)
         except ValueError:
             # Unknown error code, default to FAIL
             self.code = EcoErrorCode.FAIL
@@ -141,5 +109,26 @@ class EcoError(Exception):
 
         super().__init__(full_msg)
 
+    def __repr__(self) -> str:
+        """Return string representation of the EcoError exception."""
+        return f"EcoError(code={self.code}, message={self.message}, operation={self.operation})"
 
-__all__ = ["EcoErrorCode", "EcoError"]
+    def __eq__(self, other: object) -> bool:
+        """Compare two EcoError exceptions.
+
+        Comparison is done on all three attributes: code, message, and operation.
+        """
+        if not isinstance(other, EcoError):
+            return NotImplemented
+        return (
+            self.code == other.code
+            and self.message == other.message
+            and self.operation == other.operation
+        )
+
+    def __hash__(self) -> int:
+        """Hash the EcoError exception."""
+        return hash((self.code, self.message, self.operation))
+
+
+__all__ = ["EcoErrorCode", "EcoError", "ERROR_MESSAGES"]

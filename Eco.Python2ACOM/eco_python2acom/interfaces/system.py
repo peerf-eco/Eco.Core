@@ -1,16 +1,18 @@
-"""System interface definition.
+"""IEcoSystem1 interface definition.
 
-The `IEcoSystem1` interface is the main entry point provided to
+The IEcoSystem1 interface is the main entry point provided to
 EcoOS user-mode applications. It is identified by a GID (Generation ID)
 rather than a traditional IID.
 
 Reference:
-    Based on `IEcoSystem1.h` from `Eco.Core1/SharedFiles`.
+    Based on IEcoSystem1.h from Eco.Core1/SharedFiles.
 """
+
+from __future__ import annotations
 
 from eco_python2acom.decorators.interface import interface
 from eco_python2acom.guids.gid import GID_IEcoSystem
-from eco_python2acom.interfaces.unknown import IEcoUnknown
+from eco_python2acom.interfaces.base import IEcoUnknown
 from eco_python2acom.types.core import Void
 from eco_python2acom.types.pointer import Ptr
 
@@ -19,15 +21,21 @@ from eco_python2acom.types.pointer import Ptr
 class IEcoSystem1(IEcoUnknown):
     """System interface - main entry point for EcoOS applications.
 
-    Used by client code (e.g. `EcoMain`) to access the interface bus
-    and other system services. The interface is identified by `GID_IEcoSystem`.
+    Used by client code (e.g. EcoMain) to access the interface bus
+    and other system services.
+
+    The interface is identified by ``GID_IEcoSystem`` (a Generation ID),
+    not a regular IID.
+
+    Inherits:
+        IEcoUnknown: QueryInterface, AddRef, Release
     """
 
-    def set_Data(self, data: Ptr[Void]) -> Void:
+    def set_Data(self, pv: Ptr[Void]) -> Void:
         """Store arbitrary user data on the system object.
 
         Args:
-            data: Pointer to user data.
+            pv: Pointer to user data.
         """
         ...
 

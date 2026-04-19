@@ -1,84 +1,90 @@
 """Calculator example with interfaces (IEcoCalculatorX + IEcoCalculatorY)."""
 
+from __future__ import annotations
+
 import sys
 
 from eco_python2acom.runtime.system import EcoSystem
 from eco_python2acom.types.core import Void
+from eco_python2acom.types.guid import UGUID
 from eco_python2acom.types.pointer import Ptr
-from eco_python2acom.types.utils import byref, cast
-from examples.calculator.interfaces import (
-    CID_EcoCalculator,
-    IEcoCalculatorX,
-    IEcoCalculatorY,
-    IID_IEcoCalculatorX,
-    IID_IEcoCalculatorY,
-)
-from examples.console import console
+from eco_python2acom.types.utils import byref
+from examples.calculator.interfaces import IEcoCalculatorX, IEcoCalculatorY
+from examples.calculator.utils import get_operation_table
+from examples.console import console, print_error, print_header, print_info, print_success
 
-
-def show(name: str, a: int, oper: str, b: int, result: int) -> None:
-    """Print one operation result in a neat single-line format."""
-    console.print(
-        f"  [bold magenta]{name:<14}[/bold magenta] "
-        f"[cyan]{a:>4}[/cyan] [yellow]{oper}[/yellow] [cyan]{b:<4}[/cyan] "
-        f"= [green]{result}[/green]"
-    )
+# CID_EcoCalculator = UGUID.from_string("AE202E54-3CE5-4550-8996-03BD70C62565")  # Calculator B
+# CID_EcoCalculator = UGUID.from_string("4828F655-2E45-40E7-8121-EBD220DC360E")  # Calculator C
+# CID_EcoCalculator = UGUID.from_string("3A8E4467-7E82-475C-B4A3-719ED8397E61")  # Calculator D
+CID_EcoCalculator = UGUID.from_string("872FEF1D-E331-4B87-AD44-D1E7C232C2F0")  # Calculator E
 
 
 def main() -> int:
     """Run calculator example."""
-    console.header("Calculator Example")
-    console.info(f"CID: {CID_EcoCalculator}")
-    console.info(f"IEcoCalculatorX IID: {IID_IEcoCalculatorX}")
-    console.info(f"IEcoCalculatorY IID: {IID_IEcoCalculatorY}\n")
+    print_header("Calculator Example")
+    print_info(f"CID: {CID_EcoCalculator.to_string()}")
+    print_info(f"IEcoCalculatorX IID: {IEcoCalculatorX._iid_.to_string()}")
+    print_info(f"IEcoCalculatorY IID: {IEcoCalculatorY._iid_.to_string()}")
+    console.print()
 
     try:
-        console.info("Initializing EcoSystem...")
+        print_info("Initializing EcoSystem...")
 
-        with EcoSystem(user_lib_dir="data") as eco:
-            console.success("EcoSystem initialized\n")
+        with EcoSystem(user_dll_path="data") as eco:
+            print_success("EcoSystem initialized")
+            console.print()
 
             ppv_x = Ptr[Void]()
-            result = eco.bus.obj.QueryComponent(
-                byref(CID_EcoCalculator), None, byref(IID_IEcoCalculatorX), byref(ppv_x)
+            result = eco.bus.QueryComponent(
+                byref(CID_EcoCalculator), None, byref(IEcoCalculatorX._iid_), byref(ppv_x)
             )
             if result.value != 0 or not ppv_x.value:
-                console.error(f"Failed to query component (code = {result.value})\n")
+                print_error(f"QueryComponent(IEcoCalculatorX) failed (code={result.value})")
                 return -2
-            calc_x = cast(ppv_x, Ptr[IEcoCalculatorX])
-            console.success(f"Got {calc_x}")
-
-            result = calc_x.obj.Addition(a=10, b=20)
-            show("Addition", 10, "+", 20, result.value)
-            result = calc_x.obj.Subtraction(a=50, b=30)
-            show("Subtraction", 50, "-", 30, result.value)
+            calc_x = IEcoCalculatorX(ppv_x)
+            print_success(f"Got {calc_x}")
+            console.print(
+                get_operation_table(
+                    "Addition", "+", [(10, 20), (100, 200), (-50, 100)], calc_x.Addition
+                )
+            )
+            console.print(
+                get_operation_table(
+                    "Subtraction", "-", [(50, 30), (100, 200), (-50, -30)], calc_x.Subtraction
+                )
+            )
             console.print()
 
             ppv_y = Ptr[Void]()
-            result = calc_x.obj.QueryInterface(byref(IID_IEcoCalculatorY), byref(ppv_y))
+            result = calc_x.QueryInterface(byref(IEcoCalculatorY._iid_), byref(ppv_y))
             if result.value != 0 or not ppv_y.value:
-                console.error(f"Failed to query interface (code = {result.value})\n")
+                print_error(f"QueryInterface(IEcoCalculatorY) failed (code={result.value})")
                 calc_x.Release()
                 return -3
-            calc_y = cast(ppv_y, Ptr[IEcoCalculatorY])
-            console.success(f"Got {calc_y}")
-
-            result = calc_y.obj.Multiplication(a=6, b=7)
-            show("Multiplication", 6, "*", 7, result.value)
-            result = calc_y.obj.Division(a=100, b=10)
-            show("Division", 100, "/", 10, result.value)
+            calc_y = IEcoCalculatorY(ppv_y)
+            print_success(f"Got {calc_y}")
+            console.print(
+                get_operation_table(
+                    "Multiplication", "*", [(6, 7), (100, 100), (-10, 5)], calc_y.Multiplication
+                )
+            )
+            console.print(
+                get_operation_table(
+                    "Division", "/", [(100, 10), (42, 7), (-100, 5)], calc_y.Division
+                )
+            )
             console.print()
 
-            calc_y.obj.Release()
-            console.success(f"Released {calc_y}")
-            calc_x.obj.Release()
-            console.success(f"Released {calc_x}")
+            calc_y.Release()
+            print_success(f"Released {calc_y}")
+            calc_x.Release()
+            print_success(f"Released {calc_x}")
 
-        console.info("Released EcoSystem")
+        print_info("Released EcoSystem")
         return 0
 
     except Exception as err:
-        console.error(str(err))
+        print_error(str(err))
         return -1
 
 
