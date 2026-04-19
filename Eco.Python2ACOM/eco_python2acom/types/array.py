@@ -142,8 +142,8 @@ else:
 
             element_type, size = params
 
-            if not isinstance(size, int) or size < 0:
-                raise ValueError(f"Array size must be a non-negative integer, got '{size}'")
+            if not isinstance(size, int) or size <= 0:
+                raise ValueError(f"Array size must be a positive integer, got '{size}'")
 
             if not isinstance(element_type, type):
                 raise TypeError(

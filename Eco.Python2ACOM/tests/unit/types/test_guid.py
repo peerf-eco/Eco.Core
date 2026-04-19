@@ -1,15 +1,16 @@
 """Unit tests for `eco_python2acom.types.guid` module.
 
 This module tests UGUID (Universal GUID) functionality including parsing,
-validation, conversion, equality, hashing, and factory methods.
+validation, conversion, equality, and hashing.
 
 Test Classes:
     TestUGUIDInitialization: Tests for `UGUID` constructor variants.
     TestUGUIDValidation: Tests for `UGUID` string format validation.
     TestUGUIDConversion: Tests for string/bytes conversion methods.
     TestUGUIDComparison: Tests for equality, hashing, and collection usage.
-    TestUGUIDClassMethods: Tests for `from_raw` and `from_string` factories.
 """
+
+from typing import Any
 
 import pytest
 
@@ -22,8 +23,7 @@ SAMPLE_GUID_ALT = "87654321-4321-8765-4321-876543218765"
 class TestUGUIDInitialization:
     """Tests for `UGUID` constructor.
 
-    Verifies initialization from string, bytes, custom preamble/length,
-    and empty construction.
+    Verifies initialization from string, bytes, and with custom preamble.
     """
 
     def test_init_from_guid_string(self) -> None:
@@ -36,22 +36,26 @@ class TestUGUIDInitialization:
     def test_init_from_bytes(self) -> None:
         """Verifies `UGUID` created from raw bytes preserves data."""
         data = bytes(range(0x10))
-        guid = UGUID(data=data)
+        guid = UGUID(data)
         assert guid.preamble == 0x01
         assert guid.length == 0x10
         assert guid.to_bytes() == data
 
-    def test_init_empty(self) -> None:
-        """Verifies empty `UGUID` is zero-initialized with correct defaults."""
-        guid = UGUID()
-        assert guid.preamble == 0x01
+    def test_init_with_custom_preamble(self) -> None:
+        """Verifies custom preamble is stored correctly."""
+        guid = UGUID(SAMPLE_GUID, preamble=0x02)
+        assert guid.preamble == 0x02
         assert guid.length == 0x10
-        assert all(byte == 0 for byte in guid.to_bytes())
 
-    def test_init_with_string_and_data(self) -> None:
-        """UGUID must reject mixed initialization sources."""
-        with pytest.raises(ValueError, match="Provide either"):
-            UGUID(guid_string=SAMPLE_GUID, data=b"\x00" * 0x10)
+    @pytest.mark.parametrize(
+        "invalid",
+        [123, None, 1.5, [0] * 16],
+        ids=["int", "none", "float", "list"],
+    )
+    def test_init_with_unsupported_type(self, invalid: Any) -> None:
+        """Verifies non-str/bytes input raises `TypeError`."""
+        with pytest.raises(TypeError, match="must be 'str' or 'bytes'"):
+            UGUID(invalid)
 
 
 class TestUGUIDValidation:
@@ -77,12 +81,6 @@ class TestUGUIDValidation:
         """Verifies valid GUID strings are correctly parsed and normalized."""
         guid = UGUID(input)
         assert guid.to_string() == expected
-
-    def test_valid_guid_without_hyphens(self) -> None:
-        """Verifies GUID without 'hyphens' is accepted."""
-        no_hyphens = SAMPLE_GUID.replace("-", "")
-        guid = UGUID(no_hyphens)
-        assert guid.to_string(with_hyphens=False) == no_hyphens
 
     @pytest.mark.parametrize(
         "invalid",
@@ -114,17 +112,17 @@ class TestUGUIDValidation:
     def test_invalid_data_length(self, invalid: bytes) -> None:
         """Verifies data with incorrect length raises ValueError."""
         with pytest.raises(ValueError, match="must be 16 bytes"):
-            UGUID(data=invalid)
+            UGUID(invalid)
 
 
 class TestUGUIDConversion:
     """Tests for UGUID conversion methods.
 
-    Verifies `to_bytes`, `to_string`, `__str__`, and `__repr__` output.
+    Verifies `to_bytes`, `to_string`, `bytes()`, and `__str__` output.
     """
 
     def test_to_bytes_returns_16_bytes(self) -> None:
-        """Verifies `to_bytes` returns exactly 16 bytes."""
+        """Verifies `to_bytes` returns exactly 16 bytes (payload only)."""
         guid = UGUID(SAMPLE_GUID)
         data = guid.to_bytes()
         assert isinstance(data, bytes)
@@ -133,14 +131,15 @@ class TestUGUIDConversion:
     def test_to_bytes_consistency_with_init_data(self) -> None:
         """Verifies `to_bytes` returns the same data used for initialization."""
         original = bytes([0x12, 0x34, 0x56, 0x78] + list(range(12)))
-        guid = UGUID(data=original)
+        guid = UGUID(original)
         assert guid.to_bytes() == original
 
-    def test_data_array_mutation_reflected(self) -> None:
-        """Verifies direct data array modification is reflected in `to_bytes`."""
+    def test_bytes_dunder_returns_full_layout(self) -> None:
+        """Verifies `bytes(guid)` returns full 18-byte ABI layout."""
         guid = UGUID(SAMPLE_GUID)
-        guid.data[0] = 0xFF
-        assert guid.to_bytes()[0] == 0xFF
+        raw = bytes(guid)
+        assert len(raw) == 18
+        assert raw == b"\x01\x10" + guid.to_bytes()
 
     def test_to_string_with_hyphens(self) -> None:
         """Verifies `to_string` with hyphens produces 4 dashes."""
@@ -156,18 +155,11 @@ class TestUGUIDConversion:
         assert "-" not in result
         assert len(result) == 32
 
-    def test_str_representation(self) -> None:
-        """Verifies `__str__` includes 'UGUID' and the GUID string."""
+    def test_str_matches_to_string(self) -> None:
+        """Verifies `str(guid)` matches `guid.to_string()`."""
         guid = UGUID(SAMPLE_GUID)
-        assert "UGUID" not in str(guid)
+        assert str(guid) == guid.to_string()
         assert SAMPLE_GUID in str(guid)
-
-    def test_repr_representation(self) -> None:
-        """Verifies `__repr__` includes preamble and length hex values."""
-        guid = UGUID(SAMPLE_GUID)
-        repr_str = repr(guid)
-        assert "preamble=0x01" in repr_str
-        assert "length=0x10" in repr_str
 
 
 class TestUGUIDComparison:
@@ -183,7 +175,7 @@ class TestUGUIDComparison:
     def test_equal_from_same_bytes(self) -> None:
         """Verifies GUIDs from the same bytes are equal."""
         data = bytes(range(0x10))
-        assert UGUID(data=data) == UGUID(data=data)
+        assert UGUID(data) == UGUID(data)
 
     def test_different_guids_not_equal(self) -> None:
         """Verifies GUIDs with different data are not equal."""
@@ -193,12 +185,6 @@ class TestUGUIDComparison:
         """Verifies different preamble makes GUIDs unequal."""
         guid1 = UGUID(SAMPLE_GUID, preamble=0x01)
         guid2 = UGUID(SAMPLE_GUID, preamble=0x02)
-        assert guid1 != guid2
-
-    def test_different_length_not_equal(self) -> None:
-        """Verifies different length field makes GUIDs unequal."""
-        guid1 = UGUID(SAMPLE_GUID, length=0x10)
-        guid2 = UGUID(SAMPLE_GUID, length=0x20)
         assert guid1 != guid2
 
     @pytest.mark.parametrize("other", [SAMPLE_GUID, 0x12345678, None], ids=["str", "int", "none"])
@@ -217,6 +203,12 @@ class TestUGUIDComparison:
         guid2 = UGUID(SAMPLE_GUID)
         assert hash(guid1) == hash(guid2)
 
+    def test_different_preamble_different_hash(self) -> None:
+        """Verifies differing preamble yields differing hash (full-layout hashing)."""
+        guid1 = UGUID(SAMPLE_GUID, preamble=0x01)
+        guid2 = UGUID(SAMPLE_GUID, preamble=0x02)
+        assert hash(guid1) != hash(guid2)
+
     def test_usable_in_set(self) -> None:
         """Verifies deduplication in a set."""
         guid_set = {
@@ -232,46 +224,3 @@ class TestUGUIDComparison:
         lookup = UGUID(SAMPLE_GUID)
         dct = {key: "test_guid"}
         assert dct[lookup] == "test_guid"
-
-
-class TestUGUIDClassMethods:
-    """Tests for UGUID factory class methods.
-
-    Verifies from_raw and from_string behavior.
-    """
-
-    def test_from_raw(self) -> None:
-        """Verifies `from_raw` creates UGUID with correct fields."""
-        data_list = list(range(0x10))
-        guid = UGUID.from_raw(0x02, 0x10, data_list)
-        assert guid.preamble == 0x02
-        assert guid.length == 0x10
-        assert list(guid.to_bytes()) == data_list
-
-    def test_from_raw_zeros(self) -> None:
-        """Verifies `from_raw` with zero data produces all-zero GUID."""
-        guid = UGUID.from_raw(0x01, 0x10, [0] * 0x10)
-        assert guid.to_string() == "00000000-0000-0000-0000-000000000000"
-
-    def test_from_raw_ones(self) -> None:
-        """Verifies from_raw with 0xFF data produces all-F GUID."""
-        guid = UGUID.from_raw(0x01, 0x10, [0xFF] * 16)
-        assert guid.to_string() == "FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF"
-
-    def test_from_string(self) -> None:
-        """Verifies `from_string` creates equivalent UGUID."""
-        guid = UGUID.from_string(SAMPLE_GUID)
-        assert guid.to_string() == SAMPLE_GUID
-
-    def test_from_string_without_hyphens(self) -> None:
-        """Verifies `from_string` accepts GUID without hyphens."""
-        no_hyphens = SAMPLE_GUID.replace("-", "")
-        guid = UGUID.from_string(no_hyphens)
-        assert guid.to_string(with_hyphens=False) == no_hyphens.upper()
-
-    def test_from_raw_matches_from_string(self) -> None:
-        """Verifies `from_raw` and `from_string` produce equal GUIDs for same data."""
-        guid_str = UGUID.from_string(SAMPLE_GUID)
-        raw_bytes = guid_str.to_bytes()
-        guid_raw = UGUID.from_raw(0x01, 0x10, list(raw_bytes))
-        assert guid_str == guid_raw

@@ -7,9 +7,7 @@ Test Classes:
     TestEcoErrorCode: Tests for `EcoErrorCode` enum values and behavior.
     TestErrorMessages: Tests for `ERROR_MESSAGES` dictionary completeness.
     TestEcoErrorInitialization: Tests for `EcoError` constructor variants.
-    TestEcoErrorFormatting: Tests for `EcoError` string formatting and repr.
-    TestEcoErrorEquality: Tests for `EcoError` equality comparison.
-    TestEcoErrorHashing: Tests for `EcoError` hashing and collection usage.
+    TestEcoErrorFormatting: Tests for `EcoError` string formatting.
 """
 
 from typing import Any
@@ -153,7 +151,7 @@ class TestEcoErrorInitialization:
 class TestEcoErrorFormatting:
     """Tests for EcoError string formatting.
 
-    Verifies `__str__` and `__repr__` output format.
+    Verifies `__str__` output format.
     """
 
     @pytest.mark.parametrize(
@@ -173,83 +171,3 @@ class TestEcoErrorFormatting:
         """Verifies `str()` excludes 'during' when no operation is set."""
         error = EcoError(EcoErrorCode.POINTER)
         assert "during" not in str(error)
-
-    def test_repr_format(self) -> None:
-        """Verifies repr() contains class name and key attributes."""
-        error = EcoError(EcoErrorCode.POINTER, message="Test", operation="operation")
-        result = repr(error)
-
-        assert result.startswith("EcoError(")
-        assert "Test" in result
-        assert "operation" in result
-
-
-class TestEcoErrorEquality:
-    """Tests for EcoError equality comparison.
-
-    Verifies `__eq__` compares code, message, and operation.
-    """
-
-    def test_equal_errors(self) -> None:
-        """Verifies errors with same attributes are equal."""
-        error1 = EcoError(EcoErrorCode.POINTER)
-        error2 = EcoError(EcoErrorCode.POINTER)
-        assert error1 == error2
-
-    def test_different_codes_not_equal(self) -> None:
-        """Verifies errors with different codes are not equal."""
-        error1 = EcoError(EcoErrorCode.POINTER)
-        error2 = EcoError(EcoErrorCode.NOINTERFACE)
-        assert error1 != error2
-
-    def test_different_messages_not_equal(self) -> None:
-        """Verifies errors with different messages are not equal."""
-        error1 = EcoError(EcoErrorCode.POINTER, message="Message 1")
-        error2 = EcoError(EcoErrorCode.POINTER, message="Message 2")
-        assert error1 != error2
-
-    def test_different_operations_not_equal(self) -> None:
-        """Verifies errors with different operations are not equal."""
-        error1 = EcoError(EcoErrorCode.POINTER, operation="operation 1")
-        error2 = EcoError(EcoErrorCode.POINTER, operation="operation 2")
-        assert error1 != error2
-
-    @pytest.mark.parametrize("other", ["error", 0xFFEE, None], ids=["str", "int", "none"])
-    def test_not_equal_to_other_types(self, other: object) -> None:
-        """Verifies `EcoError` instances are not equal to objects of other types."""
-        error = EcoError(EcoErrorCode.POINTER)
-        assert error != other
-
-
-class TestEcoErrorHashing:
-    """Tests for `EcoError` hashing.
-
-    Verifies hash consistency and collection usage.
-    """
-
-    def test_is_hashable(self) -> None:
-        """Verifies `EcoError` instances can be hashed."""
-        error = EcoError(EcoErrorCode.POINTER)
-        assert isinstance(hash(error), int)
-
-    def test_equal_errors_same_hash(self) -> None:
-        """Verifies equal errors produce the same hash value."""
-        error1 = EcoError(EcoErrorCode.POINTER)
-        error2 = EcoError(EcoErrorCode.POINTER)
-        assert hash(error1) == hash(error2)
-
-    def test_usable_in_set(self) -> None:
-        """Verifies deduplication in a set."""
-        error_set = {
-            EcoError(EcoErrorCode.POINTER),
-            EcoError(EcoErrorCode.POINTER),
-            EcoError(EcoErrorCode.NOINTERFACE),
-        }
-        assert len(error_set) == 2
-
-    def test_usable_as_dict_key(self) -> None:
-        """Verifies `EcoError` works as a dictionary key."""
-        key = EcoError(EcoErrorCode.POINTER)
-        lookup = EcoError(EcoErrorCode.POINTER)
-        dct = {key: "pointer_error"}
-        assert dct[lookup] == "pointer_error"

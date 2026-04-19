@@ -141,9 +141,5 @@ class EcoError(Exception):
 
         super().__init__(full_msg)
 
-    def __repr__(self) -> str:
-        """Return string representation of the EcoError exception."""
-        return f"EcoError(code={self.code}, message={self.message}, operation={self.operation})"
-
 
 __all__ = ["EcoErrorCode", "EcoError"]

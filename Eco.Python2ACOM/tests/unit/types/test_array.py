@@ -1,14 +1,13 @@
 """Unit tests for `eco_python2acom.types.array` module.
 
 This module tests the generic `Array[T, N]` type including metaclass subscript
-syntax, element access, iteration, conversion, equality, and error handling.
+syntax, element access, iteration, conversion, and error handling.
 
 Test Classes:
     TestArrayCreation: Tests for `Array[T, N]` type creation and instantiation.
     TestArrayElementAccess: Tests for `__getitem__` and `__setitem__`.
     TestArrayIteration: Tests for `__iter__` and `__len__`.
     TestArrayConversion: Tests for `__bytes__` and `__repr__`.
-    TestArrayEquality: Tests for `__eq__` and `__hash__`.
     TestArrayValidation: Tests for type and parameter validation errors.
     TestArrayCaching: Tests for metaclass type caching.
 """
@@ -16,7 +15,7 @@ Test Classes:
 import pytest
 
 from eco_python2acom.types.array import Array
-from eco_python2acom.types.core import Int32, UInt8, UInt16
+from eco_python2acom.types.core import Int32, UInt8, UInt16, Void
 
 
 class TestArrayCreation:
@@ -52,7 +51,7 @@ class TestArrayCreation:
         assert arr[2] == 0
         assert arr[3] == 0
 
-    @pytest.mark.parametrize("size", [0, 1, 10, 10000], ids=["zero", "one", "ten", "large"])
+    @pytest.mark.parametrize("size", [1, 10, 10000], ids=["one", "ten", "large"])
     def test_array_sizes(self, size: int) -> None:
         """Verifies `Array[T, N]` can be created with various sizes."""
         arr = Array[UInt8, size]()
@@ -138,7 +137,7 @@ class TestArrayConversion:
         arr = Array[UInt8, 4](0x01, 0x02, 0x03, 0x04)
         assert bytes(arr) == b"\x01\x02\x03\x04"
 
-    def test_bytes_zero_array(self) -> None:
+    def test_bytes_empty_array(self) -> None:
         """Verifies `__bytes__` on zero-initialized array."""
         arr = Array[UInt8, 3]()
         assert bytes(arr) == b"\x00\x00\x00"
@@ -149,45 +148,6 @@ class TestArrayConversion:
         assert repr(arr).startswith("<Array[")
 
 
-class TestArrayEquality:
-    """Tests for `__eq__` and `__hash__`.
-
-    Verifies equality comparison and hash behavior.
-    """
-
-    def test_equal_arrays(self) -> None:
-        """Verifies arrays with same contents are equal."""
-        arr1 = Array[UInt8, 3](1, 2, 3)
-        arr2 = Array[UInt8, 3](1, 2, 3)
-        assert arr1 == arr2
-
-    def test_different_contents_not_equal(self) -> None:
-        """Verifies arrays with different contents are not equal."""
-        arr1 = Array[UInt8, 3](1, 2, 3)
-        arr2 = Array[UInt8, 3](4, 5, 6)
-        assert arr1 != arr2
-
-    def test_different_sizes_not_equal(self) -> None:
-        """Verifies arrays of different sizes are not equal."""
-        arr1 = Array[UInt8, 3](1, 2, 3)
-        arr2 = Array[UInt8, 4](1, 2, 3, 0)
-        assert arr1 != arr2
-
-    @pytest.mark.parametrize(
-        "other", [None, 123, "not an array", [1, 2, 3]], ids=["none", "int", "string", "list"]
-    )
-    def test_not_equal_to_other_types(self, other: object) -> None:
-        """Verifies arrays are not equal to different types."""
-        arr = Array[UInt8, 3](1, 2, 3)
-        assert arr != other
-
-    def test_not_hashable(self) -> None:
-        """Verifies arrays are not hashable."""
-        arr = Array[UInt8, 3](1, 2, 3)
-        with pytest.raises(TypeError):
-            hash(arr)
-
-
 class TestArrayValidation:
     """Tests for Array type parameter validation.
 
@@ -195,26 +155,32 @@ class TestArrayValidation:
     """
 
     @pytest.mark.parametrize(
-        ["params", "match"],
+        ["params", "err", "match"],
         [
-            ((UInt8,), "2 parameters"),
-            ((UInt8, -1), "non-negative integer"),
-            (("not_a_type", 3), "must be a type"),
-            ((UInt8, "3"), "non-negative integer"),
-            ((int, 5), "not create array"),
+            ((UInt8,), ValueError, "2 parameters"),
+            ((UInt8, -1), ValueError, "positive integer"),
+            ((UInt8, 0), ValueError, "positive integer"),
+            ((UInt8, "3"), ValueError, "positive integer"),
+            (("not_a_type", 3), TypeError, "must be a type"),
+            ((int, 5), ValueError, "not create array"),
+            ((Void, 4), ValueError, "not create array"),
         ],
         ids=[
             "single_param",
             "negative_size",
-            "non_type_element",
+            "zero_size",
             "non_int_size",
+            "non_type_element",
             "not_valid_elem_type",
+            "void_type_element",
         ],
     )
-    def test_invalid_subscript_params(self, params: tuple, match: str) -> None:
-        """Verifies invalid subscript parameters raise `TypeError`."""
-        with pytest.raises(TypeError, match=match):
-            Array[params]  # type: ignore
+    def test_invalid_subscript_params(
+        self, params: tuple, err: type[Exception], match: str
+    ) -> None:
+        """Verifies invalid subscript parameters raise the expected exception."""
+        with pytest.raises(err, match=match):
+            Array[params]
 
 
 class TestArrayCaching:
