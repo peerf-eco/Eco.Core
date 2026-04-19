@@ -283,7 +283,7 @@ class EcoSystem:
         self._mem_manager = cast(mgr_ptr, Ptr[IEcoMemoryManager1])
         self._mem_manager.obj.Init(None, self._heap_size)
 
-        # Also get `IEcoMemoryAllocator1`` for convenience
+        # Also get `IEcoMemoryAllocator1` for convenience
         alloc_ptr = Ptr[Void]()
         result = self._bus.obj.QueryComponent(
             byref(CID_EcoMemoryManager1),

@@ -3,7 +3,6 @@
 ::: eco_python2acom.types.core
     options:
       members:
-        - CFuncType
         - CDLL
         - Bool
         - Byte

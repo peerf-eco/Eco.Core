@@ -13,6 +13,7 @@ from eco_python2acom.runtime.utils import LIB_EXTENSION, guid_to_lib_filename, l
 from eco_python2acom.types.guid import UGUID
 
 
+@pytest.mark.unit
 class TestGuidToLibFilename:
     """Tests for function `guid_to_lib_filename`."""
 
@@ -33,6 +34,7 @@ class TestGuidToLibFilename:
         assert re.fullmatch(r"[0-9A-F]{32}", stem) is not None
 
 
+@pytest.mark.unit
 class TestLibFilenameToGuid:
     """Tests for function `lib_filename_to_guid`."""
 

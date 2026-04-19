@@ -24,7 +24,6 @@ Type Mapping:
     | double_t | Double  | 8     | Double-precision floating-point   |
 """
 
-from ctypes import WINFUNCTYPE
 from ctypes import Array as CArray
 from ctypes import Structure, Union, WinDLL
 from ctypes import _CFuncPtr as CFuncPtr
@@ -65,12 +64,6 @@ from typing import TYPE_CHECKING, TypeAlias
 # =============================================================================
 # Calling Convention
 # =============================================================================
-
-CFuncType = WINFUNCTYPE
-"""Function type for __stdcall convention (Windows).
-
-Use this to define function signatures for EcoOS interface methods.
-"""
 
 CDLL: TypeAlias = WinDLL
 """DLL loader with __stdcall convention.
@@ -364,7 +357,6 @@ TYPE_NAMES: dict[type, str] = {
     # Floating-point
     Float: "Float",
     Double: "Double",
-    LongDouble: "LongDouble",
     # Strings
     CString: "CString",
     WString: "WString",
@@ -378,7 +370,6 @@ TYPE_NAMES: dict[type, str] = {
 
 __all__ = [
     # Calling convention
-    "CFuncType",
     "CDLL",
     # Boolean
     "Bool",

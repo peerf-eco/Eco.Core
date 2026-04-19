@@ -16,6 +16,7 @@ from eco_python2acom.types.pointer import Ptr
 from eco_python2acom.types.utils import sizeof
 
 
+@pytest.mark.unit
 class TestUnionBasicFields:
     """Verifies basic field resolution and `CUnion` compliance."""
 
@@ -60,6 +61,7 @@ class TestUnionBasicFields:
         assert val.as_int == 42
 
 
+@pytest.mark.unit
 class TestUnionLayout:
     """Verifies byte layout — union size equals the largest member."""
 
@@ -160,6 +162,7 @@ class TestUnionLayout:
         assert isinstance(instance, CUnion)
 
 
+@pytest.mark.unit
 class TestUnionClassVar:
     """Verifies `ClassVar` annotations are excluded from `_fields_`."""
 
@@ -186,6 +189,7 @@ class TestUnionClassVar:
         assert OnlyClassVars._fields_ == []
 
 
+@pytest.mark.unit
 class TestUnionOptional:
     """Verifies `Optional[T]` is normalized to `T`."""
 
@@ -208,6 +212,7 @@ class TestUnionOptional:
         assert Union._fields_ == [("value", Int32)]
 
 
+@pytest.mark.unit
 class TestUnionInheritance:
     """Verifies union inheritance rules."""
 
@@ -254,6 +259,7 @@ class TestUnionInheritance:
                 z: Int32
 
 
+@pytest.mark.unit
 class TestUnionForwardReferences:
     """Verifies forward references resolve correctly."""
 
@@ -286,6 +292,7 @@ class TestUnionForwardReferences:
         assert sizeof(Later) == sizeof(Float)
 
 
+@pytest.mark.unit
 class TestUnionInvalidAnnotations:
     """Verifies error reporting for unresolved or invalid annotations."""
 
@@ -317,6 +324,7 @@ class TestUnionInvalidAnnotations:
                 value: Int32 | Int16
 
 
+@pytest.mark.unit
 class TestUnionBodyValidation:
     """Verifies decorator-time validation of the union body."""
 

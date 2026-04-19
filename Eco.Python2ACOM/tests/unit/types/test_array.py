@@ -18,6 +18,7 @@ from eco_python2acom.types.array import Array
 from eco_python2acom.types.core import Int32, UInt8, UInt16, Void
 
 
+@pytest.mark.unit
 class TestArrayCreation:
     """Tests for `Array[T, N]` type creation and instantiation.
 
@@ -58,6 +59,7 @@ class TestArrayCreation:
         assert len(arr) == size
 
 
+@pytest.mark.unit
 class TestArrayElementAccess:
     """Tests for element access via `__getitem__` and `__setitem__`.
 
@@ -103,6 +105,7 @@ class TestArrayElementAccess:
             arr[len(arr) + 1]
 
 
+@pytest.mark.unit
 class TestArrayIteration:
     """Tests for `__iter__` and `__len__`.
 
@@ -126,6 +129,7 @@ class TestArrayIteration:
         assert total == (1 + 2 + 3)
 
 
+@pytest.mark.unit
 class TestArrayConversion:
     """Tests for `__bytes__` and `__repr__`.
 
@@ -148,6 +152,7 @@ class TestArrayConversion:
         assert repr(arr).startswith("<Array[")
 
 
+@pytest.mark.unit
 class TestArrayValidation:
     """Tests for Array type parameter validation.
 
@@ -183,6 +188,7 @@ class TestArrayValidation:
             Array[params]
 
 
+@pytest.mark.unit
 class TestArrayCaching:
     """Tests for metaclass type caching.
 

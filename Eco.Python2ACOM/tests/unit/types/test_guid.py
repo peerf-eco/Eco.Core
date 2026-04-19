@@ -20,6 +20,7 @@ SAMPLE_GUID = "12345678-1234-5678-1234-567812345678"
 SAMPLE_GUID_ALT = "87654321-4321-8765-4321-876543218765"
 
 
+@pytest.mark.unit
 class TestUGUIDInitialization:
     """Tests for `UGUID` constructor.
 
@@ -58,6 +59,7 @@ class TestUGUIDInitialization:
             UGUID(invalid)
 
 
+@pytest.mark.unit
 class TestUGUIDValidation:
     """Tests for `UGUID` string format validation.
 
@@ -115,6 +117,7 @@ class TestUGUIDValidation:
             UGUID(invalid)
 
 
+@pytest.mark.unit
 class TestUGUIDConversion:
     """Tests for UGUID conversion methods.
 
@@ -162,6 +165,7 @@ class TestUGUIDConversion:
         assert SAMPLE_GUID in str(guid)
 
 
+@pytest.mark.unit
 class TestUGUIDComparison:
     """Tests for UGUID equality, hashing, and collection usage.
 

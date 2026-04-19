@@ -50,6 +50,9 @@ coverage.xml
 .hypothesis/
 .pytest_cache/
 
+# Allure
+allure/
+
 # Translations
 *.mo
 *.pot

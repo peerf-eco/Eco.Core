@@ -19,7 +19,6 @@ classifiers = [
 
 [tool.poetry.dependencies]
 python = "^3.11"
-rich = {version = "^13.0.0"}
 
 [tool.poetry.group.dev.dependencies]
 black = "^23.0.0"
@@ -33,6 +32,8 @@ pre-commit = "^3.4.0"
 mkdocs = "^1.6.1"
 mkdocs-material = "^9.7.6"
 mkdocstrings = {extras = ["python"], version = "^1.0.3"}
+rich = "^15.0.0"
+allure-pytest = "^2.15.3"
 
 [build-system]
 requires = ["poetry-core"]
@@ -114,17 +115,23 @@ exclude = '^(tests|examples)/'
 
 [tool.pytest.ini_options]
 minversion = "7.0"
-addopts = "-ra -q --strict-markers"
+addopts = "-q --strict-markers --tb=short --cache-clear --color=yes"
 testpaths = ["tests"]
 python_files = ["test_*.py", "*_test.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
+markers = [
+    "unit: fast isolated tests",
+    "integration: requires external resources",
+]
 
 [tool.coverage.run]
 source = ["eco_python2acom"]
 omit = [
     "*/tests/*",
     "*/test_*.py",
+    "*/interfaces/*",
+    "*/guids/*",
 ]
 
 [tool.coverage.report]

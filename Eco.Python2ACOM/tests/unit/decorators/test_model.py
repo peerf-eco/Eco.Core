@@ -30,6 +30,7 @@ from eco_python2acom.types.pointer import Ptr
 from eco_python2acom.types.utils import sizeof
 
 
+@pytest.mark.unit
 class TestModelBasicFields:
     """Verifies basic field resolution and `CStructure` compliance."""
 
@@ -112,6 +113,7 @@ class TestModelBasicFields:
         assert sizeof(Wrap) == size
 
 
+@pytest.mark.unit
 class TestModelLayout:
     """Verifies byte layout, size, and field offsets."""
 
@@ -139,6 +141,7 @@ class TestModelLayout:
         assert sizeof(WithPtr) == sizeof(Ptr[Void])
 
 
+@pytest.mark.unit
 class TestModelClassVar:
     """Verifies `ClassVar` annotations are excluded from `_fields_`."""
 
@@ -165,6 +168,7 @@ class TestModelClassVar:
         assert OnlyClassVars._fields_ == []
 
 
+@pytest.mark.unit
 class TestModelOptional:
     """Verifies `Optional[T]` is normalized to T."""
 
@@ -187,6 +191,7 @@ class TestModelOptional:
         assert WithOptional._fields_ == [("value", Int32)]
 
 
+@pytest.mark.unit
 class TestModelInheritance:
     """Verifies models can inherit from other models."""
 
@@ -238,6 +243,7 @@ class TestModelInheritance:
                 z: Int32
 
 
+@pytest.mark.unit
 class TestModelForwardReferences:
     """Verifies forward references and self-references resolve correctly."""
 
@@ -283,6 +289,7 @@ class TestModelForwardReferences:
         assert StrAnnotated._fields_ == [("value", Int32)]
 
 
+@pytest.mark.unit
 class TestModelInvalidAnnotations:
     """Verifies error reporting for unresolved or invalid annotations."""
 
@@ -311,7 +318,7 @@ class TestModelInvalidAnnotations:
 
             @model
             class Bad:
-                value: Literal[42]  # type: ignore
+                value: Literal[42]
 
     def test_union_with_multiple_types_raises(self) -> None:
         """A Union with more than one non-None type raises `TypeError`."""
@@ -323,6 +330,7 @@ class TestModelInvalidAnnotations:
                 value: Int32 | Int16
 
 
+@pytest.mark.unit
 class TestModelNestedStructures:
     """Verifies nesting of models, unions, pointers, and arrays as fields."""
 
@@ -487,6 +495,7 @@ class TestModelNestedStructures:
         assert sizeof(TreeNode) >= sizeof(Int32) + sizeof(Ptr[Void]) * 4
 
 
+@pytest.mark.unit
 class TestModelBodyValidation:
     """Verifies decorator-time validation of the model body."""
 

@@ -8,7 +8,8 @@ from collections.abc import Callable
 from types import FrameType, NoneType, UnionType
 from typing import Any, ClassVar, Optional, Union, get_args, get_origin, get_type_hints
 
-from eco_python2acom.types.core import CData, CFuncType, CLayout, CStructure, Int16
+from eco_python2acom.types.core import CData, CLayout, CStructure, Int16
+from eco_python2acom.types.function import Func
 from eco_python2acom.types.pointer import Ptr
 from eco_python2acom.types.utils import pointer
 
@@ -143,7 +144,7 @@ def _declared_slots(cls: type) -> list[tuple[str, type, list[type], list[str]]]:
 
 
 def _resolve_methods(cls: type) -> list[tuple[str, type]]:
-    """Resolve EcoOS interface methods for the vtable of ``cls``.
+    """Resolve EcoOS interface methods for the vtable of `cls`.
 
     Collects inherited slots from finalized ancestor vtables first,
     then appends methods declared on `cls` itself. The first parameter of
@@ -153,16 +154,14 @@ def _resolve_methods(cls: type) -> list[tuple[str, type]]:
         cls: The interface class to resolve methods of.
 
     Returns:
-        A list of tuples with vtable field names and their CFuncType.
+        A list of tuples with vtable field names and their `Func`.
 
     Raises:
         TypeError: If `cls` redeclares a method already defined by an ancestor.
     """
-    self_ptr_type = Ptr[cls]  # type: ignore
-    methods: list[tuple[str, type]] = []
-    method_params: dict[str, list[str]] = {}
-    method_returns: dict[str, type] = {}
-    seen: set[str] = set()
+    self_ptr_type = Ptr[cls]
+    methods, seen = [], set()
+    method_params, method_returns = {}, {}
 
     for field_name, return_type, param_types, param_names in (
         *_inherited_slots(cls),
@@ -174,14 +173,14 @@ def _resolve_methods(cls: type) -> list[tuple[str, type]]:
                 f"'{cls.__name__}.{method_name}' is already defined by an ancestor interface"
             )
         seen.add(field_name)
-        func_type = CFuncType(return_type, self_ptr_type, *param_types)  # type: ignore
+        func_type = Func[return_type, [self_ptr_type, *param_types]]
         methods.append((field_name, func_type))
         method_params[field_name] = param_names
         method_returns[field_name] = return_type
 
     cls._eco_method_params_ = method_params
     cls._eco_method_returns_ = method_returns
-    return methods
+    return methods  # type: ignore
 
 
 def _apply_resolver(
@@ -348,7 +347,7 @@ def _build_vtbl(cls: type, methods: list[tuple[str, type]]) -> type:
     }
     vtbl_cls = type(CStructure)(f"{cls.__name__}VTbl", (CStructure,), namespace)  # type: ignore
     cls._vtbl_ = vtbl_cls
-    return Ptr[vtbl_cls]  # type: ignore
+    return Ptr[vtbl_cls]
 
 
 def _build_namespace(cls: type, extra: Optional[dict[str, Any]] = None) -> dict[str, Any]:

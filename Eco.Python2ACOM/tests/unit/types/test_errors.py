@@ -18,6 +18,7 @@ from eco_python2acom.types.core import Int16
 from eco_python2acom.types.errors import ERROR_MESSAGES, EcoError, EcoErrorCode
 
 
+@pytest.mark.unit
 class TestEcoErrorCode:
     """Tests for `EcoErrorCode` enum.
 
@@ -65,6 +66,7 @@ class TestEcoErrorCode:
         assert code is EcoErrorCode.POINTER
 
 
+@pytest.mark.unit
 class TestErrorMessages:
     """Tests for `ERROR_MESSAGES` dictionary.
 
@@ -103,6 +105,7 @@ class TestErrorMessages:
         assert expected.lower() in ERROR_MESSAGES[code].lower()
 
 
+@pytest.mark.unit
 class TestEcoErrorInitialization:
     """Tests for `EcoError` constructor.
 
@@ -148,6 +151,7 @@ class TestEcoErrorInitialization:
         assert error.operation is None
 
 
+@pytest.mark.unit
 class TestEcoErrorFormatting:
     """Tests for EcoError string formatting.
 

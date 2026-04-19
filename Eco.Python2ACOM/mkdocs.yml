@@ -87,6 +87,7 @@ nav:
     - Primitives: types/primitives.md
     - Pointer: types/pointer.md
     - Array: types/array.md
+    - Function: types/function.md
     - UGUID: types/guid.md
     - Errors: types/errors.md
     - Utilities: types/utils.md

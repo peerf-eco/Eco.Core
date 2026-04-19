@@ -12,7 +12,8 @@ import pytest
 from eco_python2acom.decorators.interface import interface
 from eco_python2acom.decorators.layout import model, stub, union
 from eco_python2acom.types.array import Array
-from eco_python2acom.types.core import CFuncType, CStructure, Double, Int16, Int32, UInt8, Void
+from eco_python2acom.types.core import CStructure, Double, Int16, Int32, UInt8, Void
+from eco_python2acom.types.function import Func
 from eco_python2acom.types.guid import UGUID
 from eco_python2acom.types.pointer import Ptr
 from eco_python2acom.types.utils import sizeof
@@ -20,6 +21,7 @@ from eco_python2acom.types.utils import sizeof
 EXAMPLE_IID = "ABCDEF12-3456-7890-ABCD-EF1234567890"
 
 
+@pytest.mark.unit
 class TestInterfaceBasics:
     """Verifies basic interface decoration and metadata."""
 
@@ -49,6 +51,7 @@ class TestInterfaceBasics:
         assert IFoo._iid_ is guid
 
 
+@pytest.mark.unit
 class TestInterfaceMethodResolution:
     """Verifies VTbl method extraction and ordering."""
 
@@ -65,8 +68,8 @@ class TestInterfaceMethodResolution:
 
         own_slots = IFoo._vtbl_._fields_
         assert own_slots == [
-            ("_func_MethodA", CFuncType(Int16, Ptr[IFoo])),
-            ("_func_MethodB", CFuncType(Int32, Ptr[IFoo], Int32)),
+            ("_func_MethodA", Func[Int16, [Ptr[IFoo]]]),
+            ("_func_MethodB", Func[Int32, [Ptr[IFoo], Int32]]),
         ]
 
     def test_method_param_names_recorded(self) -> None:
@@ -101,6 +104,7 @@ class TestInterfaceMethodResolution:
         assert IFoo.Method.__name__ == "Method"
 
 
+@pytest.mark.unit
 class TestInterfaceInstanceLayout:
     """Verifies that an interface instance is a flat `{ vtbl* }` struct."""
 
@@ -116,6 +120,7 @@ class TestInterfaceInstanceLayout:
         assert sizeof(IFoo) == sizeof(Ptr[Void])
 
 
+@pytest.mark.unit
 class TestInterfaceVTblLayout:
     """Verifies VTbl byte layout matches the C-side ABI."""
 
@@ -141,6 +146,7 @@ class TestInterfaceVTblLayout:
         assert sizeof(Child._vtbl_) == (3 + 1) * sizeof(Ptr[Void])
 
 
+@pytest.mark.unit
 class TestInterfaceInheritance:
     """Verifies inheritance from interfaces."""
 
@@ -196,6 +202,7 @@ class TestInterfaceInheritance:
         assert sizeof(IDerived._vtbl_) > sizeof(IBase._vtbl_)
 
 
+@pytest.mark.unit
 class TestInterfaceForwardReferences:
     """Verifies forward references in method signatures resolve."""
 
@@ -216,9 +223,9 @@ class TestInterfaceForwardReferences:
 
         assert IContainer._vtbl_._fields_[-1] == (
             "_func_GetChild",
-            CFuncType(Int16, Ptr[IContainer], Ptr[Ptr[IChild]]),
+            Func[Int16, [Ptr[IContainer], Ptr[Ptr[IChild]]]],
         )
-        assert IChild._vtbl_._fields_[-1] == ("_func_Method", CFuncType(Int16, Ptr[IChild]))
+        assert IChild._vtbl_._fields_[-1] == ("_func_Method", Func[Int16, [Ptr[IChild]]])
 
     def test_forward_reference_to_later_model(self) -> None:
         """An interface can forward-reference a model defined later via `stub`."""
@@ -236,7 +243,7 @@ class TestInterfaceForwardReferences:
 
         assert IContext._vtbl_._fields_[-1] == (
             "_func_SetState",
-            CFuncType(Int16, Ptr[IContext], Ptr[State]),
+            Func[Int16, [Ptr[IContext], Ptr[State]]],
         )
         assert sizeof(State) == sizeof(Int32)
 
@@ -252,7 +259,7 @@ class TestInterfaceForwardReferences:
 
         assert IRecursive._vtbl_._fields_[-1] == (
             "_func_Clone",
-            CFuncType(Int16, Ptr[IRecursive], Ptr[Ptr[IRecursive]]),
+            Func[Int16, [Ptr[IRecursive], Ptr[Ptr[IRecursive]]]],
         )
 
     def test_string_annotation_for_param(self) -> None:
@@ -263,9 +270,10 @@ class TestInterfaceForwardReferences:
             def Method(self, x: "Int32") -> "Int32":
                 ...
 
-        assert IFoo._vtbl_._fields_[-1] == ("_func_Method", CFuncType(Int32, Ptr[IFoo], Int32))
+        assert IFoo._vtbl_._fields_[-1] == ("_func_Method", Func[Int32, [Ptr[IFoo], Int32]])
 
 
+@pytest.mark.unit
 class TestInterfaceInvalidAnnotations:
     """Verifies error reporting for unresolved or invalid method types."""
 
@@ -300,6 +308,7 @@ class TestInterfaceInvalidAnnotations:
                     ...
 
 
+@pytest.mark.unit
 class TestInterfaceCompositeParameters:
     """Verifies interfaces with methods that accept/return composite types."""
 
@@ -318,7 +327,7 @@ class TestInterfaceCompositeParameters:
 
         assert IShape._vtbl_._fields_[-1] == (
             "_func_GetOrigin",
-            CFuncType(Int16, Ptr[IShape], Ptr[Point]),
+            Func[Int16, [Ptr[IShape], Ptr[Point]]],
         )
 
     def test_method_with_array_param(self) -> None:
@@ -331,7 +340,7 @@ class TestInterfaceCompositeParameters:
 
         assert IBuffer._vtbl_._fields_[-1] == (
             "_func_Fill",
-            CFuncType(Int16, Ptr[IBuffer], Array[UInt8, 16]),
+            Func[Int16, [Ptr[IBuffer], Array[UInt8, 16]]],
         )
 
     def test_method_with_double_pointer_to_interface(self) -> None:
@@ -349,7 +358,7 @@ class TestInterfaceCompositeParameters:
 
         assert IFactory._vtbl_._fields_[-1] == (
             "_func_CreateChild",
-            CFuncType(Int16, Ptr[IFactory], Ptr[Ptr[IChild]]),
+            Func[Int16, [Ptr[IFactory], Ptr[Ptr[IChild]]]],
         )
 
     def test_method_with_model_by_value_param(self) -> None:
@@ -367,7 +376,7 @@ class TestInterfaceCompositeParameters:
 
         assert IShape._vtbl_._fields_[-1] == (
             "_func_SetOrigin",
-            CFuncType(Int16, Ptr[IShape], Point),
+            Func[Int16, [Ptr[IShape], Point]],
         )
 
     def test_method_with_nested_union_pointer(self) -> None:
@@ -389,10 +398,11 @@ class TestInterfaceCompositeParameters:
 
         assert IHandler._vtbl_._fields_[-1] == (
             "_func_Handle",
-            CFuncType(Int16, Ptr[IHandler], Ptr[Payload]),
+            Func[Int16, [Ptr[IHandler], Ptr[Payload]]],
         )
 
 
+@pytest.mark.unit
 class TestInterfaceBodyValidation:
     """Verifies decorator-time validation of the interface body."""
 
@@ -453,7 +463,7 @@ class TestInterfaceBodyValidation:
 
             @interface(iid=EXAMPLE_IID)
             class IBad:
-                def Method() -> Int16:  # type: ignore
+                def Method() -> Int16:
                     ...
 
     def test_non_function_attributes_ignored(self) -> None:

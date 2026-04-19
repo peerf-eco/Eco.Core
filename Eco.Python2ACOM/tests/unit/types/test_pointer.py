@@ -19,6 +19,7 @@ from eco_python2acom.types.core import Int32, UInt8, Void
 from eco_python2acom.types.pointer import Ptr
 
 
+@pytest.mark.unit
 class TestPtrVoid:
     """Tests for `Ptr[Void]` (void pointer).
 
@@ -63,6 +64,7 @@ class TestPtrVoid:
         assert not hasattr(ptr, "obj")
 
 
+@pytest.mark.unit
 class TestPtrTyped:
     """Tests for typed pointers like `Ptr[Int32]`.
 
@@ -112,6 +114,7 @@ class TestPtrTyped:
             Ptr[Int32]("not_an_int")
 
 
+@pytest.mark.unit
 class TestPtrNull:
     """Tests for NULL pointer behavior."""
 
@@ -132,6 +135,7 @@ class TestPtrNull:
         assert null_ptr != non_null_ptr
 
 
+@pytest.mark.unit
 class TestPtrRepr:
     """Tests for Ptr `__repr__` output.
 
@@ -163,6 +167,7 @@ class TestPtrRepr:
         assert "0x" in repr_str
 
 
+@pytest.mark.unit
 class TestPtrEquality:
     """Tests for pointer equality.
 
@@ -202,6 +207,7 @@ class TestPtrEquality:
         assert ptr != other
 
 
+@pytest.mark.unit
 class TestPtrCaching:
     """Tests for metaclass type caching.
 
@@ -226,6 +232,7 @@ class TestPtrCaching:
         assert Ptr[Int32] is not Ptr[Void]
 
 
+@pytest.mark.unit
 class TestPtrValidation:
     """Tests for invalid `Ptr` type parameters.
 
