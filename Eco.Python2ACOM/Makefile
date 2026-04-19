@@ -2,7 +2,7 @@
 # Usage: make <command>
 # List all commands: make help
 
-.PHONY: help install format lint test test-cov style clean build pre-commit all
+.PHONY: help install format lint test test-cov style clean build pre-commit docs-serve docs-build all
 
 # Variables
 POETRY := poetry
@@ -39,6 +39,12 @@ style: format lint ## Run all style checks (format, lint)
 
 pre-commit: ## Run pre-commit hooks on all files
 	$(POETRY) run pre-commit run --all-files
+
+docs-serve: ## Serve documentation locally
+	$(POETRY) run mkdocs serve --open --clean
+
+docs-build: ## Build documentation to site/
+	$(POETRY) run mkdocs build --clean
 
 clean: ## Clean cache files and temporary directories
 	find . -type d -name "__pycache__" ! -path "./.venv/*" -exec rm -r {} + 2>/dev/null || true

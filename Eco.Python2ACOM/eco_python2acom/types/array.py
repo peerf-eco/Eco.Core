@@ -182,20 +182,10 @@ else:
                         return f"<Array[{type_name}, {self._size_}] NULL>"
                     return f"<Array[{type_name}, {self._size_}] 0x{addressof(self):X}>"
 
-                def __eq__(self, other: object) -> bool:
-                    """Compare two arrays for equality."""
-                    if not isinstance(other, SmartArray):
-                        return NotImplemented
-                    return all(self[i] == other[i] for i in range(self._size_))
-
                 def __iter__(self):
                     """Iterate over array elements."""
                     for i in range(self._size_):
                         yield self[i]
-
-                def __bytes__(self) -> bytes:
-                    """Convert array to raw bytes."""
-                    return bytes(memoryview(self).cast("B"))
 
             SmartArray.__name__ = f"Array[{type_name}, {size}]"
             SmartArray.__qualname__ = f"Array[{type_name}, {size}]"

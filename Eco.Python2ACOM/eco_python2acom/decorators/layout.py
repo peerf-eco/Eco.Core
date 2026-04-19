@@ -9,7 +9,6 @@ Exports:
 """
 
 import inspect
-from collections.abc import Callable
 from typing import TypeVar, dataclass_transform
 
 from eco_python2acom.decorators.utils import _eco_class, _finalize
@@ -40,35 +39,6 @@ def _validate_layout_body(cls: type) -> None:
         raise TypeError(f"'{cls.__name__}.{key}' has no type annotation")
 
 
-def _layout_decorator(base: type, marker: str) -> Callable[[C], C]:
-    """Build a model-style decorator for a given C base type.
-
-    Args:
-        base: `CStructure` or `CUnion`.
-        marker: Attribute name set to `True` on the resulting class
-            (`_eco_model_` or `_eco_union_`).
-
-    Returns:
-        A decorator that turns an annotated class into a C-compatible type.
-    """
-
-    def decorator(cls: C) -> C:
-        new_class = _eco_class(
-            cls,
-            base=base,
-            frame=inspect.currentframe().f_back,
-            extra={marker: True, "_eco_forward_": False},
-            validator=_validate_layout_body,
-        )
-        return _finalize(new_class)  # type: ignore
-
-    return decorator
-
-
-_model_impl = _layout_decorator(CStructure, "_eco_model_")
-_union_impl = _layout_decorator(CUnion, "_eco_union_")
-
-
 @dataclass_transform()
 def model(cls: C) -> C:
     """Decorator for defining EcoOS C Structure data classes.
@@ -85,7 +55,14 @@ def model(cls: C) -> C:
     Raises:
         TypeError: If the class uses multiple inheritance or inherits from a non-structure base.
     """
-    return _model_impl(cls)
+    new_class = _eco_class(
+        cls,
+        base=CStructure,
+        frame=inspect.currentframe().f_back,
+        extra={"_eco_model_": True, "_eco_forward_": False},
+        validator=_validate_layout_body,
+    )
+    return _finalize(new_class)  # type: ignore
 
 
 @dataclass_transform()
@@ -104,7 +81,14 @@ def union(cls: C) -> C:
     Raises:
         TypeError: If the class uses multiple inheritance or inherits from a non-structure base.
     """
-    return _union_impl(cls)
+    new_class = _eco_class(
+        cls,
+        base=CUnion,
+        frame=inspect.currentframe().f_back,
+        extra={"_eco_union_": True, "_eco_forward_": False},
+        validator=_validate_layout_body,
+    )
+    return _finalize(new_class)  # type: ignore
 
 
 def stub(name: str, base: type = CStructure) -> type:
@@ -123,7 +107,7 @@ def stub(name: str, base: type = CStructure) -> type:
         Empty placeholder acting as a forward declaration.
     """
     frame = inspect.currentframe().f_back
-    module = frame.f_globals.get("__name__") if frame else __name__
+    module = frame.f_globals.get("__name__")
     placeholder = type(name, (), {"__module__": module})
 
     return _eco_class(

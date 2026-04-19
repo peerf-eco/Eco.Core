@@ -96,9 +96,8 @@ def _inherited_slots(cls: type) -> list[tuple[str, type, list[type], list[str]]]
     if parent_vtbl is None:
         return []
 
-    slots: list[tuple[str, type, list[type], list[str]]] = []
     parent_params = getattr(parent, "_eco_method_params_", {})
-
+    slots = []
     for field_name, slot_type in parent_vtbl._fields_:
         argtypes = iter(slot_type._argtypes_)
         next(argtypes)  # Skip implicit 'self' / instance parameter
@@ -122,8 +121,7 @@ def _declared_slots(cls: type) -> list[tuple[str, type, list[type], list[str]]]:
     Returns:
         A list of `(field name, return type, param types, param names)` tuples.
     """
-    slots: list[tuple[str, type, list[type], list[str]]] = []
-
+    slots = []
     for name, value in cls.__dict__.items():
         if name.startswith("__") and name.endswith("__"):
             continue
@@ -295,124 +293,13 @@ def _finalize(cls: type) -> type:
     methods = _apply_resolver(cls, "_eco_interface_", _resolve_methods)
     model_fields = _apply_resolver(cls, "_eco_model_", _resolve_fields)
     union_fields = _apply_resolver(cls, "_eco_union_", _resolve_fields)
-
-    interface_fields: list[tuple[str, type]] = []
-    if methods:
-        interface_fields = [("vtbl", _build_vtbl(cls, methods))]
+    interface_fields = [("vtbl", _build_vtbl(cls, methods))] if methods else []
 
     cls._fields_ = union_fields + model_fields + interface_fields
     if methods:
         _install_dispatchers(cls, methods)
 
     return cls
-
-
-def _build_vtbl(cls: type, methods: list[tuple[str, type]]) -> type:
-    """Create the hidden vtable class for an interface.
-
-    Args:
-        cls: The interface class being finalized.
-        methods: List of method tuples to install as slots.
-
-    Returns:
-        Pointer type to the newly created vtable class.
-    """
-    meta = _get_eco_layout_meta(CStructure)
-    namespace: dict[str, Any] = {
-        "__module__": cls.__module__,
-        "__qualname__": f"{cls.__qualname__}._vtbl_",
-        "__doc__": f"Virtual table for {cls.__name__}.",
-        "_fields_": methods,
-    }
-    vtbl_cls = meta(f"{cls.__name__}VTbl", (CStructure,), namespace)
-    cls._vtbl_ = vtbl_cls
-    return Ptr[vtbl_cls]  # type: ignore
-
-
-# -----------------------------------------------------------------------------
-# Metaclass for EcoOS structures and unions
-# -----------------------------------------------------------------------------
-
-_eco_layout_meta_cache: dict[type, type] = {}
-
-
-def _inherits_dunder(bases: tuple[type, ...], name: str) -> bool:
-    """Check whether a dunder method is inherited from base classes.
-
-    Args:
-        bases: Tuple of base classes to inspect.
-        name: Name of the dunder method.
-
-    Returns:
-        True if the method is found in any base class in the MRO, False otherwise.
-    """
-    for base in bases:
-        for cls in base.__mro__:
-            if cls is object:
-                continue
-            if name in cls.__dict__:
-                return True
-    return False
-
-
-def _struct_eq(self, other: Any) -> bool:
-    """Compare two EcoOS structures by field values."""
-    if not isinstance(other, type(self)):
-        return NotImplemented  # type: ignore
-
-    for field_name, _ in getattr(type(self), "_fields_", []):
-        if getattr(self, field_name) != getattr(other, field_name):
-            return False
-
-    return True
-
-
-def _struct_repr(self) -> str:
-    """Return string representation of an EcoOS structure or interface."""
-    cls = type(self)
-    field_strs = [
-        f"{field_name}={getattr(self, field_name)!r}"
-        for field_name, _ in getattr(cls, "_fields_", [])
-        if not field_name.startswith("_func_")
-    ]
-    return f"{cls.__name__}({', '.join(field_strs)})"
-
-
-def _get_eco_layout_meta(base: type) -> type:
-    """Get or create an `EcoLayoutMeta` metaclass for the given base.
-
-    Args:
-        base: The base type.
-
-    Returns:
-        The `EcoLayoutMeta` metaclass for the given base type.
-    """
-    if base in _eco_layout_meta_cache:
-        return _eco_layout_meta_cache[base]
-
-    native_meta = type(base)
-
-    class EcoLayoutMeta(native_meta):  # type: ignore
-        """Metaclass for EcoOS C structures and unions.
-
-        Injects default `__eq__` and `__repr__` methods for better debugging.
-        """
-
-        def __new__(
-            cls, name: str, bases: tuple[type, ...], namespace: dict[str, Any], **kwargs: Any
-        ) -> type:
-            """Create the class with default `__eq__` / `__repr__`."""
-            if "__eq__" not in namespace and not _inherits_dunder(bases, "__eq__"):
-                namespace["__eq__"] = _struct_eq
-            if "__repr__" not in namespace and not _inherits_dunder(bases, "__repr__"):
-                namespace["__repr__"] = _struct_repr
-
-            return super().__new__(cls, name, bases, namespace, **kwargs)  # type: ignore
-
-    EcoLayoutMeta.__name__ = f"EcoLayoutMeta[{base.__name__}]"
-    EcoLayoutMeta.__qualname__ = EcoLayoutMeta.__name__
-    _eco_layout_meta_cache[base] = EcoLayoutMeta
-    return EcoLayoutMeta
 
 
 # -----------------------------------------------------------------------------
@@ -443,8 +330,29 @@ def _resolve_base(cls: type, base: type) -> type:
     return parent if parent is not object else base
 
 
-def _build_namespace(cls: type, extra: dict[str, Any] | None = None) -> dict[str, Any]:
-    """Build namespace dict for a new `EcoLayoutMeta` class.
+def _build_vtbl(cls: type, methods: list[tuple[str, type]]) -> type:
+    """Create the hidden vtable class for an interface.
+
+    Args:
+        cls: The interface class being finalized.
+        methods: List of method tuples to install as slots.
+
+    Returns:
+        Pointer type to the newly created vtable class.
+    """
+    namespace: dict[str, Any] = {
+        "__module__": cls.__module__,
+        "__qualname__": f"{cls.__qualname__}._vtbl_",
+        "__doc__": f"Virtual table for {cls.__name__}.",
+        "_fields_": methods,
+    }
+    vtbl_cls = type(CStructure)(f"{cls.__name__}VTbl", (CStructure,), namespace)  # type: ignore
+    cls._vtbl_ = vtbl_cls
+    return Ptr[vtbl_cls]  # type: ignore
+
+
+def _build_namespace(cls: type, extra: Optional[dict[str, Any]] = None) -> dict[str, Any]:
+    """Build namespace dict for a new EcoOS layout class.
 
     Copies module, qualname, docs, annotations, and all non-special attributes
     from the original class. Optionally merges extra attributes.
@@ -454,7 +362,7 @@ def _build_namespace(cls: type, extra: dict[str, Any] | None = None) -> dict[str
         extra: Additional attributes to add to namespace.
 
     Returns:
-        Namespace dict ready for `EcoLayoutMeta`.
+        Namespace dict ready for the native ctypes metaclass.
     """
     namespace: dict[str, Any] = {
         "__module__": cls.__module__,
@@ -468,9 +376,8 @@ def _build_namespace(cls: type, extra: dict[str, Any] | None = None) -> dict[str
 
     skip = frozenset({"__dict__", "__weakref__", "_fields_"})
     for key, value in cls.__dict__.items():
-        if key in namespace or key in skip:
-            continue
-        namespace[key] = value
+        if key not in namespace and key not in skip:
+            namespace[key] = value
 
     return namespace
 
@@ -478,12 +385,12 @@ def _build_namespace(cls: type, extra: dict[str, Any] | None = None) -> dict[str
 def _eco_class(
     cls: type,
     base: type,
-    frame: FrameType | None,
-    extra: dict[str, Any] | None = None,
-    validator: Callable[[type], None] | None = None,
+    frame: Optional[FrameType],
+    extra: Optional[dict[str, Any]] = None,
+    validator: Optional[Callable[[type], None]] = None,
     flatten: bool = False,
 ) -> type:
-    """Create or fill in an `EcoLayoutMeta` class from a decorated class.
+    """Create or fill in an EcoOS layout class from a decorated class.
 
     Args:
         cls: The original class being decorated.
@@ -496,11 +403,12 @@ def _eco_class(
     Returns:
         The resulting class (new or adopted).
     """
+    if extra is None:
+        extra = {}
     if validator is not None:
         validator(cls)
 
     parent = _resolve_base(cls, base)
-    extra = dict(extra) if extra else {}
     if flatten:
         extra["_eco_parent_"] = parent if parent is not base else None
         base_cls = base
@@ -517,14 +425,12 @@ def _eco_class(
         else None
     )
     if target is None:
-        meta = _get_eco_layout_meta(base)
-        result = meta(cls.__name__, (base_cls,), namespace)
+        result = type(base)(cls.__name__, (base_cls,), namespace)
     else:
         skip = frozenset({"__module__", "__qualname__"})
         for key, value in namespace.items():
-            if key in skip:
-                continue
-            setattr(target, key, value)
+            if key not in skip:
+                setattr(target, key, value)
         result = target
 
     return result  # type: ignore

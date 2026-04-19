@@ -145,18 +145,5 @@ class EcoError(Exception):
         """Return string representation of the EcoError exception."""
         return f"EcoError(code={self.code}, message={self.message}, operation={self.operation})"
 
-    def __eq__(self, other: object) -> bool:
-        """Compare two EcoError exceptions.
-
-        Comparison is done on all three attributes: code, message, and operation.
-        """
-        if not isinstance(other, EcoError):
-            return NotImplemented
-        return (
-            self.code == other.code
-            and self.message == other.message
-            and self.operation == other.operation
-        )
-
 
 __all__ = ["EcoErrorCode", "EcoError"]

@@ -49,7 +49,7 @@ def _validate_interface_body(cls: type) -> None:
             raise TypeError(f"'{cls.__name__}.{name}' has no return type annotation")
 
 
-def interface(iid: Union[str, UGUID], preamble: int = 0x01, length: int = 0x10) -> Callable[[C], C]:
+def interface(iid: Union[str, bytes, UGUID], preamble: int = 0x01) -> Callable[[C], C]:
     """Decorator for defining EcoOS ACOM interface classes.
 
     Converts a class with method signatures into an interface type suitable
@@ -57,9 +57,8 @@ def interface(iid: Union[str, UGUID], preamble: int = 0x01, length: int = 0x10) 
     `{ vtbl* }` struct, regardless of declared inheritance.
 
     Args:
-        iid: Interface ID as a string or pre-built `UGUID`.
+        iid: Interface ID as a string, bytes or pre-built `UGUID`.
         preamble: Preamble byte for UGUID when `iid` is a string.
-        length: Length byte for UGUID when `iid` is a string.
 
     Returns:
         A decorator that converts the class into an interface EcoOS class.
@@ -77,7 +76,7 @@ def interface(iid: Union[str, UGUID], preamble: int = 0x01, length: int = 0x10) 
         if isinstance(iid, UGUID):
             guid = iid
         else:
-            guid = UGUID(iid, preamble=preamble, length=length)
+            guid = UGUID(iid, preamble=preamble)
 
         new_class = _eco_class(
             cls,

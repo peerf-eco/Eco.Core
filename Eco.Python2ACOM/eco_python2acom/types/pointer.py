@@ -3,7 +3,7 @@
 This module provides the `Ptr[T]` generic type for type-safe pointer operations.
 """
 
-from typing import TYPE_CHECKING, Any, Generic, TypeVar
+from typing import TYPE_CHECKING, Any, Generic, Optional, TypeVar
 
 from eco_python2acom.types.core import TYPE_NAMES, Void, VoidPtr
 from eco_python2acom.types.utils import addressof, pointer_type
@@ -25,7 +25,7 @@ if TYPE_CHECKING:
 
         _type_: type[T]
 
-        def __init__(self, value: int | T | None = None) -> None:
+        def __init__(self, value: Optional[int | T] = None) -> None:
             """Initialize pointer.
 
             Args:
@@ -59,7 +59,7 @@ if TYPE_CHECKING:
             ...
 
         @property
-        def value(self) -> int | None:
+        def value(self) -> Optional[int]:
             """Get raw pointer address.
 
             Returns:
@@ -68,7 +68,7 @@ if TYPE_CHECKING:
             ...
 
         @value.setter
-        def value(self, addr: int | None) -> None:
+        def value(self, addr: Optional[int]) -> None:
             """Set raw pointer address.
 
             Args:
@@ -81,6 +81,15 @@ if TYPE_CHECKING:
 
             Returns:
                 True if pointer is non-NULL, False otherwise.
+            """
+            ...
+
+        def __eq__(self, other: object) -> bool:
+            """Compare two pointers by address.
+
+            Returns:
+                True if both pointers reference the same address
+                or NULL, False otherwise.
             """
             ...
 
@@ -163,7 +172,7 @@ else:
 
                 _type_ = item
 
-                def __init__(self, value: Any | None = None) -> None:
+                def __init__(self, value: Optional[Any] = None) -> None:
                     """Initialize pointer from value."""
                     if value is None:
                         super().__init__()
