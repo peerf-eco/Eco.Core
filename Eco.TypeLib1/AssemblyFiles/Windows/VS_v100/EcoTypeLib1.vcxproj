@@ -338,6 +338,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\HeaderFiles\CEcoTypeLib1.h" />
+    <ClInclude Include="..\..\..\HeaderFiles\CEcoTypeLib1Annotation.h" />
     <ClInclude Include="..\..\..\HeaderFiles\CEcoTypeLib1Builder.h" />
     <ClInclude Include="..\..\..\HeaderFiles\CEcoTypeLib1Const.h" />
     <ClInclude Include="..\..\..\HeaderFiles\CEcoTypeLib1Directory.h" />
@@ -349,6 +350,7 @@
     <ClInclude Include="..\..\..\HeaderFiles\CEcoTypeLib1Parameter.h" />
     <ClInclude Include="..\..\..\SharedFiles\ErrEcoTypeLib1.h" />
     <ClInclude Include="..\..\..\SharedFiles\IdEcoTypeLib1.h" />
+    <ClInclude Include="..\..\..\SharedFiles\IEcoAnnotationDescriptor1.h" />
     <ClInclude Include="..\..\..\SharedFiles\IEcoConstDescriptor1.h" />
     <ClInclude Include="..\..\..\SharedFiles\IEcoInterfaceDescriptor1.h" />
     <ClInclude Include="..\..\..\SharedFiles\IEcoInterfaceDirectory1.h" />
@@ -361,6 +363,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\SourceFiles\CEcoTypeLib1.c" />
+    <ClCompile Include="..\..\..\SourceFiles\CEcoTypeLib1Annotation.c" />
     <ClCompile Include="..\..\..\SourceFiles\CEcoTypeLib1Builder.c" />
     <ClCompile Include="..\..\..\SourceFiles\CEcoTypeLib1Const.c" />
     <ClCompile Include="..\..\..\SourceFiles\CEcoTypeLib1Directory.c" />

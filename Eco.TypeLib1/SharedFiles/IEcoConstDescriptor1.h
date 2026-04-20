@@ -43,8 +43,8 @@ typedef struct IEcoConstDescriptor1VTbl {
     /* IEcoConstDescriptor1: Свойства константы */
 
     /* Имя константы (Identifier*) */
-    int16_t (ECOCALLMETHOD *get_Name)(/* in */ IEcoConstDescriptor1Ptr_t me, /* out */ char** ppName);
-    int16_t (ECOCALLMETHOD *set_Name)(/* in */ IEcoConstDescriptor1Ptr_t me, /* in */ const char* name);
+    int16_t (ECOCALLMETHOD *get_Name)(/* in */ IEcoConstDescriptor1Ptr_t me, /* out */ char_t** ppName);
+    int16_t (ECOCALLMETHOD *set_Name)(/* in */ IEcoConstDescriptor1Ptr_t me, /* in */ const char_t* name);
 
     /* Тип данных (TypeDescriptor) */
     int16_t (ECOCALLMETHOD *get_Type)(/* in */ IEcoConstDescriptor1Ptr_t me, /* out */ uint16_t* pTypeTag);

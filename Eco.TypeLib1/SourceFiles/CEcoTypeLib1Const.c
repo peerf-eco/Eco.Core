@@ -113,7 +113,7 @@ static uint32_t ECOCALLMETHOD CEcoTypeLib1Const_01434A0B_Release(/* in */ IEcoCo
 /*
  *
  * <summary>
- *   MyFunction Function
+ *   get_Name Function
  * </summary>
  *
  * <description>
@@ -121,27 +121,133 @@ static uint32_t ECOCALLMETHOD CEcoTypeLib1Const_01434A0B_Release(/* in */ IEcoCo
  * </description>
  *
  */
-static int16_t ECOCALLMETHOD CEcoTypeLib1Const_01434A0B_MyFunction(/* in */ IEcoConstDescriptor1Ptr_t me, /* in */ char_t* Name, /* out */ char_t** copyName) {
+static int16_t ECOCALLMETHOD CEcoTypeLib1Const_01434A0B_get_Name(/* in */ IEcoConstDescriptor1Ptr_t me, /* out */ char_t** ppName) {
     CEcoTypeLib1Const_01434A0B* pCMe = (CEcoTypeLib1Const_01434A0B*)me;
-    int16_t index = 0;
 
-    /* Pointer Validation */
-    if (me == 0 || Name == 0 || copyName == 0) {
+    if (me == 0 || ppName == 0) {
         return ERR_ECO_POINTER;
     }
 
-    /* Copying the string */
-    while(Name[index] != 0) {
-        index++;
-    }
-    pCMe->m_Name = (char_t*)pCMe->m_pIMem->pVTbl->Alloc(pCMe->m_pIMem, index + 1);
-    index = 0;
-    while(Name[index] != 0) {
-        pCMe->m_Name[index] = Name[index];
-        index++;
-    }
-    *copyName = pCMe->m_Name;
+    *ppName = pCMe->m_Name;
+    return ERR_ECO_SUCCESES;
+}
 
+/*
+ *
+ * <summary>
+ *   set_Name Function
+ * </summary>
+ *
+ * <description>
+ *   Function
+ * </description>
+ *
+ */
+static int16_t ECOCALLMETHOD CEcoTypeLib1Const_01434A0B_set_Name(/* in */ IEcoConstDescriptor1Ptr_t me, /* in */ const char_t* name) {
+    CEcoTypeLib1Const_01434A0B* pCMe = (CEcoTypeLib1Const_01434A0B*)me;
+
+    if (me == 0) {
+        return ERR_ECO_POINTER;
+    }
+
+    pCMe->m_Name = name;
+    return ERR_ECO_SUCCESES;
+}
+
+/*
+ *
+ * <summary>
+ *   get_Type Function
+ * </summary>
+ *
+ * <description>
+ *   Function
+ * </description>
+ *
+ */
+static int16_t ECOCALLMETHOD CEcoTypeLib1Const_01434A0B_get_Type(/* in */ IEcoConstDescriptor1Ptr_t me, /* out */ uint16_t* pTypeTag) {
+    CEcoTypeLib1Const_01434A0B* pCMe = (CEcoTypeLib1Const_01434A0B*)me;
+
+    if (me == 0) {
+        return ERR_ECO_POINTER;
+    }
+
+    *pTypeTag = pCMe->m_TypeTag;
+    return ERR_ECO_SUCCESES;
+}
+
+/*
+ *
+ * <summary>
+ *   set_Type Function
+ * </summary>
+ *
+ * <description>
+ *   Function
+ * </description>
+ *
+ */
+static int16_t ECOCALLMETHOD CEcoTypeLib1Const_01434A0B_set_Type(/* in */ IEcoConstDescriptor1Ptr_t me, /* in */ uint16_t typeTag) {
+    CEcoTypeLib1Const_01434A0B* pCMe = (CEcoTypeLib1Const_01434A0B*)me;
+
+    if (me == 0) {
+        return ERR_ECO_POINTER;
+    }
+
+    pCMe->m_TypeTag = typeTag;
+    return ERR_ECO_SUCCESES;
+}
+
+/*
+ *
+ * <summary>
+ *   get_Value Function
+ * </summary>
+ *
+ * <description>
+ *   Function
+ * </description>
+ *
+ */
+static int16_t ECOCALLMETHOD CEcoTypeLib1Const_01434A0B_get_Value(/* in */ IEcoConstDescriptor1Ptr_t me, /* in | out */ uint32_t* pSize, /* out */ voidptr_t pValue) {
+    CEcoTypeLib1Const_01434A0B* pCMe = (CEcoTypeLib1Const_01434A0B*)me;
+
+    if (me == 0 || pSize == 0 || pValue == 0) {
+        return ERR_ECO_POINTER;
+    }
+
+    if (*pSize == 0) {
+        *pSize = pCMe->m_Size;
+    }
+    pCMe->m_pIMem->pVTbl->Copy(pCMe->m_pIMem, pValue, pCMe->m_pValue, *pSize);
+    return ERR_ECO_SUCCESES;
+}
+
+/*
+ *
+ * <summary>
+ *   set_Value Function
+ * </summary>
+ *
+ * <description>
+ *   Function
+ * </description>
+ *
+ */
+static int16_t ECOCALLMETHOD CEcoTypeLib1Const_01434A0B_set_Value(/* in */ IEcoConstDescriptor1Ptr_t me, /* in */ uint32_t size, /* in */ voidptr_t pValue) {
+    CEcoTypeLib1Const_01434A0B* pCMe = (CEcoTypeLib1Const_01434A0B*)me;
+
+    if (me == 0 || pValue == 0) {
+        return ERR_ECO_POINTER;
+    }
+
+    if (pCMe->m_pValue == 0) {
+        pCMe->m_pValue = pCMe->m_pIMem->pVTbl->Alloc(pCMe->m_pIMem, size);
+    } else {
+        pCMe->m_pValue = pCMe->m_pIMem->pVTbl->Realloc(pCMe->m_pIMem, pCMe->m_pValue, size);
+    }
+    pCMe->m_pIMem->pVTbl->Copy(pCMe->m_pIMem, pCMe->m_pValue, pValue, size);
+    pCMe->m_Size = size;
     return ERR_ECO_SUCCESES;
 }
 
@@ -239,8 +345,8 @@ static void ECOCALLMETHOD deleteCEcoTypeLib1Const_01434A0B(/* in */ CEcoTypeLib1
     if (pCMe != 0 ) {
         pIMem = pCMe->m_pIMem;
         /* Freeing */
-        if ( pCMe->m_Name != 0 ) {
-            pIMem->pVTbl->Free(pIMem, pCMe->m_Name);
+        if ( pCMe->m_pValue != 0 ) {
+            pIMem->pVTbl->Free(pIMem, pCMe->m_pValue);
         }
         if ( pCMe->m_pISys != 0 ) {
             pCMe->m_pISys->pVTbl->Release(pCMe->m_pISys);
@@ -254,7 +360,13 @@ static void ECOCALLMETHOD deleteCEcoTypeLib1Const_01434A0B(/* in */ CEcoTypeLib1
 IEcoConstDescriptor1VTbl g_xC2C30046EE324672858C295132701507VTbl_01434A0B = {
     CEcoTypeLib1Const_01434A0B_QueryInterface,
     CEcoTypeLib1Const_01434A0B_AddRef,
-    CEcoTypeLib1Const_01434A0B_Release
+    CEcoTypeLib1Const_01434A0B_Release,
+    CEcoTypeLib1Const_01434A0B_get_Name,
+    CEcoTypeLib1Const_01434A0B_set_Name,
+    CEcoTypeLib1Const_01434A0B_get_Type,
+    CEcoTypeLib1Const_01434A0B_set_Type,
+    CEcoTypeLib1Const_01434A0B_get_Value,
+    CEcoTypeLib1Const_01434A0B_set_Value
 };
 
 
@@ -268,5 +380,8 @@ CEcoTypeLib1Const_01434A0B g_xCEcoTypeLib1Const_01434A0B = {
     1, /* m_cRef */
     0, /* m_pISys */
     0, /* m_pISys */
-    0  /* m_Name */
+    0, /* m_Name */
+    0, /* m_TypeTag */
+    0, /* m_pValue */
+    0  /* m_Size */
 };

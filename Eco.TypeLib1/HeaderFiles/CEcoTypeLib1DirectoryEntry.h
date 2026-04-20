@@ -50,7 +50,10 @@ typedef struct CEcoTypeLib1DirectoryEntry_01434A0B {
     IEcoSystem1* m_pISys;
 
     /* Instance data */
+    UGUID m_IID;
     char_t* m_Name;
+    char_t* m_Namespace;
+    struct IEcoInterfaceDescriptor1* m_pIDescriptor;
 
 } CEcoTypeLib1DirectoryEntry_01434A0B;
 

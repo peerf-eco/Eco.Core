@@ -24,6 +24,7 @@
 #include "IdEcoInterfaceBus1.h"
 #include "IdEcoFileSystemManagement1.h"
 #include "IdEcoTypeLib1.h"
+#include "IdEcoList1.h"
 
 void SaveListTypeLib(IEcoTypeLib1* pTypeLib, const char* fileName);
 void LoadAndInspectList(IEcoTypeLib1* pTypeLib, const char* fileName);
@@ -68,6 +69,11 @@ int16_t EcoMain(IEcoUnknown* pIUnk) {
 #ifdef ECO_LIB
     /* Registration of a static component for working with the list */
     result = pIBus->pVTbl->RegisterComponent(pIBus, &CID_EcoTypeLib1, (IEcoUnknown*)GetIEcoComponentFactoryPtr_8039E233E9A34D43BAF7833001434A0B);
+    if (result != 0 ) {
+        /* Free in case of an error */
+        goto Release;
+    }
+    result = pIBus->pVTbl->RegisterComponent(pIBus, &CID_EcoList1, (IEcoUnknown*)GetIEcoComponentFactoryPtr_53884AFC93C448ECAA929C8D3A562281);
     if (result != 0 ) {
         /* Free in case of an error */
         goto Release;
@@ -143,9 +149,6 @@ interface IEcoList1 : IEcoUnknown {
 
 */
 
-/* IID для IEcoList1 */
-static const UGUID IID_IEcoList1 = {0x01, 0x10, {0x5A, 0xAD, 0xBC, 0xB4, 0x84, 0x6C, 0x45, 0x76, 0x82, 0x7B, 0x28, 0x7B, 0x5E, 0x67, 0xA1, 0x52}};
-
 /*  Описание и сохранение интерфейса (Serialization) */
 void SaveListTypeLib(IEcoTypeLib1* pTypeLib, const char* fileName) {
     IEcoTypeLib1Builder* pBuilder = 0;
@@ -159,24 +162,70 @@ void SaveListTypeLib(IEcoTypeLib1* pTypeLib, const char* fileName) {
     pTypeLib->pVTbl->CreateBuilder(pTypeLib, &pBuilder);
 
     /* 2. Создаем дескриптор интерфейса (ParentIndex = 0 для IEcoUnknown) */
-    pBuilder->pVTbl->CreateInterfaceDescriptor(pBuilder, 0, &pDesc);
+    pBuilder->pVTbl->CreateInterfaceDescriptor(pBuilder, 0, 0, &pDesc);
     pDesc->pVTbl->set_Flags(pDesc, ECO_INTERFACE_FLAG_SCRIPTABLE); /* is_scriptable = true */
+
+    /* --- Описываем метод: uint32_t Count() --- */
+    pBuilder->pVTbl->CreateMethod(pBuilder, "Count", 0, &pMethod);
+    pBuilder->pVTbl->CreateParameter(pBuilder, "", ECO_TYPE_UINT32, ECO_PARAM_OUT, &pParam);
+    pMethod->pVTbl->set_Result(pMethod, pParam);
+    pDesc->pVTbl->AddMethod(pDesc, pMethod);
 
     /* --- Описываем метод: voidptr_t Item([in] uint32_t index) --- */
     pBuilder->pVTbl->CreateMethod(pBuilder, "Item", 0, &pMethod);
-    
-    /* Параметр 'index' */
-    pBuilder->pVTbl->CreateParameter(pBuilder, "index", ECO_TYPE_UINT32, ECO_PARAM_IN, 0, &pParam);
+    pBuilder->pVTbl->CreateParameter(pBuilder, "index", ECO_TYPE_UINT32, ECO_PARAM_IN, &pParam);
     pMethod->pVTbl->AddParameter(pMethod, pParam);
-    pParam->pVTbl->Release(pParam);
-    
-    /* Результат метода */
-    pBuilder->pVTbl->CreateParameter(pBuilder, "result", ECO_TYPE_VOIDPTR, 0, ECO_PARAM_OUT, &pParam);
+    pBuilder->pVTbl->CreateParameter(pBuilder, "", ECO_TYPE_VOIDPTR, ECO_PARAM_OUT, &pParam);
     pMethod->pVTbl->set_Result(pMethod, pParam);
-    pParam->pVTbl->Release(pParam);
-
     pDesc->pVTbl->AddMethod(pDesc, pMethod);
-    pMethod->pVTbl->Release(pMethod);
+
+    /* --- Описываем метод: uint32_t Add([in] voidptr_t value) --- */
+    pBuilder->pVTbl->CreateMethod(pBuilder, "Add", 0, &pMethod);
+    pBuilder->pVTbl->CreateParameter(pBuilder, "value", ECO_TYPE_VOIDPTR, ECO_PARAM_IN, &pParam);
+    pMethod->pVTbl->AddParameter(pMethod, pParam);
+    pBuilder->pVTbl->CreateParameter(pBuilder, "", ECO_TYPE_UINT32, ECO_PARAM_OUT, &pParam);
+    pMethod->pVTbl->set_Result(pMethod, pParam);
+    pDesc->pVTbl->AddMethod(pDesc, pMethod);
+
+    /* --- Описываем метод: uint32_t IndexOf([in] voidptr_t value) --- */
+    pBuilder->pVTbl->CreateMethod(pBuilder, "IndexOf", 0, &pMethod);
+    pBuilder->pVTbl->CreateParameter(pBuilder, "value", ECO_TYPE_VOIDPTR, ECO_PARAM_IN, &pParam);
+    pMethod->pVTbl->AddParameter(pMethod, pParam);
+    pBuilder->pVTbl->CreateParameter(pBuilder, "", ECO_TYPE_UINT32, ECO_PARAM_OUT, &pParam);
+    pMethod->pVTbl->set_Result(pMethod, pParam);
+    pDesc->pVTbl->AddMethod(pDesc, pMethod);
+
+    /* --- Описываем метод: void InsertAt([in] uint32_t index, [in] voidptr_t value) --- */
+    pBuilder->pVTbl->CreateMethod(pBuilder, "InsertAt", 0, &pMethod);
+    pBuilder->pVTbl->CreateParameter(pBuilder, "index", ECO_TYPE_UINT32, ECO_PARAM_IN, &pParam);
+    pMethod->pVTbl->AddParameter(pMethod, pParam);
+    pBuilder->pVTbl->CreateParameter(pBuilder, "value", ECO_TYPE_VOIDPTR, ECO_PARAM_IN, &pParam);
+    pMethod->pVTbl->AddParameter(pMethod, pParam);
+    pBuilder->pVTbl->CreateParameter(pBuilder, "", ECO_TYPE_VOID, ECO_PARAM_OUT, &pParam);
+    pMethod->pVTbl->set_Result(pMethod, pParam);
+    pDesc->pVTbl->AddMethod(pDesc, pMethod);
+
+    /* --- Описываем метод: void Remove([in] voidptr_t value) --- */
+    pBuilder->pVTbl->CreateMethod(pBuilder, "Remove", 0, &pMethod);
+    pBuilder->pVTbl->CreateParameter(pBuilder, "value", ECO_TYPE_VOIDPTR, ECO_PARAM_IN, &pParam);
+    pMethod->pVTbl->AddParameter(pMethod, pParam);
+    pBuilder->pVTbl->CreateParameter(pBuilder, "", ECO_TYPE_VOID, ECO_PARAM_OUT, &pParam);
+    pMethod->pVTbl->set_Result(pMethod, pParam);
+    pDesc->pVTbl->AddMethod(pDesc, pMethod);
+
+    /* --- Описываем метод: void RemoveAt([in] uint32_t index) --- */
+    pBuilder->pVTbl->CreateMethod(pBuilder, "RemoveAt", 0, &pMethod);
+    pBuilder->pVTbl->CreateParameter(pBuilder, "index", ECO_TYPE_UINT32, ECO_PARAM_IN, &pParam);
+    pMethod->pVTbl->AddParameter(pMethod, pParam);
+    pBuilder->pVTbl->CreateParameter(pBuilder, "", ECO_TYPE_VOID, ECO_PARAM_OUT, &pParam);
+    pMethod->pVTbl->set_Result(pMethod, pParam);
+    pDesc->pVTbl->AddMethod(pDesc, pMethod);
+
+    /* --- Описываем метод: void Clear() --- */
+    pBuilder->pVTbl->CreateMethod(pBuilder, "Clear", 0, &pMethod);
+    pBuilder->pVTbl->CreateParameter(pBuilder, "", ECO_TYPE_VOID, ECO_PARAM_OUT, &pParam);
+    pMethod->pVTbl->set_Result(pMethod, pParam);
+    pDesc->pVTbl->AddMethod(pDesc, pMethod);
 
     /* 3. Создаем запись в директории */
     pBuilder->pVTbl->CreateInterfaceDirectoryEntry(pBuilder, "IEcoList1", "Eco.Core", &IID_IEcoList1, pDesc, &pEntry);
@@ -195,15 +244,41 @@ void SaveListTypeLib(IEcoTypeLib1* pTypeLib, const char* fileName) {
     pBuilder->pVTbl->Release(pBuilder);
 }
 
+const char_t* ECO_TYPE_NAME[] = {
+    "undefined", /* ECO_TYPE_UNDEFINED */
+    "int8", /* ECO_TYPE_INT8 */
+    "int16", /* ECO_TYPE_INT16 */
+    "int32", /* ECO_TYPE_INT32 */
+    "int64", /* ECO_TYPE_INT64 */
+    "uint8", /* ECO_TYPE_UINT8 */
+    "uint16", /* ECO_TYPE_UINT16 */
+    "uint32", /* ECO_TYPE_UINT32 */
+    "uint64", /* ECO_TYPE_UINT64 */
+    "float", /* ECO_TYPE_FLOAT */
+    "double", /* ECO_TYPE_DOUBLE */
+    "bool", /* ECO_TYPE_BOOLEAN */
+    "char", /* ECO_TYPE_CHAR */
+    "wchar", /* ECO_TYPE_WCHAR */
+    "astring", /* ECO_TYPE_ASTRING */
+    "wstring", /* ECO_TYPE_WSTRING */
+    "interface", /* ECO_TYPE_INTERFACE */
+    "voidptr", /* ECO_TYPE_VOIDPTR */
+    "void"  /* ECO_TYPE_VOID */
+};
+
 /* Загрузка и чтение (Deserialization / Introspection) */
 void LoadAndInspectList(IEcoTypeLib1* pTypeLib, const char* fileName) {
     IEcoInterfaceDirectory1* pDir = 0;
     IEcoInterfaceDirectoryEntry1* pEntry = 0;
     IEcoInterfaceDescriptor1* pDesc = 0;
     IEcoMethodDescriptor1* pMethod = 0;
+    IEcoParamDescriptor1* pParam = 0;
+    uint16_t typeTag = 0;
+    uint8_t flags = 0;
     uint16_t mCount = 0;
     uint8_t pCount = 0;
-    uint16_t i = 0;
+    uint16_t mIndex = 0;
+    uint16_t pIndex = 0;
     char* name = 0;
 
     /* 1. Прямая загрузка файла в объектную модель Директории */
@@ -219,12 +294,24 @@ void LoadAndInspectList(IEcoTypeLib1* pTypeLib, const char* fileName) {
             
             /* 4. Читаем методы */
             mCount = pDesc->pVTbl->get_MethodCount(pDesc);
-            for (i = 0; i < mCount; i++) {
-                pDesc->pVTbl->get_MethodAtIndex(pDesc, i, &pMethod);
+            for (mIndex = 0; mIndex < mCount; mIndex++) {
+                pDesc->pVTbl->get_MethodAtIndex(pDesc, mIndex, &pMethod);
                 pMethod->pVTbl->get_Name(pMethod, &name);
 
+                pMethod->pVTbl->get_Result(pMethod, &pParam);
+                pParam->pVTbl->get_Type(pParam, &typeTag);
+
                 pCount = pMethod->pVTbl->get_ParamCount(pMethod);
-                printf("  Method: %s, Params: %d\n", name, pCount);
+                printf("  Method: %s (%s)\n", name, ECO_TYPE_NAME[typeTag]);
+
+                for (pIndex = 0; pIndex < pCount; pIndex++) {
+                    pMethod->pVTbl->GetParamAtIndex(pMethod, pIndex, &pParam);
+                    pParam->pVTbl->get_Name(pParam, &name);
+                    pParam->pVTbl->get_Type(pParam, &typeTag);
+                    flags = pParam->pVTbl->get_Flags(pParam);
+                    printf("    Param: %s (%s, 0x%.2X)\n", name, ECO_TYPE_NAME[typeTag], flags);
+                    pParam->pVTbl->Release(pParam);
+                }
                 
                 pMethod->pVTbl->Release(pMethod);
             }

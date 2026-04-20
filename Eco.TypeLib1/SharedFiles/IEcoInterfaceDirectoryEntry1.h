@@ -41,10 +41,14 @@ typedef struct IEcoInterfaceDirectoryEntry1VTbl {
     uint32_t (ECOCALLMETHOD *Release)(/* in */ IEcoInterfaceDirectoryEntry1Ptr_t me);
 
     /* IEcoInterfaceDirectoryEntry1 */
-    int16_t (ECOCALLMETHOD *get_IID)(IEcoInterfaceDirectoryEntry1Ptr_t me, UGUID* pIID);
-    int16_t (ECOCALLMETHOD *get_Name)(IEcoInterfaceDirectoryEntry1Ptr_t me, char** ppName);
-    int16_t (ECOCALLMETHOD *get_Namespace)(IEcoInterfaceDirectoryEntry1Ptr_t me, char** ppNamespace);
-    int16_t (ECOCALLMETHOD *get_Descriptor)(IEcoInterfaceDirectoryEntry1Ptr_t me, struct IEcoInterfaceDescriptor1** ppDescriptor);
+    int16_t (ECOCALLMETHOD *get_IID)(IEcoInterfaceDirectoryEntry1Ptr_t me, /* out */ UGUID* pIID);
+    int16_t (ECOCALLMETHOD *set_IID)(IEcoInterfaceDirectoryEntry1Ptr_t me, /* in */ UGUID iid);
+    int16_t (ECOCALLMETHOD *get_Name)(IEcoInterfaceDirectoryEntry1Ptr_t me, /* out */ char_t** ppName);
+    int16_t (ECOCALLMETHOD *set_Name)(IEcoInterfaceDirectoryEntry1Ptr_t me, /* in */ char_t* name);
+    int16_t (ECOCALLMETHOD *get_Namespace)(IEcoInterfaceDirectoryEntry1Ptr_t me, /* out */ char_t** ppNamespace);
+    int16_t (ECOCALLMETHOD *set_Namespace)(IEcoInterfaceDirectoryEntry1Ptr_t me, /* in */ char_t* namespace);
+    int16_t (ECOCALLMETHOD *get_Descriptor)(IEcoInterfaceDirectoryEntry1Ptr_t me, /* out */ struct IEcoInterfaceDescriptor1** ppDescriptor);
+    int16_t (ECOCALLMETHOD *set_Descriptor)(IEcoInterfaceDirectoryEntry1Ptr_t me, /* in */ struct IEcoInterfaceDescriptor1* pDescriptor);
 
 } IEcoInterfaceDirectoryEntry1VTbl, *IEcoInterfaceDirectoryEntry1VTblPtr_t;
 

@@ -113,7 +113,7 @@ static uint32_t ECOCALLMETHOD CEcoTypeLib1Directory_01434A0B_Release(/* in */ IE
 /*
  *
  * <summary>
- *   MyFunction Function
+ *   AddEntry Function
  * </summary>
  *
  * <description>
@@ -121,28 +121,201 @@ static uint32_t ECOCALLMETHOD CEcoTypeLib1Directory_01434A0B_Release(/* in */ IE
  * </description>
  *
  */
-static int16_t ECOCALLMETHOD CEcoTypeLib1Directory_01434A0B_MyFunction(/* in */ IEcoInterfaceDirectory1Ptr_t me, /* in */ char_t* Name, /* out */ char_t** copyName) {
+static int16_t ECOCALLMETHOD CEcoTypeLib1Directory_01434A0B_AddEntry(/* in */ IEcoInterfaceDirectory1Ptr_t me, /* in */ uint16_t index, /* in */ struct IEcoInterfaceDirectoryEntry1* pIEntry) {
     CEcoTypeLib1Directory_01434A0B* pCMe = (CEcoTypeLib1Directory_01434A0B*)me;
-    int16_t index = 0;
 
-    /* Pointer Validation */
-    if (me == 0 || Name == 0 || copyName == 0) {
+    if (me == 0) {
         return ERR_ECO_POINTER;
     }
 
-    /* Copying the string */
-    while(Name[index] != 0) {
-        index++;
+    if (index == (uint16_t)-1) {
+        pCMe->m_pIEntryList->pVTbl->Add(pCMe->m_pIEntryList, (void*)pIEntry);
+        return ERR_ECO_SUCCESES;
     }
-    pCMe->m_Name = (char_t*)pCMe->m_pIMem->pVTbl->Alloc(pCMe->m_pIMem, index + 1);
-    index = 0;
-    while(Name[index] != 0) {
-        pCMe->m_Name[index] = Name[index];
-        index++;
-    }
-    *copyName = pCMe->m_Name;
 
+    pCMe->m_pIEntryList->pVTbl->InsertAt(pCMe->m_pIEntryList, index, (void*)pIEntry);
     return ERR_ECO_SUCCESES;
+}
+
+/*
+ *
+ * <summary>
+ *   get_NumInterfaces Function
+ * </summary>
+ *
+ * <description>
+ *   Function
+ * </description>
+ *
+ */
+static uint16_t ECOCALLMETHOD CEcoTypeLib1Directory_01434A0B_get_NumInterfaces(/* in */ IEcoInterfaceDirectory1Ptr_t me) {
+    CEcoTypeLib1Directory_01434A0B* pCMe = (CEcoTypeLib1Directory_01434A0B*)me;
+
+    if (me == 0) {
+        return ERR_ECO_POINTER;
+    }
+
+    return pCMe->m_pIEntryList->pVTbl->Count(pCMe->m_pIEntryList);
+}
+
+/*
+ *
+ * <summary>
+ *   GetEntryAtIndex Function
+ * </summary>
+ *
+ * <description>
+ *   Function
+ * </description>
+ *
+ */
+static int16_t ECOCALLMETHOD CEcoTypeLib1Directory_01434A0B_GetEntryAtIndex(/* in */ IEcoInterfaceDirectory1Ptr_t me, /* in */ uint16_t index, /* out */ IEcoInterfaceDirectoryEntry1** ppEntry) {
+    CEcoTypeLib1Directory_01434A0B* pCMe = (CEcoTypeLib1Directory_01434A0B*)me;
+
+    if (me == 0 || ppEntry == 0) {
+        return ERR_ECO_POINTER;
+    }
+
+    *ppEntry = (IEcoInterfaceDirectoryEntry1*) pCMe->m_pIEntryList->pVTbl->Item(pCMe->m_pIEntryList, index);
+    return ERR_ECO_SUCCESES;
+}
+
+/*
+ *
+ * <summary>
+ *   GetEntryByIID Function
+ * </summary>
+ *
+ * <description>
+ *   Function
+ * </description>
+ *
+ */
+static int16_t ECOCALLMETHOD CEcoTypeLib1Directory_01434A0B_GetEntryByIID(/* in */ IEcoInterfaceDirectory1Ptr_t me, /* in */ const UGUID* riid, /* out */ IEcoInterfaceDirectoryEntry1** ppEntry) {
+    CEcoTypeLib1Directory_01434A0B* pCMe = (CEcoTypeLib1Directory_01434A0B*)me;
+    uint32_t count = 0;
+    uint32_t index = 0;
+    UGUID iid = {0};
+
+    if (me == 0 || ppEntry == 0) {
+        return ERR_ECO_POINTER;
+    }
+
+    count = pCMe->m_pIEntryList->pVTbl->Count(pCMe->m_pIEntryList);
+    for (index = 0; index < count; index++) {
+        *ppEntry = (IEcoInterfaceDirectoryEntry1*) pCMe->m_pIEntryList->pVTbl->Item(pCMe->m_pIEntryList, index);
+        (*ppEntry)->pVTbl->get_IID(*ppEntry, &iid);
+        if (IsEqualUGUID(riid, &iid)) {
+            return ERR_ECO_SUCCESES;
+        }
+    }
+    *ppEntry = 0;
+    return ERR_ECO_FAIL;
+}
+
+/*
+ *
+ * <summary>
+ *   AddAnnotation Function
+ * </summary>
+ *
+ * <description>
+ *   Function
+ * </description>
+ *
+ */
+static int16_t ECOCALLMETHOD CEcoTypeLib1Directory_01434A0B_AddAnnotation(/* in */ IEcoInterfaceDirectory1Ptr_t me, /* in */ uint16_t index, /* in */ struct IEcoAnnotationDescriptor1* pIAnnotation) {
+    CEcoTypeLib1Directory_01434A0B* pCMe = (CEcoTypeLib1Directory_01434A0B*)me;
+
+    if (me == 0) {
+        return ERR_ECO_POINTER;
+    }
+
+    if (index == (uint16_t)-1) {
+        pCMe->m_pIAnnotationList->pVTbl->Add(pCMe->m_pIAnnotationList, (void*)pIAnnotation);
+        return ERR_ECO_SUCCESES;
+    }
+
+    pCMe->m_pIAnnotationList->pVTbl->InsertAt(pCMe->m_pIAnnotationList, index, (void*)pIAnnotation);
+    return ERR_ECO_SUCCESES;
+}
+
+/*
+ *
+ * <summary>
+ *   get_AnnotationCount Function
+ * </summary>
+ *
+ * <description>
+ *   Function
+ * </description>
+ *
+ */
+static uint16_t ECOCALLMETHOD CEcoTypeLib1Directory_01434A0B_get_AnnotationCount(/* in */ IEcoInterfaceDirectory1Ptr_t me) {
+    CEcoTypeLib1Directory_01434A0B* pCMe = (CEcoTypeLib1Directory_01434A0B*)me;
+
+    if (me == 0) {
+        return ERR_ECO_POINTER;
+    }
+
+    return pCMe->m_pIAnnotationList->pVTbl->Count(pCMe->m_pIAnnotationList);
+}
+
+/*
+ *
+ * <summary>
+ *   GetAnnotationAtIndex Function
+ * </summary>
+ *
+ * <description>
+ *   Function
+ * </description>
+ *
+ */
+static int16_t ECOCALLMETHOD CEcoTypeLib1Directory_01434A0B_GetAnnotationAtIndex(/* in */ IEcoInterfaceDirectory1Ptr_t me, /* in */ uint16_t index, /* out */ struct IEcoAnnotationDescriptor1** ppAnnotation) {
+    CEcoTypeLib1Directory_01434A0B* pCMe = (CEcoTypeLib1Directory_01434A0B*)me;
+
+    if (me == 0) {
+        return ERR_ECO_POINTER;
+    }
+
+    *ppAnnotation = (struct IEcoAnnotationDescriptor1*) pCMe->m_pIAnnotationList->pVTbl->Item(pCMe->m_pIAnnotationList, index);
+    return ERR_ECO_SUCCESES;
+}
+
+/*
+ *
+ * <summary>
+ *   GetAnnotationByKey Function
+ * </summary>
+ *
+ * <description>
+ *   Function
+ * </description>
+ *
+ */
+static int16_t ECOCALLMETHOD CEcoTypeLib1Directory_01434A0B_GetAnnotationByKey(/* in */ IEcoInterfaceDirectory1Ptr_t me, /* in */ const char_t* key, /* out */ char_t** ppValue) {
+    CEcoTypeLib1Directory_01434A0B* pCMe = (CEcoTypeLib1Directory_01434A0B*)me;
+    struct IEcoAnnotationDescriptor1* pIAnnotation = 0;
+    char_t* pKey = 0;
+    uint32_t count = 0;
+    uint32_t index = 0;
+    int16_t result = 0;
+
+    if (me == 0 || ppValue == 0) {
+        return ERR_ECO_POINTER;
+    }
+
+    count = pCMe->m_pIAnnotationList->pVTbl->Count(pCMe->m_pIAnnotationList);
+    for (index = 0; index < count; index++) {
+        pIAnnotation = (struct IEcoAnnotationDescriptor1*) pCMe->m_pIAnnotationList->pVTbl->Item(pCMe->m_pIAnnotationList, index);
+        result = pIAnnotation->pVTbl->get_Key(pIAnnotation, &pKey);
+        if (result == 0 && strcmp(pKey, key) == 0) {
+            return pIAnnotation->pVTbl->get_Value(pIAnnotation, ppValue);
+        }
+    }
+    *ppValue = 0;
+    return ERR_ECO_FAIL;
 }
 
 
@@ -190,6 +363,9 @@ static int16_t ECOCALLMETHOD initCEcoTypeLib1Directory_01434A0B(/*in*/ CEcoTypeL
     if (result != 0 || pCMe->m_pIMem == 0) {
         result = ERR_ECO_GET_MEMORY_ALLOCATOR;
     }
+
+    pIBus->pVTbl->QueryComponent(pIBus, &CID_EcoList1, 0, &IID_IEcoList1, (void**) &pCMe->m_pIEntryList);
+    pIBus->pVTbl->QueryComponent(pIBus, &CID_EcoList1, 0, &IID_IEcoList1, (void**) &pCMe->m_pIAnnotationList);
 
 
 
@@ -239,8 +415,13 @@ static void ECOCALLMETHOD deleteCEcoTypeLib1Directory_01434A0B(/* in */ CEcoType
     if (pCMe != 0 ) {
         pIMem = pCMe->m_pIMem;
         /* Freeing */
-        if ( pCMe->m_Name != 0 ) {
-            pIMem->pVTbl->Free(pIMem, pCMe->m_Name);
+        if ( pCMe->m_pIEntryList != 0 ) {
+            pCMe->m_pIEntryList->pVTbl->Clear(pCMe->m_pIEntryList);
+            pCMe->m_pIEntryList->pVTbl->Release(pCMe->m_pIEntryList);
+        }
+        if ( pCMe->m_pIAnnotationList != 0 ) {
+            pCMe->m_pIAnnotationList->pVTbl->Clear(pCMe->m_pIAnnotationList);
+            pCMe->m_pIAnnotationList->pVTbl->Release(pCMe->m_pIAnnotationList);
         }
         if ( pCMe->m_pISys != 0 ) {
             pCMe->m_pISys->pVTbl->Release(pCMe->m_pISys);
@@ -254,7 +435,15 @@ static void ECOCALLMETHOD deleteCEcoTypeLib1Directory_01434A0B(/* in */ CEcoType
 IEcoInterfaceDirectory1VTbl g_x9E7246B89BCB46A2A016B92DC3E97F27VTbl_01434A0B = {
     CEcoTypeLib1Directory_01434A0B_QueryInterface,
     CEcoTypeLib1Directory_01434A0B_AddRef,
-    CEcoTypeLib1Directory_01434A0B_Release
+    CEcoTypeLib1Directory_01434A0B_Release,
+    CEcoTypeLib1Directory_01434A0B_AddEntry,
+    CEcoTypeLib1Directory_01434A0B_get_NumInterfaces,
+    CEcoTypeLib1Directory_01434A0B_GetEntryAtIndex,
+    CEcoTypeLib1Directory_01434A0B_GetEntryByIID,
+    CEcoTypeLib1Directory_01434A0B_AddAnnotation,
+    CEcoTypeLib1Directory_01434A0B_get_AnnotationCount,
+    CEcoTypeLib1Directory_01434A0B_GetAnnotationAtIndex,
+    CEcoTypeLib1Directory_01434A0B_GetAnnotationByKey
 };
 
 
@@ -268,5 +457,6 @@ CEcoTypeLib1Directory_01434A0B g_xCEcoTypeLib1Directory_01434A0B = {
     1, /* m_cRef */
     0, /* m_pISys */
     0, /* m_pISys */
-    0  /* m_Name */
+    0, /* m_pIEntryList */
+    0  /* m_pIAnnotationList */
 };

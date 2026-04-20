@@ -113,7 +113,7 @@ static uint32_t ECOCALLMETHOD CEcoTypeLib1Interface_01434A0B_Release(/* in */ IE
 /*
  *
  * <summary>
- *   MyFunction Function
+ *   set_ParentIndex Function
  * </summary>
  *
  * <description>
@@ -121,27 +121,208 @@ static uint32_t ECOCALLMETHOD CEcoTypeLib1Interface_01434A0B_Release(/* in */ IE
  * </description>
  *
  */
-static int16_t ECOCALLMETHOD CEcoTypeLib1Interface_01434A0B_MyFunction(/* in */ IEcoInterfaceDescriptor1Ptr_t me, /* in */ char_t* Name, /* out */ char_t** copyName) {
+static int16_t ECOCALLMETHOD CEcoTypeLib1Interface_01434A0B_set_ParentIndex(/* in */ IEcoInterfaceDescriptor1Ptr_t me, /* in */ uint16_t parentIndex) {
     CEcoTypeLib1Interface_01434A0B* pCMe = (CEcoTypeLib1Interface_01434A0B*)me;
-    int16_t index = 0;
 
-    /* Pointer Validation */
-    if (me == 0 || Name == 0 || copyName == 0) {
+    if (me == 0) {
         return ERR_ECO_POINTER;
     }
 
-    /* Copying the string */
-    while(Name[index] != 0) {
-        index++;
-    }
-    pCMe->m_Name = (char_t*)pCMe->m_pIMem->pVTbl->Alloc(pCMe->m_pIMem, index + 1);
-    index = 0;
-    while(Name[index] != 0) {
-        pCMe->m_Name[index] = Name[index];
-        index++;
-    }
-    *copyName = pCMe->m_Name;
+    pCMe->m_ParentIndex = parentIndex;
+    return ERR_ECO_SUCCESES;
+}
 
+/*
+ *
+ * <summary>
+ *   get_ParentIndex Function
+ * </summary>
+ *
+ * <description>
+ *   Function
+ * </description>
+ *
+ */
+static uint16_t ECOCALLMETHOD CEcoTypeLib1Interface_01434A0B_get_ParentIndex(/* in */ IEcoInterfaceDescriptor1Ptr_t me) {
+    CEcoTypeLib1Interface_01434A0B* pCMe = (CEcoTypeLib1Interface_01434A0B*)me;
+
+    if (me == 0) {
+        return ERR_ECO_POINTER;
+    }
+
+    return pCMe->m_ParentIndex;
+}
+
+/*
+ *
+ * <summary>
+ *   set_Flags Function
+ * </summary>
+ *
+ * <description>
+ *   Function
+ * </description>
+ *
+ */
+static int16_t ECOCALLMETHOD CEcoTypeLib1Interface_01434A0B_set_Flags(/* in */ IEcoInterfaceDescriptor1Ptr_t me, /* in */ uint8_t flags) {
+    CEcoTypeLib1Interface_01434A0B* pCMe = (CEcoTypeLib1Interface_01434A0B*)me;
+
+    if (me == 0) {
+        return ERR_ECO_POINTER;
+    }
+
+    pCMe->m_Flags = flags;
+    return ERR_ECO_SUCCESES;
+}
+
+/*
+ *
+ * <summary>
+ *   get_Flags Function
+ * </summary>
+ *
+ * <description>
+ *   Function
+ * </description>
+ *
+ */
+static uint8_t ECOCALLMETHOD CEcoTypeLib1Interface_01434A0B_get_Flags(/* in */ IEcoInterfaceDescriptor1Ptr_t me) {
+    CEcoTypeLib1Interface_01434A0B* pCMe = (CEcoTypeLib1Interface_01434A0B*)me;
+
+    if (me == 0) {
+        return ERR_ECO_POINTER;
+    }
+
+    return pCMe->m_Flags;
+}
+
+/*
+ *
+ * <summary>
+ *   AddMethod Function
+ * </summary>
+ *
+ * <description>
+ *   Function
+ * </description>
+ *
+ */
+static int16_t ECOCALLMETHOD CEcoTypeLib1Interface_01434A0B_AddMethod(/* in */ IEcoInterfaceDescriptor1Ptr_t me, /* in */ struct IEcoMethodDescriptor1* pIMethod) {
+    CEcoTypeLib1Interface_01434A0B* pCMe = (CEcoTypeLib1Interface_01434A0B*)me;
+
+    if (me == 0) {
+        return ERR_ECO_POINTER;
+    }
+
+    pCMe->m_pIMethodList->pVTbl->Add(pCMe->m_pIMethodList, (void*)pIMethod);
+    return ERR_ECO_SUCCESES;
+}
+
+/*
+ *
+ * <summary>
+ *   get_MethodCount Function
+ * </summary>
+ *
+ * <description>
+ *   Function
+ * </description>
+ *
+ */
+static uint16_t ECOCALLMETHOD CEcoTypeLib1Interface_01434A0B_get_MethodCount(/* in */ IEcoInterfaceDescriptor1Ptr_t me) {
+    CEcoTypeLib1Interface_01434A0B* pCMe = (CEcoTypeLib1Interface_01434A0B*)me;
+
+    if (me == 0) {
+        return ERR_ECO_POINTER;
+    }
+
+    return pCMe->m_pIMethodList->pVTbl->Count(pCMe->m_pIMethodList);
+}
+
+/*
+ *
+ * <summary>
+ *   get_MethodAtIndex Function
+ * </summary>
+ *
+ * <description>
+ *   Function
+ * </description>
+ *
+ */
+static int16_t ECOCALLMETHOD CEcoTypeLib1Interface_01434A0B_get_MethodAtIndex(/* in */ IEcoInterfaceDescriptor1Ptr_t me, /* in */ uint16_t index, /* out */ struct IEcoMethodDescriptor1** ppIMethod) {
+    CEcoTypeLib1Interface_01434A0B* pCMe = (CEcoTypeLib1Interface_01434A0B*)me;
+
+    if (me == 0 || ppIMethod == 0) {
+        return ERR_ECO_POINTER;
+    }
+
+    *ppIMethod = (struct IEcoMethodDescriptor1*) pCMe->m_pIMethodList->pVTbl->Item(pCMe->m_pIMethodList, index);
+    return ERR_ECO_SUCCESES;
+}
+
+/*
+ *
+ * <summary>
+ *   AddConstant Function
+ * </summary>
+ *
+ * <description>
+ *   Function
+ * </description>
+ *
+ */
+static int16_t ECOCALLMETHOD CEcoTypeLib1Interface_01434A0B_AddConstant(/* in */ IEcoInterfaceDescriptor1Ptr_t me, /* in */ struct IEcoConstantDescriptor1* pIConstant) {
+    CEcoTypeLib1Interface_01434A0B* pCMe = (CEcoTypeLib1Interface_01434A0B*)me;
+
+    if (me == 0) {
+        return ERR_ECO_POINTER;
+    }
+
+    pCMe->m_pIConstantList->pVTbl->Add(pCMe->m_pIConstantList, (void*)pIConstant);
+    return ERR_ECO_SUCCESES;
+}
+
+/*
+ *
+ * <summary>
+ *   get_ConstantCount Function
+ * </summary>
+ *
+ * <description>
+ *   Function
+ * </description>
+ *
+ */
+static uint16_t ECOCALLMETHOD CEcoTypeLib1Interface_01434A0B_get_ConstantCount(/* in */ IEcoInterfaceDescriptor1Ptr_t me) {
+    CEcoTypeLib1Interface_01434A0B* pCMe = (CEcoTypeLib1Interface_01434A0B*)me;
+
+    if (me == 0) {
+        return ERR_ECO_POINTER;
+    }
+
+    return pCMe->m_pIConstantList->pVTbl->Count(pCMe->m_pIConstantList);
+}
+
+/*
+ *
+ * <summary>
+ *   get_ConstantAtIndex Function
+ * </summary>
+ *
+ * <description>
+ *   Function
+ * </description>
+ *
+ */
+static int16_t ECOCALLMETHOD CEcoTypeLib1Interface_01434A0B_get_ConstantAtIndex(/* in */ IEcoInterfaceDescriptor1Ptr_t me, /* in */ uint16_t index, /* out */ struct IEcoConstantDescriptor1** ppIConstant) {
+    CEcoTypeLib1Interface_01434A0B* pCMe = (CEcoTypeLib1Interface_01434A0B*)me;
+
+    if (me == 0 || ppIConstant == 0) {
+        return ERR_ECO_POINTER;
+    }
+
+    *ppIConstant = (struct IEcoConstantDescriptor1*) pCMe->m_pIConstantList->pVTbl->Item(pCMe->m_pIConstantList, index);
     return ERR_ECO_SUCCESES;
 }
 
@@ -191,6 +372,8 @@ static int16_t ECOCALLMETHOD initCEcoTypeLib1Interface_01434A0B(/*in*/ CEcoTypeL
         result = ERR_ECO_GET_MEMORY_ALLOCATOR;
     }
 
+    pIBus->pVTbl->QueryComponent(pIBus, &CID_EcoList1, 0, &IID_IEcoList1, (void**) &pCMe->m_pIMethodList);
+    pIBus->pVTbl->QueryComponent(pIBus, &CID_EcoList1, 0, &IID_IEcoList1, (void**) &pCMe->m_pIConstantList);
 
 
     /* Freeing */
@@ -239,8 +422,13 @@ static void ECOCALLMETHOD deleteCEcoTypeLib1Interface_01434A0B(/* in */ CEcoType
     if (pCMe != 0 ) {
         pIMem = pCMe->m_pIMem;
         /* Freeing */
-        if ( pCMe->m_Name != 0 ) {
-            pIMem->pVTbl->Free(pIMem, pCMe->m_Name);
+        if ( pCMe->m_pIMethodList != 0 ) {
+            pCMe->m_pIMethodList->pVTbl->Clear(pCMe->m_pIMethodList);
+            pCMe->m_pIMethodList->pVTbl->Release(pCMe->m_pIMethodList);
+        }
+        if ( pCMe->m_pIConstantList != 0 ) {
+            pCMe->m_pIConstantList->pVTbl->Clear(pCMe->m_pIConstantList);
+            pCMe->m_pIConstantList->pVTbl->Release(pCMe->m_pIConstantList);
         }
         if ( pCMe->m_pISys != 0 ) {
             pCMe->m_pISys->pVTbl->Release(pCMe->m_pISys);
@@ -254,7 +442,17 @@ static void ECOCALLMETHOD deleteCEcoTypeLib1Interface_01434A0B(/* in */ CEcoType
 IEcoInterfaceDescriptor1VTbl g_x5D9AE041C0AB482C935FA35F0F07B0F1VTbl_01434A0B = {
     CEcoTypeLib1Interface_01434A0B_QueryInterface,
     CEcoTypeLib1Interface_01434A0B_AddRef,
-    CEcoTypeLib1Interface_01434A0B_Release
+    CEcoTypeLib1Interface_01434A0B_Release,
+    CEcoTypeLib1Interface_01434A0B_set_ParentIndex,
+    CEcoTypeLib1Interface_01434A0B_get_ParentIndex,
+    CEcoTypeLib1Interface_01434A0B_set_Flags,
+    CEcoTypeLib1Interface_01434A0B_get_Flags,
+    CEcoTypeLib1Interface_01434A0B_AddMethod,
+    CEcoTypeLib1Interface_01434A0B_get_MethodCount,
+    CEcoTypeLib1Interface_01434A0B_get_MethodAtIndex,
+    CEcoTypeLib1Interface_01434A0B_AddConstant,
+    CEcoTypeLib1Interface_01434A0B_get_ConstantCount,
+    CEcoTypeLib1Interface_01434A0B_get_ConstantAtIndex
 };
 
 
@@ -268,5 +466,8 @@ CEcoTypeLib1Interface_01434A0B g_xCEcoTypeLib1Interface_01434A0B = {
     1, /* m_cRef */
     0, /* m_pISys */
     0, /* m_pISys */
-    0  /* m_Name */
+    0, /* m_ParentIndex */
+    0, /* m_Flags */
+    0, /* m_pIMethodList */
+    0  /* m_pIConstantList */
 };

@@ -113,7 +113,7 @@ static uint32_t ECOCALLMETHOD CEcoTypeLib1DirectoryEntry_01434A0B_Release(/* in 
 /*
  *
  * <summary>
- *   MyFunction Function
+ *   get_IID Function
  * </summary>
  *
  * <description>
@@ -121,27 +121,168 @@ static uint32_t ECOCALLMETHOD CEcoTypeLib1DirectoryEntry_01434A0B_Release(/* in 
  * </description>
  *
  */
-static int16_t ECOCALLMETHOD CEcoTypeLib1DirectoryEntry_01434A0B_MyFunction(/* in */ IEcoInterfaceDirectoryEntry1Ptr_t me, /* in */ char_t* Name, /* out */ char_t** copyName) {
+static int16_t ECOCALLMETHOD CEcoTypeLib1DirectoryEntry_01434A0B_get_IID(/* in */ IEcoInterfaceDirectoryEntry1Ptr_t me, /* out */ UGUID* pIID) {
     CEcoTypeLib1DirectoryEntry_01434A0B* pCMe = (CEcoTypeLib1DirectoryEntry_01434A0B*)me;
-    int16_t index = 0;
 
-    /* Pointer Validation */
-    if (me == 0 || Name == 0 || copyName == 0) {
+    if (me == 0 || pIID == 0) {
         return ERR_ECO_POINTER;
     }
 
-    /* Copying the string */
-    while(Name[index] != 0) {
-        index++;
-    }
-    pCMe->m_Name = (char_t*)pCMe->m_pIMem->pVTbl->Alloc(pCMe->m_pIMem, index + 1);
-    index = 0;
-    while(Name[index] != 0) {
-        pCMe->m_Name[index] = Name[index];
-        index++;
-    }
-    *copyName = pCMe->m_Name;
+    *pIID = pCMe->m_IID;
+    return ERR_ECO_SUCCESES;
+}
 
+/*
+ *
+ * <summary>
+ *   set_IID Function
+ * </summary>
+ *
+ * <description>
+ *   Function
+ * </description>
+ *
+ */
+static int16_t ECOCALLMETHOD CEcoTypeLib1DirectoryEntry_01434A0B_set_IID(/* in */ IEcoInterfaceDirectoryEntry1Ptr_t me, /* in */ UGUID iid) {
+    CEcoTypeLib1DirectoryEntry_01434A0B* pCMe = (CEcoTypeLib1DirectoryEntry_01434A0B*)me;
+
+    if (me == 0) {
+        return ERR_ECO_POINTER;
+    }
+
+    pCMe->m_IID = iid;
+    return ERR_ECO_SUCCESES;
+}
+
+/*
+ *
+ * <summary>
+ *   get_Name Function
+ * </summary>
+ *
+ * <description>
+ *   Function
+ * </description>
+ *
+ */
+static int16_t ECOCALLMETHOD CEcoTypeLib1DirectoryEntry_01434A0B_get_Name(/* in */ IEcoInterfaceDirectoryEntry1Ptr_t me, /* out */ char_t** ppName) {
+    CEcoTypeLib1DirectoryEntry_01434A0B* pCMe = (CEcoTypeLib1DirectoryEntry_01434A0B*)me;
+
+    if (me == 0 || ppName == 0) {
+        return ERR_ECO_POINTER;
+    }
+
+    *ppName = pCMe->m_Name;
+    return ERR_ECO_SUCCESES;
+}
+
+/*
+ *
+ * <summary>
+ *   set_Name Function
+ * </summary>
+ *
+ * <description>
+ *   Function
+ * </description>
+ *
+ */
+static int16_t ECOCALLMETHOD CEcoTypeLib1DirectoryEntry_01434A0B_set_Name(/* in */ IEcoInterfaceDirectoryEntry1Ptr_t me, /* in */ char_t* name) {
+    CEcoTypeLib1DirectoryEntry_01434A0B* pCMe = (CEcoTypeLib1DirectoryEntry_01434A0B*)me;
+
+    if (me == 0) {
+        return ERR_ECO_POINTER;
+    }
+
+    pCMe->m_Name = name;
+    return ERR_ECO_SUCCESES;
+}
+
+/*
+ *
+ * <summary>
+ *   get_Namespace Function
+ * </summary>
+ *
+ * <description>
+ *   Function
+ * </description>
+ *
+ */
+static int16_t ECOCALLMETHOD CEcoTypeLib1DirectoryEntry_01434A0B_get_Namespace(/* in */ IEcoInterfaceDirectoryEntry1Ptr_t me, /* out */ char_t** ppNamespace) {
+    CEcoTypeLib1DirectoryEntry_01434A0B* pCMe = (CEcoTypeLib1DirectoryEntry_01434A0B*)me;
+
+    if (me == 0 || ppNamespace == 0) {
+        return ERR_ECO_POINTER;
+    }
+
+    *ppNamespace = pCMe->m_Namespace;
+    return ERR_ECO_SUCCESES;
+}
+
+/*
+ *
+ * <summary>
+ *   set_Namespace Function
+ * </summary>
+ *
+ * <description>
+ *   Function
+ * </description>
+ *
+ */
+static int16_t ECOCALLMETHOD CEcoTypeLib1DirectoryEntry_01434A0B_set_Namespace(/* in */ IEcoInterfaceDirectoryEntry1Ptr_t me, /* in */ char_t* namespace) {
+    CEcoTypeLib1DirectoryEntry_01434A0B* pCMe = (CEcoTypeLib1DirectoryEntry_01434A0B*)me;
+
+    if (me == 0) {
+        return ERR_ECO_POINTER;
+    }
+
+    pCMe->m_Namespace = namespace;
+    return ERR_ECO_SUCCESES;
+}
+
+/*
+ *
+ * <summary>
+ *   get_Descriptor Function
+ * </summary>
+ *
+ * <description>
+ *   Function
+ * </description>
+ *
+ */
+static int16_t ECOCALLMETHOD CEcoTypeLib1DirectoryEntry_01434A0B_get_Descriptor(/* in */ IEcoInterfaceDirectoryEntry1Ptr_t me, /* out */ struct IEcoInterfaceDescriptor1** ppDescriptor) {
+    CEcoTypeLib1DirectoryEntry_01434A0B* pCMe = (CEcoTypeLib1DirectoryEntry_01434A0B*)me;
+
+    if (me == 0 || ppDescriptor == 0) {
+        return ERR_ECO_POINTER;
+    }
+
+    *ppDescriptor = pCMe->m_pIDescriptor;
+    return ERR_ECO_SUCCESES;
+}
+
+/*
+ *
+ * <summary>
+ *   set_Descriptor Function
+ * </summary>
+ *
+ * <description>
+ *   Function
+ * </description>
+ *
+ */
+static int16_t ECOCALLMETHOD CEcoTypeLib1DirectoryEntry_01434A0B_set_Descriptor(/* in */ IEcoInterfaceDirectoryEntry1Ptr_t me, /* in */ struct IEcoInterfaceDescriptor1* pDescriptor) {
+    CEcoTypeLib1DirectoryEntry_01434A0B* pCMe = (CEcoTypeLib1DirectoryEntry_01434A0B*)me;
+
+    if (me == 0) {
+        return ERR_ECO_POINTER;
+    }
+
+    pCMe->m_pIDescriptor = pDescriptor;
     return ERR_ECO_SUCCESES;
 }
 
@@ -239,9 +380,6 @@ static void ECOCALLMETHOD deleteCEcoTypeLib1DirectoryEntry_01434A0B(/* in */ CEc
     if (pCMe != 0 ) {
         pIMem = pCMe->m_pIMem;
         /* Freeing */
-        if ( pCMe->m_Name != 0 ) {
-            pIMem->pVTbl->Free(pIMem, pCMe->m_Name);
-        }
         if ( pCMe->m_pISys != 0 ) {
             pCMe->m_pISys->pVTbl->Release(pCMe->m_pISys);
         }
@@ -254,7 +392,15 @@ static void ECOCALLMETHOD deleteCEcoTypeLib1DirectoryEntry_01434A0B(/* in */ CEc
 IEcoInterfaceDirectoryEntry1VTbl g_xF3D1C80F34C2478F8D93EB7ED39977E5VTbl_01434A0B = {
     CEcoTypeLib1DirectoryEntry_01434A0B_QueryInterface,
     CEcoTypeLib1DirectoryEntry_01434A0B_AddRef,
-    CEcoTypeLib1DirectoryEntry_01434A0B_Release
+    CEcoTypeLib1DirectoryEntry_01434A0B_Release,
+    CEcoTypeLib1DirectoryEntry_01434A0B_get_IID,
+    CEcoTypeLib1DirectoryEntry_01434A0B_set_IID,
+    CEcoTypeLib1DirectoryEntry_01434A0B_get_Name,
+    CEcoTypeLib1DirectoryEntry_01434A0B_set_Name,
+    CEcoTypeLib1DirectoryEntry_01434A0B_get_Namespace,
+    CEcoTypeLib1DirectoryEntry_01434A0B_set_Namespace,
+    CEcoTypeLib1DirectoryEntry_01434A0B_get_Descriptor,
+    CEcoTypeLib1DirectoryEntry_01434A0B_set_Descriptor
 };
 
 
@@ -268,5 +414,8 @@ CEcoTypeLib1DirectoryEntry_01434A0B g_xCEcoTypeLib1DirectoryEntry_01434A0B = {
     1, /* m_cRef */
     0, /* m_pISys */
     0, /* m_pISys */
-    0  /* m_Name */
+    0, /* m_IID */
+    0, /* m_Name */
+    0, /* m_Namespace */
+    0  /* m_pIDescriptor */
 };
