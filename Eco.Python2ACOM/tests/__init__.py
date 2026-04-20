@@ -1,1 +1,1 @@
-"""Tests for Eco.Python2ACOM."""
+"""Tests for `eco_python2acom` package."""

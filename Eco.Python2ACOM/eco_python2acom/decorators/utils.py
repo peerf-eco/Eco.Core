@@ -1,24 +1,24 @@
-"""Internal utilities for @model and @interface decorators.
+"""Utilities for @model, @union and @interface decorators.
 
-This module provides helper functions, metaclasses, and field/method resolution
-for building EcoOS structure and interface classes.
+This module provides helper tools for building EcoOS structure, union and interface classes.
 """
 
-from __future__ import annotations
-
+import inspect
 from collections.abc import Callable
-from types import FrameType, NoneType
+from types import FrameType, NoneType, UnionType
 from typing import Any, ClassVar, Optional, Union, get_args, get_origin, get_type_hints
 
-from eco_python2acom.types.core import CData, CFuncType, CStructure, Int16, Void
+from eco_python2acom.types.core import CData, CLayout, CStructure, Int16
+from eco_python2acom.types.function import Func
 from eco_python2acom.types.pointer import Ptr
+from eco_python2acom.types.utils import pointer
 
 # -----------------------------------------------------------------------------
 # Type validation and normalization
 # -----------------------------------------------------------------------------
 
 
-def validate(hint: type) -> type:
+def _validate(hint: type) -> type:
     """Validate EcoOS data type.
 
     Args:
@@ -38,7 +38,7 @@ def validate(hint: type) -> type:
     raise TypeError(f"Invalid EcoOS data type: '{hint}'")
 
 
-def normalize(hint: type) -> type:
+def _normalize(hint: type) -> type:
     """Normalize EcoOS data type.
 
     Args:
@@ -50,7 +50,7 @@ def normalize(hint: type) -> type:
     Raises:
         TypeError: If union has more than one non-None type.
     """
-    if get_origin(hint) is Union:
+    if get_origin(hint) in (Union, UnionType):
         args = [arg for arg in get_args(hint) if arg is not type(None)]
         if len(args) != 1:
             raise TypeError(f"Invalid EcoOS union type: '{hint}'")
@@ -63,7 +63,7 @@ def normalize(hint: type) -> type:
 # -----------------------------------------------------------------------------
 
 
-def resolve_fields(cls: type) -> list[tuple[str, type]]:
+def _resolve_fields(cls: type) -> list[tuple[str, type]]:
     """Resolve EcoOS fields defined in this class only.
 
     Args:
@@ -72,76 +72,146 @@ def resolve_fields(cls: type) -> list[tuple[str, type]]:
     Returns:
         A list of tuples of field names and their resolved EcoOS types.
     """
-    hints = get_type_hints(
-        cls,
-        globalns=getattr(cls, "__decl_globalns__", {}),
-        localns=getattr(cls, "__decl_localns__", {}),
-    )
-
+    hints = get_type_hints(cls)
     return [
-        (name, validate(normalize(hints[name])))
+        (name, _validate(_normalize(hints[name])))
         for name in getattr(cls, "__annotations__", {})
         if get_origin(hints.get(name)) is not ClassVar
     ]
 
 
-def resolve_methods(cls: type) -> list[tuple[str, type]]:
-    """Resolve EcoOS interface methods defined in this class only.
+def _inherited_slots(cls: type) -> list[tuple[str, type, list[type], list[str]]]:
+    """Collect vtable slots inherited from the direct parent interface.
+
+    Args:
+        cls: The interface class whose parent to inspect.
+
+    Returns:
+        A list of `(field name, return type, param types, param names)` tuples.
+    """
+    parent = cls.__dict__.get("_eco_parent_")
+    if parent is None:
+        return []
+
+    parent_vtbl = getattr(parent, "_vtbl_", None)
+    if parent_vtbl is None:
+        return []
+
+    parent_params = getattr(parent, "_eco_method_params_", {})
+    slots = []
+    for field_name, slot_type in parent_vtbl._fields_:
+        argtypes = iter(slot_type._argtypes_)
+        next(argtypes)  # Skip implicit 'self' / instance parameter
+        slots.append(
+            (
+                field_name,
+                slot_type._restype_,
+                list(argtypes),
+                parent_params.get(field_name, []),
+            )
+        )
+    return slots
+
+
+def _declared_slots(cls: type) -> list[tuple[str, type, list[type], list[str]]]:
+    """Collect vtable slots from methods declared on `cls` itself.
+
+    Args:
+        cls: The interface class to inspect.
+
+    Returns:
+        A list of `(field name, return type, param types, param names)` tuples.
+    """
+    slots = []
+    for name, value in cls.__dict__.items():
+        if name.startswith("__") and name.endswith("__"):
+            continue
+        if not inspect.isfunction(value):
+            continue
+
+        hints = get_type_hints(value)
+        return_type = _validate(_normalize(hints.pop("return", Int16)))
+        param_names, param_types = [], []
+
+        params = iter(inspect.signature(value).parameters.values())
+        next(params)  # Skip implicit 'self' / instance parameter
+        for param in params:
+            param_types.append(_validate(_normalize(hints[param.name])))
+            param_names.append(param.name)
+
+        slots.append((f"_func_{name}", return_type, param_types, param_names))
+    return slots
+
+
+def _resolve_methods(cls: type) -> list[tuple[str, type]]:
+    """Resolve EcoOS interface methods for the vtable of `cls`.
+
+    Collects inherited slots from finalized ancestor vtables first,
+    then appends methods declared on `cls` itself. The first parameter of
+    every slot is `Ptr[cls]` — the derived-interface pointer.
 
     Args:
         cls: The interface class to resolve methods of.
 
     Returns:
-        A list of tuples with method names and resolved EcoOS types.
+        A list of tuples with vtable field names and their `Func`.
 
-    Note:
-        Sets cls._eco_method_params_ with parameter names for dispatchers.
-        Sets cls._eco_method_returns_ with return types for result wrapping.
+    Raises:
+        TypeError: If `cls` redeclares a method already defined by an ancestor.
     """
-    methods: list[tuple[str, type]] = []
-    method_params: dict[str, list[str]] = {}
-    method_returns: dict[str, type] = {}
+    self_ptr_type = Ptr[cls]
+    methods, seen = [], set()
+    method_params, method_returns = {}, {}
 
-    for name, value in cls.__dict__.items():
-        if name.startswith("__") and name.endswith("__"):
-            continue
-        if not callable(value):
-            continue
-
-        hints = get_type_hints(
-            value,
-            globalns=getattr(cls, "__decl_globalns__", {}),
-            localns=getattr(cls, "__decl_localns__", {}),
-        )
-
-        return_type = validate(normalize(hints.pop("return", Int16)))
-        param_names, param_types = [], []
-        for key, hint in hints.items():
-            if key not in ("self", "cls"):
-                param_types.append(validate(normalize(hint)))
-                param_names.append(key)
-
-        func_type = CFuncType(return_type, Ptr[Void], *param_types)  # type: ignore
-        field_name = f"_func_{name}"
+    for field_name, return_type, param_types, param_names in (
+        *_inherited_slots(cls),
+        *_declared_slots(cls),
+    ):
+        if field_name in seen:
+            method_name = field_name.removeprefix("_func_")
+            raise TypeError(
+                f"'{cls.__name__}.{method_name}' is already defined by an ancestor interface"
+            )
+        seen.add(field_name)
+        func_type = Func[return_type, [self_ptr_type, *param_types]]
         methods.append((field_name, func_type))
         method_params[field_name] = param_names
         method_returns[field_name] = return_type
 
     cls._eco_method_params_ = method_params
     cls._eco_method_returns_ = method_returns
-    return methods
+    return methods  # type: ignore
 
 
-def install_dispatchers(cls: type, methods: list[tuple[str, type]]) -> None:
+def _apply_resolver(
+    cls: type, marker: str, resolver: Callable[[type], list[tuple[str, type]]]
+) -> list[tuple[str, type]]:
+    """Apply a resolver function to populate fields of a class.
+
+    Args:
+        cls: The class to populate fields of.
+        marker: The class attribute marker to check.
+        resolver: A function to resolve field types.
+
+    Returns:
+        A list of tuples with field names and resolved types.
+    """
+    if not cls.__dict__.get(marker):
+        return []
+
+    try:
+        return resolver(cls)
+    except TypeError:
+        raise
+    except Exception as err:
+        raise TypeError(f"Class '{cls.__name__}' contains unresolved types") from err
+
+
+def _install_dispatchers(cls: type, methods: list[tuple[str, type]]) -> None:
     """Replace method stubs with C function dispatchers for an interface class.
 
-    The methods are stored as fields in the interface class with names
-    like '_func_{method_name}'. This function creates Python method wrappers
-    that:
-    1. Access the function pointer field from the structure
-    2. Call it with self.ptr as the first argument
-    3. Support both positional and keyword arguments
-    4. Wrap the result in the declared return type
+    Each dispatcher reads the function pointer from the vtable
+    and calls it with self pointer as the implicit first argument.
 
     Args:
         cls: The interface class to install dispatchers on.
@@ -152,47 +222,48 @@ def install_dispatchers(cls: type, methods: list[tuple[str, type]]) -> None:
 
     for field_name, _ in methods:
         method_name = field_name.removeprefix("_func_")
-        original = cls.__dict__.get(method_name)
-        doc = getattr(original, "__doc__", None) if callable(original) else None
         param_names = method_params.get(field_name, [])
         return_type = method_returns.get(field_name)
+        original = cls.__dict__.get(method_name)
+        docstring = getattr(original, "__doc__", None) if callable(original) else None
 
         def make_dispatch(
-            fname: str,
-            mname: str,
-            pnames: list[str],
-            rtype: Optional[type] = None,
+            field_name: str,
+            method_name: str,
+            param_names: list[str],
+            return_type: Optional[type] = None,
             docstring: Optional[str] = None,
         ) -> Callable[..., Any]:
             """Create a dispatcher closure for a specific method."""
 
             def dispatch(self, *args: Any, **kwargs: Any) -> Any:
-                vtbl = getattr(self, "vtbl", self)
-                func_ptr = getattr(vtbl, fname)
+                func_ptr = getattr(self.vtbl.obj, field_name)
+                self_ptr = pointer(self)
                 if kwargs:
                     full_args = list(args)
-                    for i, pname in enumerate(pnames):
-                        if i < len(args):
+                    for idx, param_name in enumerate(param_names):
+                        if idx < len(args):
                             continue
-                        if pname in kwargs:
-                            full_args.append(kwargs[pname])
+                        if param_name in kwargs:
+                            full_args.append(kwargs[param_name])
                         else:
-                            raise TypeError(f"{mname}() missing required argument: '{pname}'")
-                    result = func_ptr(self.ptr, *full_args)
+                            raise TypeError(
+                                f"'{method_name}' missing required argument: '{param_name}'"
+                            )
+                    result = func_ptr(self_ptr, *full_args)
                 else:
-                    result = func_ptr(self.ptr, *args)
+                    result = func_ptr(self_ptr, *args)
 
-                if rtype is not None and result is not None:
-                    return rtype(result)
+                if return_type is not None and result is not None:
+                    return return_type(result)
                 return result
 
-            dispatch.__name__ = mname
+            dispatch.__name__ = method_name
             dispatch.__doc__ = docstring
             return dispatch
 
-        setattr(
-            cls, method_name, make_dispatch(field_name, method_name, param_names, return_type, doc)
-        )
+        dispatcher = make_dispatch(field_name, method_name, param_names, return_type, docstring)
+        setattr(cls, method_name, dispatcher)
 
 
 # -----------------------------------------------------------------------------
@@ -200,121 +271,34 @@ def install_dispatchers(cls: type, methods: list[tuple[str, type]]) -> None:
 # -----------------------------------------------------------------------------
 
 
-def finalize(cls: type) -> None:
-    """Finalize an EcoOS structure or interface class.
+def _finalize(cls: type) -> type:
+    """Finalize an EcoOS structure, union, or interface class.
 
     Resolves field and method annotations, validates the class layout,
-    and prepares it for use with EcoOS.
+    and prepares it for use with EcoOS. No-op for non-layout types.
 
     Args:
         cls: The class to finalize.
 
+    Returns:
+        The same class, finalized if applicable.
+
     Raises:
         TypeError: If field or method types cannot be resolved.
     """
-    if cls.__dict__.get("_eco_ready_"):
-        return
+    if not (isinstance(cls, type) and issubclass(cls, CLayout) and cls not in CLayout.__args__):
+        return cls
 
-    methods: list[tuple[str, type]] = []
-    if cls.__dict__.get("_eco_interface_"):
-        try:
-            methods = resolve_methods(cls)
-        except TypeError:
-            raise
-        except Exception as err:
-            raise TypeError(
-                f"Interface '{cls.__name__}': contains unresolved method types"
-            ) from err
+    methods = _apply_resolver(cls, "_eco_interface_", _resolve_methods)
+    model_fields = _apply_resolver(cls, "_eco_model_", _resolve_fields)
+    union_fields = _apply_resolver(cls, "_eco_union_", _resolve_fields)
+    interface_fields = [("vtbl", _build_vtbl(cls, methods))] if methods else []
 
-    fields: list[tuple[str, type]] = []
-    if cls.__dict__.get("_eco_model_"):
-        try:
-            fields = resolve_fields(cls)
-        except TypeError:
-            raise
-        except Exception as err:
-            raise TypeError(f"Model '{cls.__name__}': contains unresolved field types") from err
-
-    cls._fields_ = fields + methods
-    cls._eco_ready_ = True
-
+    cls._fields_ = union_fields + model_fields + interface_fields
     if methods:
-        install_dispatchers(cls, methods)
+        _install_dispatchers(cls, methods)
 
-
-# -----------------------------------------------------------------------------
-# Metaclass for EcoOS structures
-# -----------------------------------------------------------------------------
-
-StructureMeta = type(CStructure)
-
-
-def struct_eq(self, other: Any) -> bool:
-    """Compare two EcoOS structures by field values."""
-    if type(self) is not type(other):
-        return False
-    for field_name, _ in getattr(type(self), "_fields_", []):
-        if getattr(self, field_name) != getattr(other, field_name):
-            return False
-    return True
-
-
-def struct_repr(self: Any) -> str:
-    """Return string representation of an EcoOS structure or interface."""
-    cls = type(self)
-    fields = getattr(cls, "_fields_", [])
-    field_strs = []
-
-    # For interfaces: show ptr as hex address
-    if hasattr(self, "ptr") and hasattr(self.ptr, "value"):
-        addr = self.ptr.value or 0
-        field_strs.append(f"ptr=0x{addr:X}")
-
-    for field_name, _ in fields:
-        if field_name.startswith("_func_"):
-            continue
-        try:
-            value = getattr(self, field_name)
-            field_strs.append(f"{field_name}={value!r}")
-        except Exception:
-            field_strs.append(f"{field_name}=<error>")
-
-    return f"{cls.__name__}({', '.join(field_strs)})"
-
-
-class EcoStructMeta(StructureMeta):  # type: ignore[misc]
-    """Metaclass for EcoOS C structures with lazy field resolution.
-
-    - On class creation: finalizes bases.
-    - On _fields_ access or instance creation: finalizes the class.
-    - Adds __eq__ and __repr__ methods for better debugging.
-    """
-
-    def __new__(
-        cls, name: str, bases: tuple[type, ...], namespace: dict[str, Any], **kwargs: Any
-    ) -> type:
-        """Create the class and finalize bases."""
-        for base in reversed(bases):
-            if issubclass(base, CStructure) and base != CStructure:
-                finalize(base)
-
-        if "__eq__" not in namespace:
-            namespace["__eq__"] = struct_eq
-        if "__repr__" not in namespace:
-            namespace["__repr__"] = struct_repr
-
-        return super().__new__(cls, name, bases, namespace, **kwargs)  # type: ignore
-
-    def __call__(cls, *args: Any, **kwargs: Any) -> Any:
-        """Create instance, ensuring fields are resolved."""
-        finalize(cls)
-        return super().__call__(*args, **kwargs)
-
-    def __getattribute__(cls, name: str) -> Any:
-        """Intercept _fields_ access to trigger lazy resolution."""
-        if name == "_fields_":
-            finalize(cls)
-        return super().__getattribute__(name)
+    return cls
 
 
 # -----------------------------------------------------------------------------
@@ -322,35 +306,54 @@ class EcoStructMeta(StructureMeta):  # type: ignore[misc]
 # -----------------------------------------------------------------------------
 
 
-def validate_bases(cls: type, kind: str) -> tuple[type, ...]:
-    """Validate class inheritance and return bases tuple for EcoStructMeta.
+def _resolve_base(cls: type, base: type) -> type:
+    """Resolve and validate the base class for a decorated class.
 
     Args:
         cls: The class being decorated.
-        kind: Descriptor for error messages.
+        base: The default base type.
 
     Returns:
-        Tuple of base classes for the new EcoStructMeta class.
+        The resolved base class.
 
     Raises:
         TypeError: If multiple inheritance is used or base is invalid.
     """
     if len(cls.__bases__) > 1:
-        raise TypeError(f"{kind} '{cls.__name__}' uses multiple inheritance")
+        raise TypeError(f"'{cls.__name__}' uses multiple inheritance")
 
-    base = next(iter(cls.__bases__)) if cls.__bases__ else object
-    if base is not object and not issubclass(base, CStructure):
-        raise TypeError(
-            f"{kind} '{cls.__name__}' inherits from non-structure base '{base.__name__}'"
-        )
+    parent = next(iter(cls.__bases__)) if cls.__bases__ else object
+    if parent is not object and not issubclass(parent, base):
+        raise TypeError(f"Class '{cls.__name__}' inherits from invalid base '{parent.__name__}'")
 
-    return (base,) if base is not object else (CStructure,)
+    return parent if parent is not object else base
 
 
-def build_namespace(cls: type, extra: dict[str, Any] | None = None) -> dict[str, Any]:
-    """Build namespace dict for a new EcoStructMeta class.
+def _build_vtbl(cls: type, methods: list[tuple[str, type]]) -> type:
+    """Create the hidden vtable class for an interface.
 
-    Copies module, qualname, doc, annotations, and all non-special attributes
+    Args:
+        cls: The interface class being finalized.
+        methods: List of method tuples to install as slots.
+
+    Returns:
+        Pointer type to the newly created vtable class.
+    """
+    namespace: dict[str, Any] = {
+        "__module__": cls.__module__,
+        "__qualname__": f"{cls.__qualname__}._vtbl_",
+        "__doc__": f"Virtual table for {cls.__name__}.",
+        "_fields_": methods,
+    }
+    vtbl_cls = type(CStructure)(f"{cls.__name__}VTbl", (CStructure,), namespace)  # type: ignore
+    cls._vtbl_ = vtbl_cls
+    return Ptr[vtbl_cls]
+
+
+def _build_namespace(cls: type, extra: Optional[dict[str, Any]] = None) -> dict[str, Any]:
+    """Build namespace dict for a new EcoOS layout class.
+
+    Copies module, qualname, docs, annotations, and all non-special attributes
     from the original class. Optionally merges extra attributes.
 
     Args:
@@ -358,14 +361,13 @@ def build_namespace(cls: type, extra: dict[str, Any] | None = None) -> dict[str,
         extra: Additional attributes to add to namespace.
 
     Returns:
-        Namespace dict ready for EcoStructMeta.
+        Namespace dict ready for the native ctypes metaclass.
     """
     namespace: dict[str, Any] = {
         "__module__": cls.__module__,
         "__qualname__": cls.__qualname__,
         "__doc__": cls.__doc__,
         "__annotations__": getattr(cls, "__annotations__", None) or {},
-        "_eco_ready_": False,
     }
 
     if extra:
@@ -373,29 +375,61 @@ def build_namespace(cls: type, extra: dict[str, Any] | None = None) -> dict[str,
 
     skip = frozenset({"__dict__", "__weakref__", "_fields_"})
     for key, value in cls.__dict__.items():
-        if key in namespace or key in skip:
-            continue
-        namespace[key] = value
+        if key not in namespace and key not in skip:
+            namespace[key] = value
 
     return namespace
 
 
-def register_class(frame: FrameType, cls: type) -> None:
-    """Register a class in the frame namespace for forward reference resolution.
-
-    Sets 'cls.__decl_localns__' and 'cls.__decl_globalns__' so that
-    get_type_hints can resolve forward references in annotations.
+def _eco_class(
+    cls: type,
+    base: type,
+    frame: Optional[FrameType],
+    extra: Optional[dict[str, Any]] = None,
+    validator: Optional[Callable[[type], None]] = None,
+    flatten: bool = False,
+) -> type:
+    """Create or fill in an EcoOS layout class from a decorated class.
 
     Args:
-        frame: Caller's frame where the decorated class is defined.
-        cls: The newly created class to register.
+        cls: The original class being decorated.
+        base: The default base type.
+        frame: Caller's frame for namespace registration.
+        extra: Additional attributes to add to namespace.
+        validator: Optional function validating the class body before creation.
+        flatten: If True, drop inheritance and stash the declared parent in `_eco_parent_`.
+
+    Returns:
+        The resulting class (new or adopted).
     """
-    if "__type_registry__" not in frame.f_locals:
-        frame.f_locals["__type_registry__"] = {}
+    if extra is None:
+        extra = {}
+    if validator is not None:
+        validator(cls)
 
-    registry = frame.f_locals["__type_registry__"]
-    registry.update({k: v for k, v in frame.f_locals.items() if isinstance(v, type)})
+    parent = _resolve_base(cls, base)
+    if flatten:
+        extra["_eco_parent_"] = parent if parent is not base else None
+        base_cls = base
+    else:
+        base_cls = parent
+    namespace = _build_namespace(cls, extra)
 
-    registry[cls.__name__] = cls
-    cls.__decl_localns__ = registry  # type: ignore[attr-defined]
-    cls.__decl_globalns__ = frame.f_globals  # type: ignore[attr-defined]
+    existing = frame.f_locals.get(cls.__name__) if frame else None
+    target = (
+        existing
+        if isinstance(existing, type)
+        and issubclass(existing, base)
+        and existing.__dict__.get("_eco_forward_")
+        else None
+    )
+    if target is None:
+        result = type(base)(cls.__name__, (base_cls,), namespace)
+    else:
+        skip = frozenset({"__module__", "__qualname__"})
+        for key, value in namespace.items():
+            if key not in skip:
+                setattr(target, key, value)
+        result = target
+
+    return result  # type: ignore
