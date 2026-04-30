@@ -47,8 +47,9 @@ const uint32_t ECO_TYPE_SIZE[] = {
     2, /* ECO_TYPE_WCHAR */
     1, /* ECO_TYPE_ASTRING */
     2, /* ECO_TYPE_WSTRING */
-    8, /* ECO_TYPE_INTERFACE */
-    8, /* ECO_TYPE_VOIDPTR */
+    4, /* ECO_TYPE_INTERFACE */
+    4, /* ECO_TYPE_UGUID */
+    4, /* ECO_TYPE_VOIDPTR */
     0  /* ECO_TYPE_VOID */
 };
 
