@@ -25,6 +25,7 @@
 #include "IdEcoFileSystemManagement1.h"
 #include "IdEcoACOM2Java.h"
 #include "IdEcoList1.h"
+#include "IdEcoTypeLib1.h"
 #include "IEcoCalculatorX.h"
 #include "IEcoCalculatorY.h"
 
@@ -69,14 +70,17 @@ int16_t EcoMain(IEcoUnknown* pIUnk) {
         goto Release;
     }
 #ifdef ECO_LIB
-    /* Registration of a static component for working with the list */
     result = pIBus->pVTbl->RegisterComponent(pIBus, &CID_EcoACOM2Java, (IEcoUnknown*)GetIEcoComponentFactoryPtr_C8035C9741CB40F9B104A12C3F41E2AA);
     if (result != 0 ) {
         /* Free in case of an error */
         goto Release;
     }
-    /* Registration of a static component for working with the list */
     result = pIBus->pVTbl->RegisterComponent(pIBus, &CID_EcoList1, (IEcoUnknown*)GetIEcoComponentFactoryPtr_53884AFC93C448ECAA929C8D3A562281);
+    if (result != 0 ) {
+        /* Free in case of an error */
+        goto Release;
+    }
+    result = pIBus->pVTbl->RegisterComponent(pIBus, &CID_EcoTypeLib1, (IEcoUnknown*)GetIEcoComponentFactoryPtr_8039E233E9A34D43BAF7833001434A0B);
     if (result != 0 ) {
         /* Free in case of an error */
         goto Release;
