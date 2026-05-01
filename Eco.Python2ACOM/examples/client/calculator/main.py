@@ -1,13 +1,13 @@
-"""Calculator example with interfaces (IEcoCalculatorX + IEcoCalculatorY)."""
+"""Calculator example with interfaces (`IEcoCalculatorX` + `IEcoCalculatorY`)."""
 
 import sys
 
 from eco_python2acom.runtime.system import EcoSystem
 from eco_python2acom.types.core import Void
+from eco_python2acom.types.guid import UGUID
 from eco_python2acom.types.pointer import Ptr
 from eco_python2acom.types.utils import byref, cast
-from examples.calculator.interfaces import (
-    CID_EcoCalculator,
+from examples.client.calculator.interfaces import (
     IEcoCalculatorX,
     IEcoCalculatorY,
     IID_IEcoCalculatorX,
@@ -17,7 +17,15 @@ from examples.console import console
 
 
 def show(name: str, a: int, oper: str, b: int, result: int) -> None:
-    """Print one operation result in a neat single-line format."""
+    """Print one operation result in a neat single-line format.
+
+    Args:
+        name: Operation name.
+        a: First operand.
+        oper: Operator symbol.
+        b: Second operand.
+        result: Operation result.
+    """
     console.print(
         f"  [bold magenta]{name:<14}[/bold magenta] "
         f"[cyan]{a:>4}[/cyan] [yellow]{oper}[/yellow] [cyan]{b:<4}[/cyan] "
@@ -27,7 +35,8 @@ def show(name: str, a: int, oper: str, b: int, result: int) -> None:
 
 def main() -> int:
     """Run calculator example."""
-    console.header("Calculator Example")
+    CID_EcoCalculator = UGUID("4828F655-2E45-40E7-8121-EBD220DC360E")
+    console.header("Eco Calculator Example")
     console.info(f"CID: {CID_EcoCalculator}")
     console.info(f"IEcoCalculatorX IID: {IID_IEcoCalculatorX}")
     console.info(f"IEcoCalculatorY IID: {IID_IEcoCalculatorY}\n")

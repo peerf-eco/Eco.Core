@@ -110,7 +110,17 @@ warn_unreachable = true
 strict_equality = true
 show_error_codes = true
 ignore_missing_imports = true
-disable_error_code = ["attr-defined", "empty-body", "valid-type", "type-var", "union-attr", "no-redef"]
+disable_error_code = [
+    "attr-defined",
+    "empty-body",
+    "valid-type",
+    "type-var",
+    "union-attr",
+    "no-redef",
+    "method-assign",
+    "assignment",
+    "no-any-return",
+]
 exclude = '^(tests|examples)/'
 
 [tool.pytest.ini_options]

@@ -1,4 +1,7 @@
-default_stages: [commit]
+default_stages: [pre-commit, pre-push]
+default_install_hook_types:
+  - pre-commit
+  - pre-push
 files: ^Eco\.Python2ACOM/
 
 repos:
@@ -23,7 +26,6 @@ repos:
         language: system
         pass_filenames: false
         types: [python]
-        files: ^Eco\.Python2ACOM/
 
       - id: isort
         name: isort
@@ -31,7 +33,6 @@ repos:
         language: system
         pass_filenames: false
         types: [python]
-        files: ^Eco\.Python2ACOM/
 
       - id: ruff
         name: ruff
@@ -39,7 +40,6 @@ repos:
         language: system
         pass_filenames: false
         types: [python]
-        files: ^Eco\.Python2ACOM/
 
       - id: mypy
         name: mypy
@@ -47,13 +47,11 @@ repos:
         language: system
         pass_filenames: false
         types: [python]
-        files: ^Eco\.Python2ACOM/
 
       - id: pytest
         name: pytest
-        entry: bash -c 'cd Eco.Python2ACOM && poetry run pytest'
+        entry: bash -c 'cd Eco.Python2ACOM && poetry run pytest' --
         language: system
         pass_filenames: false
         stages: [pre-push]
         types: [python]
-        files: ^Eco\.Python2ACOM/

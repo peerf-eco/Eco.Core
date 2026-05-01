@@ -1,1 +1,0 @@
-"""Calculator example package."""
