@@ -10,5 +10,5 @@ public interface IEcoFileSystemManagement1 extends IEcoUnknown {
 
     IEcoFileManager1 get_FileManager();
     IEcoDirectoryManager1 get_DirectoryManager();
-    IEcoDriveManager1 get_DriveManager1();
+    IEcoDriveManager1 get_DriveManager();
 }

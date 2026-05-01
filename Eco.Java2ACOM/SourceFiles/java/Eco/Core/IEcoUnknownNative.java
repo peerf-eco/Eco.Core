@@ -8,8 +8,8 @@ public class IEcoUnknownNative implements IEcoUnknown {
     }
 
     @Override
-    public int QueryInterface(UGUID riid, IEcoUnknownPtr pIUnk) {
-        return (Integer) invokeNative(0, new Object[]{riid, pIUnk}, int.class);
+    public short QueryInterface(UGUID riid, IEcoUnknownPtr pIUnk) {
+        return (Short) invokeNative(0, new Object[]{riid, pIUnk}, short.class);
     }
 
     @Override

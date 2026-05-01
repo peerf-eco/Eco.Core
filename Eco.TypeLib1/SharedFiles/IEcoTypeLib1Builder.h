@@ -51,6 +51,7 @@ typedef enum EcoTypeLib1TypeTag {
     ECO_TYPE_ASTRING,    /* ASCII String */
     ECO_TYPE_WSTRING,    /* Wide String */
     ECO_TYPE_INTERFACE,  /* Указатель на интерфейс */
+    ECO_TYPE_UGUID,      /* Указатель на UGUID */
     ECO_TYPE_VOIDPTR,    /* void* */
     ECO_TYPE_VOID        /* void (только для Result) */
 } EcoTypeLib1TypeTag;
