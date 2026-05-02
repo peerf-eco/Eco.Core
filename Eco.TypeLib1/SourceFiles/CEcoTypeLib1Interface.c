@@ -73,7 +73,7 @@ static uint32_t ECOCALLMETHOD CEcoTypeLib1Interface_01434A0B_AddRef(/* in */ IEc
     CEcoTypeLib1Interface_01434A0B* pCMe = (CEcoTypeLib1Interface_01434A0B*)me;
 
     /* Pointer Validation */
-    if (me == 0 ) {
+    if ( me == 0 ) {
         return -1; /* ERR_ECO_POINTER */
     }
 
@@ -95,7 +95,7 @@ static uint32_t ECOCALLMETHOD CEcoTypeLib1Interface_01434A0B_Release(/* in */ IE
     CEcoTypeLib1Interface_01434A0B* pCMe = (CEcoTypeLib1Interface_01434A0B*)me;
 
     /* Pointer Validation */
-    if (me == 0 ) {
+    if ( me == 0 ) {
         return -1; /* ERR_ECO_POINTER */
     }
 
@@ -348,7 +348,7 @@ static int16_t ECOCALLMETHOD initCEcoTypeLib1Interface_01434A0B(/*in*/ CEcoTypeL
     UGUID* rcid = (UGUID*)&CID_EcoMemoryManager1;	
 
     /* Pointer Validation */
-    if (me == 0 ) {
+    if ( me == 0 ) {
         return result;
     }
 
@@ -419,7 +419,7 @@ static int16_t ECOCALLMETHOD createCEcoTypeLib1Interface_01434A0B(/* in */ CEcoT
 static void ECOCALLMETHOD deleteCEcoTypeLib1Interface_01434A0B(/* in */ CEcoTypeLib1Interface_01434A0BPtr_t pCMe) {
     IEcoMemoryAllocator1* pIMem = 0;
 
-    if (pCMe != 0 ) {
+    if ( pCMe != 0 ) {
         pIMem = pCMe->m_pIMem;
         /* Freeing */
         if ( pCMe->m_pIMethodList != 0 ) {
