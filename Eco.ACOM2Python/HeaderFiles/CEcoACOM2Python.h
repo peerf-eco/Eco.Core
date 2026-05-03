@@ -29,6 +29,13 @@
 #include "IEcoInterfaceDescriptor1.h"
 #include "IEcoMethodDescriptor1.h"
 
+/* Force `__cdecl` on every Python C-API entry point */
+#define Py_EXPORTS_H
+#define Py_IMPORTED_SYMBOL __declspec(dllimport)
+#define Py_EXPORTED_SYMBOL __declspec(dllexport)
+#define Py_LOCAL_SYMBOL
+#define PyAPI_FUNC(RTYPE) __declspec(dllimport) RTYPE __cdecl
+#define PyAPI_DATA(RTYPE) extern __declspec(dllimport) RTYPE
 #include <Python.h>
 #include <ffi.h>
 
@@ -136,5 +143,28 @@ typedef struct EcoPythonComponentContext {
     EcoPythonMethodContext* m_pListMethods;
 
 } EcoPythonComponentContext;
+
+
+/*
+ * <summary>
+ *   EcoPythonTypeMap
+ * </summary>
+ *
+ * <description>
+ *   A mapping from Eco type tags to Python types.
+ * </description>
+ */
+typedef struct EcoPythonTypeMap {
+
+    /* Flag indicating whether the type is a primitive or not */
+    bool_t isPrimitive;
+
+    /* Corresponding format characters from CPython documentation */
+    const char_t* pyFormat;
+
+    /* Corresponding Python type name */
+    const char_t* pyTypeName;
+
+} EcoPythonTypeMap;
 
 #endif /* __C_ECOACOM2PYTHON_H__ */

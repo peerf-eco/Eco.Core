@@ -1,55 +1,49 @@
-# Project Structure
+# Eco.ACOM2Python
 
-This document describes the organization of folders and files within the project repository.
+C-side bridge that lets EcoOS components call Python implementations via `CPython` embedding.
 
-## Overview
+## Build & Run (Windows, MSVC + libffi + CPython)
 
-The project is organized using a strict folder naming convention, where each folder contains files of a specific type and purpose. All folder names use `PascalCase` styling and end with the `Files` suffix.
+### 1. Prerequisites
 
+| Tool           | Notes                                                                                                                  |
+|----------------|------------------------------------------------------------------------------------------------------------------------|
+| `Visual Studio`| Toolset is not set in the project files.                                                                               |
+| `Python 3.x`   | Install from [python.org](https://www.python.org/downloads/). Pick the architecture (32-bit or 64-bit) that matches the `Platform` you intend to build (`Win32` ↔ 32-bit Python, `x64` ↔ 64-bit Python). For `Debug` configurations also tick **Download debug binaries** in the installer's options. |
+| `libffi`       | Pre-built MSVC binaries on the [libffi releases page](https://github.com/libffi/libffi/releases): pick the 32-bit ZIP for `Win32`, the 64-bit ZIP for `x64`. |
+
+### 2. Environment variables (User scope)
+
+| Variable           | Used by         | Notes                                                                  |
+|--------------------|-----------------|------------------------------------------------------------------------|
+| `PYTHON_HOME`      | build & runtime | Path to `Python` installation.                                         |
+| `PYTHON_VERSION`   | build           | Selects `python$(PYTHON_VERSION)[_d].lib` at link time.                |
+| `LIBFFI_HOME`      | build & runtime | Path to `libffi` installation.                                         |
+| `ECO_FRAMEWORK`    | build           | Eco component sources (interfaces and per-component build outputs).    |
+| `ECO_FRAMEWORK_RT` | runtime         | Eco runtime libraries (`InterfaceBus1`, `MemoryManager1`, `FileSystemManagement1`, …). |
+
+After setting them, restart `Visual Studio` so the values are picked up.
+
+### 3. Install the Python runtime package
+
+The Python module loaded by the bridge imports `eco_python2acom`. Install the package once into the same interpreter that `PYTHON_HOME` points at:
+
+```cmd
+pip install -e eco_python2acom
 ```
-/
-├── AssemblyFiles
-├── BuildFiles
-├── DependenciesFiles
-├── DesignFiles
-├── HeaderFiles
-├── SharedFiles
-├── SourceFiles
-└── UnitTestFiles
-```
 
----
+### 4. Build
 
-## Folder Descriptions
+Open `Eco.ACOM2Python\AssemblyFiles\Windows\VS_v100\EcoACOM2Python.sln` in Visual Studio, choose need configuration and click **Build Solution**. The bridge library and the unit-test executable land in `BuildFiles\Windows\<Platform>\<Configuration>\`.
 
-### `AssemblyFiles`
+### 5. Runtime layout next to `EcoACOM2PythonUnitTest.exe`
 
-Contains scripts, configuration files, and tools necessary for the project's build process (e.g., `Makefile`, `pom.xml`, files for CI/CD, or automation scripts).
-
-### `BuildFiles`
-
-Contains the compiled output files of the project (executables, DLL libraries, `.jar` files, or other build artifacts), ready for deployment or execution.
-
-### `DependenciesFiles`
-
-Contains third-party libraries, frameworks, and external dependencies of the project that are not part of the core source code. These can be compiled libraries or source files of external packages.
-
-### `DesignFiles`
-
-Contains all artifacts related to the design and planning of the project: technical specifications (TS), UML diagrams, user interface mockups (UI/UX), database schemas, and other project documentation.
-
-### `HeaderFiles`
-
-Contains **private** header files (`.h`, `.hpp`) that describe the internal class structures and implementation details of the ACOM/COM components. These files are not intended for public consumption by external clients.
-
-### `SharedFiles`
-
-Contains **public** shared ACOM/COM interface header files (`.h`, `.hpp`) and Interface Definition Language source files (`.idl` files). These files provide external clients with the necessary information to interact with your component.
-
-### `SourceFiles`
-
-The core folder of the project. Contains the **main source code** of the application (`.c`, `.cpp`, `.py`, `.js`, `.java`, etc.).
-
-### `UnitTestFiles`
-
-Contains unit test files, integration tests, and other scripts for automated testing of the code located within `SourceFiles`.
+| File                                                  | Source                                                                  |
+|-------------------------------------------------------|-------------------------------------------------------------------------|
+| `219EDB626EF14B42BE16F93A566F1CC3.dll`                | bridge build output                                                     |
+| `python$(PYTHON_VERSION)[_d].dll`                     | `$(PYTHON_HOME)\`                                                       |
+| `libffi-8.dll`                                        | `$(LIBFFI_HOME)\`                                                       |
+| `8039E233E9A34D43BAF7833001434A0B.dll` (Eco.TypeLib1) | `Eco.TypeLib1\BuildFiles\Windows\<Platform>\<Configuration>\`           |
+| `53884AFC93C448ECAA929C8D3A562281.dll` (Eco.List1)    | `Eco.List1\BuildFiles\Windows\<Platform>\<Configuration>\`              |
+| `9322111622484742AE0682819447843D.etl`                | `Eco.TypeLib1\BuildFiles\Windows\<Platform>\<Configuration>\`           |
+| `BD6414C29096423EA90C04D77AFD1CAD.etl`                | `Eco.TypeLib1\BuildFiles\Windows\<Platform>\<Configuration>\`           |
