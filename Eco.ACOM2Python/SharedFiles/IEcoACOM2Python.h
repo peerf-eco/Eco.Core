@@ -41,9 +41,9 @@ typedef struct IEcoACOM2PythonVTbl {
     uint32_t (ECOCALLMETHOD *Release)(/* in */ IEcoACOM2PythonPtr_t me);
 
     /* IEcoACOM2Python */
-    int16_t (ECOCALLMETHOD *RegisterComponent) (/*in*/ IEcoACOM2PythonPtr_t me, /*in*/ char_t* pathname, /*in*/ const UGUID* rcid, /*in*/ IEcoUnknownPtr_t pIFactory);
-    int16_t (ECOCALLMETHOD *UnRegisterComponent) (/*in*/ IEcoACOM2PythonPtr_t me, /*in*/ const UGUID* rcid);
-    int16_t (ECOCALLMETHOD *QueryComponent) (/*in*/ IEcoACOM2PythonPtr_t me, /*in*/ const UGUID* rcid, /*in*/ IEcoUnknownPtr_t pIUnkOuter, /*in*/ const UGUID* riid, /*out*/ voidptr_t* ppv);
+    int16_t (ECOCALLMETHOD *RegisterComponent) (/* in */ IEcoACOM2PythonPtr_t me, /* in */ char_t* pathName, /* in */ char_t* className, /* in */ const UGUID* rcid);
+    int16_t (ECOCALLMETHOD *UnRegisterComponent) (/* in */ IEcoACOM2PythonPtr_t me, /* in */ const UGUID* rcid);
+    int16_t (ECOCALLMETHOD *QueryComponent) (/* in */ IEcoACOM2PythonPtr_t me, /* in */ const UGUID* rcid, /* in */ IEcoUnknownPtr_t pIUnkOuter, /* in */ const UGUID* riid, /* out */ voidptr_t* ppv);
 
 } IEcoACOM2PythonVTbl, *IEcoACOM2PythonVTblPtr_t;
 

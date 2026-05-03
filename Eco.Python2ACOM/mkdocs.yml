@@ -83,6 +83,7 @@ nav:
   - Decorators:
     - Layout: decorators/layout.md
     - Interface: decorators/interface.md
+    - Component: decorators/component.md
   - Types:
     - Primitives: types/primitives.md
     - Pointer: types/pointer.md

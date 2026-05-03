@@ -18,12 +18,20 @@
  */
 
 
+#include <stdio.h>
+
 /* Eco OS */
 #include "IEcoSystem1.h"
-#include "IdEcoMemoryManager1.h"
-#include "IdEcoInterfaceBus1.h"
-#include "IdEcoFileSystemManagement1.h"
+#include "IEcoInterfaceBus1.h"
 #include "IdEcoACOM2Python.h"
+#include "IdEcoList1.h"
+#include "IdEcoTypeLib1.h"
+#include "IEcoCalculatorX.h"
+#include "IEcoCalculatorY.h"
+
+
+#define ECO_EXAMPLE_PATH       "main.py"
+#define ECO_EXAMPLE_CLASS_NAME "EcoCalculator"
 
 /*
  *
@@ -38,22 +46,22 @@
  */
 int16_t EcoMain(IEcoUnknown* pIUnk) {
     int16_t result = -1;
-    /* Pointer to the system interface */
+
+    /* Pointers to the system and the interface bus */
     IEcoSystem1* pISys = 0;
-    /* Pointer to the interface for working with the system interface bus */
     IEcoInterfaceBus1* pIBus = 0;
-    /* Pointer to the memory management interface */
-    IEcoMemoryAllocator1* pIMem = 0;
-    char_t* name = 0;
-    char_t* copyName = 0;
-    /* Pointer to the tested interface */
+
+    /* Pointer to the tested interfaces */
     IEcoACOM2Python* pIEcoACOM2Python = 0;
+    IEcoCalculatorX* pIX = 0;
+    IEcoCalculatorY* pIY = 0;
+
+    UGUID CID_EcoCalculator = {0x01, 0x10, {0x48, 0x28, 0xF6, 0x55, 0x2E, 0x45, 0x40, 0xE7, 0x81, 0x21, 0xEB, 0xD2, 0x20, 0xDC, 0x36, 0x0E}};
 
     /* System interface check and creation */
     if (pISys == 0) {
         result = pIUnk->pVTbl->QueryInterface(pIUnk, &GID_IEcoSystem, (void **)&pISys);
         if (result != 0 && pISys == 0) {
-        /* Free the system interface in case of an error */
             goto Release;
         }
     }
@@ -61,69 +69,60 @@ int16_t EcoMain(IEcoUnknown* pIUnk) {
     /* Getting the interface for working with the interface bus */
     result = pISys->pVTbl->QueryInterface(pISys, &IID_IEcoInterfaceBus1, (void **)&pIBus);
     if (result != 0 || pIBus == 0) {
-        /* Free in case of an error */
         goto Release;
     }
+
 #ifdef ECO_LIB
-    /* Registration of a static component for working with the list */
     result = pIBus->pVTbl->RegisterComponent(pIBus, &CID_EcoACOM2Python, (IEcoUnknown*)GetIEcoComponentFactoryPtr_219EDB626EF14B42BE16F93A566F1CC3);
-    if (result != 0 ) {
-        /* Free in case of an error */
+    if (result != 0) {
+        goto Release;
+    }
+    result = pIBus->pVTbl->RegisterComponent(pIBus, &CID_EcoList1, (IEcoUnknown*)GetIEcoComponentFactoryPtr_53884AFC93C448ECAA929C8D3A562281);
+    if (result != 0) {
+        goto Release;
+    }
+    result = pIBus->pVTbl->RegisterComponent(pIBus, &CID_EcoTypeLib1, (IEcoUnknown*)GetIEcoComponentFactoryPtr_8039E233E9A34D43BAF7833001434A0B);
+    if (result != 0) {
         goto Release;
     }
 #endif
-    /* Getting the memory management interface */
-    result = pIBus->pVTbl->QueryComponent(pIBus, &CID_EcoMemoryManager1, 0, &IID_IEcoMemoryAllocator1, (void**) &pIMem);
-
-    /* Check */
-    if (result != 0 || pIMem == 0) {
-        /* Free the system interface in case of an error */
-        goto Release;
-    }
-
-    /* Memory block allocation */
-    name = (char_t *)pIMem->pVTbl->Alloc(pIMem, 10);
-
-    /* Fill the memory block */
-    pIMem->pVTbl->Fill(pIMem, name, 'a', 9);
-
 
     /* Getting the tested interface */
     result = pIBus->pVTbl->QueryComponent(pIBus, &CID_EcoACOM2Python, 0, &IID_IEcoACOM2Python, (void**) &pIEcoACOM2Python);
     if (result != 0 || pIEcoACOM2Python == 0) {
-        /* Free interfaces in case of an error */
         goto Release;
     }
 
+    /* Register the calculator component */
+    result = pIEcoACOM2Python->pVTbl->RegisterComponent(pIEcoACOM2Python, ECO_EXAMPLE_PATH, ECO_EXAMPLE_CLASS_NAME, &CID_EcoCalculator);
+    if (result != 0) {
+        goto Release;
+    }
 
-    result = pIEcoACOM2Python->pVTbl->MyFunction(pIEcoACOM2Python, name, &copyName);
+    /* Query the X interface from the bridge to test QueryComponent */
+    result = pIEcoACOM2Python->pVTbl->QueryComponent(pIEcoACOM2Python, &CID_EcoCalculator, 0, &IID_IEcoCalculatorX, (void**) &pIX);
+    if (result != 0 || pIX == 0) {
+        goto Release;
+    }
 
+    /* Query the Y interface from the X interface to test QueryInterface */
+    result = pIX->pVTbl->QueryInterface(pIX, &IID_IEcoCalculatorY, (void**) &pIY);
+    if (result != 0 || pIY == 0) {
+        goto Release;
+    }
 
-    /* Free the memory block */
-    pIMem->pVTbl->Free(pIMem, name);
+    printf("10 + 10 = %d\n", pIX->pVTbl->Addition(pIX, 10, 10));
+    printf("30 - 45 = %d\n", pIX->pVTbl->Subtraction(pIX, 30, 45));
+    printf("5 * 8 = %d\n", pIY->pVTbl->Multiplication(pIY, 5, 8));
+    printf("42 / 7 = %d\n", pIY->pVTbl->Division(pIY, 42, 7));
 
 Release:
 
-    /* Free the interface for working with the interface bus */
-    if (pIBus != 0) {
-        pIBus->pVTbl->Release(pIBus);
-    }
-
-    /* Free the memory management interface */
-    if (pIMem != 0) {
-        pIMem->pVTbl->Release(pIMem);
-    }
-
-    /* Free the tested interface */
-    if (pIEcoACOM2Python != 0) {
-        pIEcoACOM2Python->pVTbl->Release(pIEcoACOM2Python);
-    }
-
-
-    /* Free the system interface */
-    if (pISys != 0) {
-        pISys->pVTbl->Release(pISys);
-    }
+    if (pIBus != 0) pIBus->pVTbl->Release(pIBus);
+    if (pIX != 0) pIX->pVTbl->Release(pIX);
+    if (pIY != 0) pIY->pVTbl->Release(pIY);
+    if (pIEcoACOM2Python != 0) pIEcoACOM2Python->pVTbl->Release(pIEcoACOM2Python);
+    if (pISys != 0) pISys->pVTbl->Release(pISys);
 
     return result;
 }
