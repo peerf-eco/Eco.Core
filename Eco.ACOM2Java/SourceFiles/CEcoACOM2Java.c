@@ -139,6 +139,13 @@ UGUID JavaObjectToUGUIDPtr(JNIEnv* env, jobject obj) {
     return result;
 }
 
+UGUID GetUGUIDFromInterfaceJavaObject(JNIEnv* env, jobject obj) {
+    jclass clazz = (*env)->GetObjectClass(env, obj);
+    jfieldID field = (*env)->GetStaticFieldID(env, clazz, "IID", "LEco/Core/UGUID;");
+    obj = (*env)->GetStaticObjectField(env, clazz, field);
+    return JavaObjectToUGUIDPtr(env, obj);
+}
+
 void AddClassPath(JNIEnv* env, char_t* classpath) {
     jclass clazz;
     jmethodID method;
@@ -344,7 +351,9 @@ void JavaValueToParam(EcoJavaProxy* proxy, jvalue jarg, uint16_t typeTag, void**
         jclass clazz = (*env)->FindClass(env, "Eco/Core/IEcoUnknownPtr");
         jfieldID field = (*env)->GetFieldID(env, clazz, "iUnk", "LEco/Core/IEcoUnknown;");
         jobject obj = (*env)->GetObjectField(env, jarg.l, field);
-        CreateEcoJavaProxy(env, obj, 0, proxy->m_pIMem, proxy->m_pITypeLib); // pIDesc = ?
+        UGUID riid = GetUGUIDFromInterfaceJavaObject(env, obj);
+        IEcoInterfaceDescriptor1* pIDesc = GetInterfaceDescriptorByUGUID(proxy->m_pITypeLib, &riid);
+        CreateEcoJavaProxy(env, obj, pIDesc, proxy->m_pIMem, proxy->m_pITypeLib);
     } else if (typeTag == ECO_TYPE_UGUID) {
         **(UGUID**)arg = JavaObjectToUGUIDPtr(env, jarg.l);
     } else if (typeTag == ECO_TYPE_VOIDPTR) {
@@ -379,7 +388,9 @@ void CallJavaMethod(EcoJavaProxy* proxy, jobject obj, jmethodID method, jvalue* 
         } else if (typeTag == ECO_TYPE_WSTRING) {
             *(wchar_t**)ret = (*env)->GetStringChars(env, retObj, 0);
         } else if (typeTag == ECO_TYPE_INTERFACE) {
-            CreateEcoJavaProxy(env, retObj, 0, proxy->m_pIMem, proxy->m_pITypeLib); // pIDesc = ?
+            UGUID riid = GetUGUIDFromInterfaceJavaObject(env, retObj);
+            IEcoInterfaceDescriptor1* pIDesc = GetInterfaceDescriptorByUGUID(proxy->m_pITypeLib, &riid);
+            CreateEcoJavaProxy(env, retObj, pIDesc, proxy->m_pIMem, proxy->m_pITypeLib);
         } else if (typeTag == ECO_TYPE_UGUID) {
             *(UGUID*)ret = JavaObjectToUGUIDPtr(env, retObj);
         } else if (typeTag == ECO_TYPE_VOIDPTR) {
@@ -493,10 +504,6 @@ void EcoJavaProxy_GlobalDispatcher(ffi_cif* cif, void* ret, void** args, void* u
             JavaValueToParam(proxy, jArgs[index], typeTag, &args[index + 1]);
         }
     }
-}
-
-void ECOCDECLMETHOD EcoJavaProxy_GlobalDispatcher_cdecl(ffi_cif* cif, void* ret, void** args, void* userData) {
-    EcoJavaProxy_GlobalDispatcher(cif, ret, args, userData);
 }
 
 EcoJavaProxy* CreateEcoJavaProxy(JNIEnv* env, jobject obj, IEcoInterfaceDescriptor1* pIDesc, IEcoMemoryAllocator1* pIMem, IEcoTypeLib1* pITypeLib) {

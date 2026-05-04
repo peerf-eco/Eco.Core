@@ -93,7 +93,4 @@ typedef struct EcoTypeMap {
     const char_t* jniClassName;
 } EcoTypeMap;
 
-static jobject UGUIDPtrToJavaObject(JNIEnv* env, const UGUID* uguid);
-static int16_t createProxyForInterface(JNIEnv* env, const UGUID* riid, jobject obj, IEcoMemoryAllocator1* pIMem, voidptr_t* ppv);
-
 #endif /* __C_ECOACOM2JAVA_H__ */
