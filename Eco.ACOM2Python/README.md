@@ -10,19 +10,50 @@ C-side bridge that lets EcoOS components call Python implementations via `CPytho
 |----------------|------------------------------------------------------------------------------------------------------------------------|
 | `Visual Studio`| Toolset is not set in the project files.                                                                               |
 | `Python 3.x`   | Install from [python.org](https://www.python.org/downloads/). Pick the architecture (32-bit or 64-bit) that matches the `Platform` you intend to build (`Win32` ↔ 32-bit Python, `x64` ↔ 64-bit Python). For `Debug` configurations also tick **Download debug binaries** in the installer's options. |
-| `libffi`       | Pre-built MSVC binaries on the [libffi releases page](https://github.com/libffi/libffi/releases): pick the 32-bit ZIP for `Win32`, the 64-bit ZIP for `x64`. |
+| `libffi`       | Statically-linked MSVC build. Easiest way is via [vcpkg](https://github.com/microsoft/vcpkg) — see step **2.5**. |
 
 ### 2. Environment variables (User scope)
 
 | Variable           | Used by         | Notes                                                                  |
 |--------------------|-----------------|------------------------------------------------------------------------|
-| `PYTHON_HOME`      | build & runtime | Path to `Python` installation.                                         |
-| `PYTHON_VERSION`   | build           | Selects `python$(PYTHON_VERSION)[_d].lib` at link time.                |
+| `PYTHON_HOME`      | build & runtime | Path to `Python` installation (3.6 or newer).                          |
 | `LIBFFI_HOME`      | build & runtime | Path to `libffi` installation.                                         |
 | `ECO_FRAMEWORK`    | build           | Eco component sources (interfaces and per-component build outputs).    |
 | `ECO_FRAMEWORK_RT` | runtime         | Eco runtime libraries (`InterfaceBus1`, `MemoryManager1`, `FileSystemManagement1`, …). |
 
 After setting them, restart `Visual Studio` so the values are picked up.
+
+### 2.5. Build static libffi via `vcpkg`
+
+The bridge links `libffi` **statically** so no extra DLL has to be shipped next to `.exe`. Get a static `libffi.lib` like this:
+
+```cmd
+git clone https://github.com/microsoft/vcpkg.git C:\vcpkg
+C:\vcpkg\bootstrap-vcpkg.bat
+C:\vcpkg\vcpkg.exe install libffi:x64-windows-static libffi:x86-windows-static
+```
+
+`vcpkg` requires a working `Visual Studio` install with the **Desktop development with C++** workload — make sure the C++ toolset is installed.
+
+After the install finishes, point `LIBFFI_HOME` at the relevant triplet:
+
+| Build platform | `LIBFFI_HOME` value                            |
+|----------------|------------------------------------------------|
+| `amd64`        | `C:\vcpkg\installed\x64-windows-static`        |
+| `x86`          | `C:\vcpkg\installed\x86-windows-static`        |
+
+(If you build for both architectures, switch `LIBFFI_HOME` between the two as needed.)
+
+The expected layout under `LIBFFI_HOME`:
+
+```
+LIBFFI_HOME\
+├── include\
+│   ├── ffi.h
+│   └── ffitarget.h
+└── lib\
+    └── libffi.lib   (static)
+```
 
 ### 3. Install the Python runtime package
 
@@ -41,8 +72,7 @@ Open `Eco.ACOM2Python\AssemblyFiles\Windows\VS_v100\EcoACOM2Python.sln` in Visua
 | File                                                  | Source                                                                  |
 |-------------------------------------------------------|-------------------------------------------------------------------------|
 | `219EDB626EF14B42BE16F93A566F1CC3.dll`                | bridge build output                                                     |
-| `python$(PYTHON_VERSION)[_d].dll`                     | `$(PYTHON_HOME)\`                                                       |
-| `libffi-8.dll`                                        | `$(LIBFFI_HOME)\`                                                       |
+| `python3.dll`                                         | `$(PYTHON_HOME)\`                                                       |
 | `8039E233E9A34D43BAF7833001434A0B.dll` (Eco.TypeLib1) | `Eco.TypeLib1\BuildFiles\Windows\<Platform>\<Configuration>\`           |
 | `53884AFC93C448ECAA929C8D3A562281.dll` (Eco.List1)    | `Eco.List1\BuildFiles\Windows\<Platform>\<Configuration>\`              |
 | `9322111622484742AE0682819447843D.etl`                | `Eco.TypeLib1\BuildFiles\Windows\<Platform>\<Configuration>\`           |

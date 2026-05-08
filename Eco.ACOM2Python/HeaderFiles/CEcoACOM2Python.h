@@ -29,13 +29,8 @@
 #include "IEcoInterfaceDescriptor1.h"
 #include "IEcoMethodDescriptor1.h"
 
-/* Force `__cdecl` on every Python C-API entry point */
-#define Py_EXPORTS_H
-#define Py_IMPORTED_SYMBOL __declspec(dllimport)
-#define Py_EXPORTED_SYMBOL __declspec(dllexport)
-#define Py_LOCAL_SYMBOL
-#define PyAPI_FUNC(RTYPE) __declspec(dllimport) RTYPE __cdecl
-#define PyAPI_DATA(RTYPE) extern __declspec(dllimport) RTYPE
+/* Use Python's stable ABI (Limited API) since Python 3.6 */
+#define Py_LIMITED_API 0x03060000
 #include <Python.h>
 #include <ffi.h>
 
@@ -155,9 +150,6 @@ typedef struct EcoPythonComponentContext {
  * </description>
  */
 typedef struct EcoPythonTypeMap {
-
-    /* Flag indicating whether the type is a primitive or not */
-    bool_t isPrimitive;
 
     /* Corresponding format characters from CPython documentation */
     const char_t* pyFormat;
