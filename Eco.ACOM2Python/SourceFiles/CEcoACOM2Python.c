@@ -228,7 +228,7 @@ static IEcoInterfaceDescriptor1* GetInterfaceDescriptorByUGUID(IEcoTypeLib1* pIT
 static PyObject* WrapAsUGUIDPtr(const UGUID* uguid) {
     PyObject* pPtrCls = NULL;
     PyObject* pUGUIDCls = NULL;
-    PyObject* pBytes = NULL;
+    PyObject* pData = NULL;
     PyObject* pUGUIDObj = NULL;
     PyObject* pPtrUGUID = NULL;
     PyObject* pInstance = NULL;
@@ -239,10 +239,10 @@ static PyObject* WrapAsUGUIDPtr(const UGUID* uguid) {
     pUGUIDCls = ImportModuleAttr("eco_python2acom.types.guid", "UGUID");
     if (pPtrCls == NULL || pUGUIDCls == NULL) goto Cleanup;
 
-    pBytes = PyBytes_FromStringAndSize((const char*)uguid, (Py_ssize_t)sizeof(UGUID));
-    if (pBytes == NULL) goto Cleanup;
+    pData = PyBytes_FromStringAndSize((const char*)uguid->Data, (Py_ssize_t)sizeof(uguid->Data));
+    if (pData == NULL) goto Cleanup;
 
-    pUGUIDObj = PyObject_CallFunctionObjArgs(pUGUIDCls, pBytes, NULL);
+    pUGUIDObj = PyObject_CallFunction(pUGUIDCls, "OB", pData, (uint8_t)uguid->Preamble);
     if (pUGUIDObj == NULL) goto Cleanup;
 
     pPtrUGUID = PyObject_GetItem(pPtrCls, pUGUIDCls);
@@ -253,7 +253,7 @@ static PyObject* WrapAsUGUIDPtr(const UGUID* uguid) {
 Cleanup:
     Py_XDECREF(pPtrUGUID);
     Py_XDECREF(pUGUIDObj);
-    Py_XDECREF(pBytes);
+    Py_XDECREF(pData);
     Py_XDECREF(pUGUIDCls);
     Py_XDECREF(pPtrCls);
     return pInstance;
