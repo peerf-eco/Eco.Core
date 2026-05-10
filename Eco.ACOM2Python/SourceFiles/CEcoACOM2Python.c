@@ -34,6 +34,7 @@
 
 #include "CEcoACOM2Python.h"
 
+#define ECO_FFI_TYPES_COUNT 20
 #define HALF_BYTE_SIZE 4
 #define IECOUNKNOWN_METHOD_COUNT 3 /* QueryInterface, AddRef, Release */
 
@@ -67,31 +68,32 @@ EcoPythonTypeMap ECO_TYPE_MAP[] = {
 };
 
 // Mapping of Eco type tags to `libffi` types
-static ffi_type* ECO_FFI_TYPES[] = {
-    &ffi_type_void,    /* ECO_TYPE_UNDEFINED */
-    &ffi_type_sint8,   /* ECO_TYPE_INT8 */
-    &ffi_type_sint16,  /* ECO_TYPE_INT16 */
-    &ffi_type_sint32,  /* ECO_TYPE_INT32 */
-    &ffi_type_sint64,  /* ECO_TYPE_INT64 */
-    &ffi_type_uint8,   /* ECO_TYPE_UINT8 */
-    &ffi_type_uint16,  /* ECO_TYPE_UINT16 */
-    &ffi_type_uint32,  /* ECO_TYPE_UINT32 */
-    &ffi_type_uint64,  /* ECO_TYPE_UINT64 */
-    &ffi_type_float,   /* ECO_TYPE_FLOAT */
-    &ffi_type_double,  /* ECO_TYPE_DOUBLE */
-    &ffi_type_uint8,   /* ECO_TYPE_BOOLEAN */
-    &ffi_type_sint8,   /* ECO_TYPE_CHAR */
-    &ffi_type_uint16,  /* ECO_TYPE_WCHAR */
-    &ffi_type_pointer, /* ECO_TYPE_ASTRING */
-    &ffi_type_pointer, /* ECO_TYPE_WSTRING */
-    &ffi_type_pointer, /* ECO_TYPE_INTERFACE */
-    &ffi_type_pointer, /* ECO_TYPE_UGUID */
-    &ffi_type_pointer, /* ECO_TYPE_VOIDPTR */
-    &ffi_type_void     /* ECO_TYPE_VOID */
-};
+static ffi_type* ECO_FFI_TYPES[ECO_FFI_TYPES_COUNT] = { 0 };
 
 static ffi_type* GetFfiType(uint16_t typeTag) {
-    if (typeTag >= sizeof(ECO_FFI_TYPES) / sizeof(*ECO_FFI_TYPES)) return NULL;
+    if (!*ECO_FFI_TYPES) {
+        ECO_FFI_TYPES[ECO_TYPE_UNDEFINED] = &ffi_type_void;
+        ECO_FFI_TYPES[ECO_TYPE_INT8]      = &ffi_type_sint8;
+        ECO_FFI_TYPES[ECO_TYPE_INT16]     = &ffi_type_sint16;
+        ECO_FFI_TYPES[ECO_TYPE_INT32]     = &ffi_type_sint32;
+        ECO_FFI_TYPES[ECO_TYPE_INT64]     = &ffi_type_sint64;
+        ECO_FFI_TYPES[ECO_TYPE_UINT8]     = &ffi_type_uint8;
+        ECO_FFI_TYPES[ECO_TYPE_UINT16]    = &ffi_type_uint16;
+        ECO_FFI_TYPES[ECO_TYPE_UINT32]    = &ffi_type_uint32;
+        ECO_FFI_TYPES[ECO_TYPE_UINT64]    = &ffi_type_uint64;
+        ECO_FFI_TYPES[ECO_TYPE_FLOAT]     = &ffi_type_float;
+        ECO_FFI_TYPES[ECO_TYPE_DOUBLE]    = &ffi_type_double;
+        ECO_FFI_TYPES[ECO_TYPE_BOOLEAN]   = &ffi_type_uint8;
+        ECO_FFI_TYPES[ECO_TYPE_CHAR]      = &ffi_type_sint8;
+        ECO_FFI_TYPES[ECO_TYPE_WCHAR]     = &ffi_type_uint16;
+        ECO_FFI_TYPES[ECO_TYPE_ASTRING]   = &ffi_type_pointer;
+        ECO_FFI_TYPES[ECO_TYPE_WSTRING]   = &ffi_type_pointer;
+        ECO_FFI_TYPES[ECO_TYPE_INTERFACE] = &ffi_type_pointer;
+        ECO_FFI_TYPES[ECO_TYPE_UGUID]     = &ffi_type_pointer;
+        ECO_FFI_TYPES[ECO_TYPE_VOIDPTR]   = &ffi_type_pointer;
+        ECO_FFI_TYPES[ECO_TYPE_VOID]      = &ffi_type_void;
+    }
+    if (typeTag >= ECO_FFI_TYPES_COUNT) return NULL;
     return ECO_FFI_TYPES[typeTag];
 }
 
@@ -113,7 +115,7 @@ static UGUID UnwrapUGUIDPtr(PyObject* pPtr);
 static PyObject* WrapAsVoidPtr(void* addr);
 static void* UnwrapVoidPtr(PyObject* pPtr);
 static PyObject* WrapAsInterfacePtr(void* iface);
-static IEcoUnknown* UnwrapInterfacePtr(PyObject* pPtr);
+static void* UnwrapInterfacePtr(PyObject* pPtr);
 
 static PyObject* WrapAsCType(const char_t* className, PyObject* pValue);
 static PyObject* WrapAsPtr(PyObject* pValue);
@@ -233,7 +235,7 @@ static PyObject* WrapAsUGUIDPtr(const UGUID* uguid) {
     PyObject* pPtrUGUID = NULL;
     PyObject* pInstance = NULL;
 
-    if (uguid == NULL) Py_RETURN_NONE;
+    if (uguid == NULL) { Py_IncRef(Py_None); return Py_None; }
 
     pPtrCls   = ImportModuleAttr("eco_python2acom.types.pointer", "Ptr");
     pUGUIDCls = ImportModuleAttr("eco_python2acom.types.guid", "UGUID");
@@ -251,11 +253,11 @@ static PyObject* WrapAsUGUIDPtr(const UGUID* uguid) {
     pInstance = PyObject_CallFunctionObjArgs(pPtrUGUID, pUGUIDObj, NULL);
 
 Cleanup:
-    Py_XDECREF(pPtrUGUID);
-    Py_XDECREF(pUGUIDObj);
-    Py_XDECREF(pData);
-    Py_XDECREF(pUGUIDCls);
-    Py_XDECREF(pPtrCls);
+    Py_DecRef(pPtrUGUID);
+    Py_DecRef(pUGUIDObj);
+    Py_DecRef(pData);
+    Py_DecRef(pUGUIDCls);
+    Py_DecRef(pPtrCls);
     return pInstance;
 }
 
@@ -283,7 +285,7 @@ static UGUID UnwrapUGUIDPtr(PyObject* pPtr) {
     if (pObj == NULL) { PyErr_Clear(); return result; }
 
     pBytes = PyObject_Bytes(pObj);
-    Py_DECREF(pObj);
+    Py_DecRef(pObj);
     if (pBytes == NULL) { PyErr_Clear(); return result; }
 
     if (PyBytes_AsStringAndSize(pBytes, &buffer, &length) == 0 && length == (Py_ssize_t)sizeof(UGUID)) {
@@ -291,7 +293,7 @@ static UGUID UnwrapUGUIDPtr(PyObject* pPtr) {
     } else {
         PyErr_Clear();
     }
-    Py_DECREF(pBytes);
+    Py_DecRef(pBytes);
     return result;
 }
 
@@ -331,10 +333,10 @@ static PyObject* WrapAsVoidPtr(void* addr) {
     pInstance = PyObject_CallFunctionObjArgs(pPtrVoid, pAddrInt, NULL);
 
 Cleanup:
-    Py_XDECREF(pAddrInt);
-    Py_XDECREF(pPtrVoid);
-    Py_XDECREF(pVoidCls);
-    Py_XDECREF(pPtrCls);
+    Py_DecRef(pAddrInt);
+    Py_DecRef(pPtrVoid);
+    Py_DecRef(pVoidCls);
+    Py_DecRef(pPtrCls);
     return pInstance;
 }
 
@@ -361,7 +363,7 @@ static void* UnwrapVoidPtr(PyObject* pPtr) {
         return NULL;
     }
     addr = PyLong_AsVoidPtr(pValue);
-    Py_DECREF(pValue);
+    Py_DecRef(pValue);
     if (PyErr_Occurred()) {
         PyErr_Clear();
         return NULL;
@@ -407,11 +409,11 @@ static PyObject* WrapAsInterfacePtr(void* iface) {
     pInstance = PyObject_CallFunctionObjArgs(pCastFn, pVoidPtr, pPtrIface, NULL);
 
 Cleanup:
-    Py_XDECREF(pVoidPtr);
-    Py_XDECREF(pPtrIface);
-    Py_XDECREF(pIfaceCls);
-    Py_XDECREF(pPtrCls);
-    Py_XDECREF(pCastFn);
+    Py_DecRef(pVoidPtr);
+    Py_DecRef(pPtrIface);
+    Py_DecRef(pIfaceCls);
+    Py_DecRef(pPtrCls);
+    Py_DecRef(pCastFn);
     return pInstance;
 }
 
@@ -450,11 +452,11 @@ static void* UnwrapInterfacePtr(PyObject* pPtr) {
     addr = UnwrapVoidPtr(pVoidPtr);
 
 Cleanup:
-    Py_XDECREF(pVoidPtr);
-    Py_XDECREF(pPtrVoid);
-    Py_XDECREF(pVoidCls);
-    Py_XDECREF(pPtrCls);
-    Py_XDECREF(pCastFn);
+    Py_DecRef(pVoidPtr);
+    Py_DecRef(pPtrVoid);
+    Py_DecRef(pVoidCls);
+    Py_DecRef(pPtrCls);
+    Py_DecRef(pCastFn);
     if (PyErr_Occurred()) PyErr_Clear();
     return addr;
 }
@@ -485,7 +487,7 @@ static PyObject* WrapAsCType(const char_t* className, PyObject* pValue) {
     if (pCls == NULL) return NULL;
 
     pInstance = PyObject_CallFunctionObjArgs(pCls, pValue, NULL);
-    Py_DECREF(pCls);
+    Py_DecRef(pCls);
     return pInstance;
 }
 
@@ -544,9 +546,9 @@ static PyObject* WrapAsPtr(PyObject* pValue) {
     pInstance = PyObject_CallFunctionObjArgs(pPtrT, pValue, NULL);
 
 Cleanup:
-    Py_XDECREF(pPtrT);
-    Py_XDECREF(pValueType);
-    Py_XDECREF(pPtrCls);
+    Py_DecRef(pPtrT);
+    Py_DecRef(pValueType);
+    Py_DecRef(pPtrCls);
     return pInstance;
 }
 
@@ -684,7 +686,7 @@ static void ParamToPyObject(void* arg, uint16_t typeTag, uint8_t flags, PyObject
     /* Wrap scalar in ctypes class if needed */
     if (pTmp != NULL && *meta->pyTypeName != '\0') {
         *ppArg = WrapAsCType(meta->pyTypeName, pTmp);
-        Py_DECREF(pTmp);
+        Py_DecRef(pTmp);
     } else if (pTmp != NULL) {
         *ppArg = pTmp;
     }
@@ -692,13 +694,13 @@ static void ParamToPyObject(void* arg, uint16_t typeTag, uint8_t flags, PyObject
     /* For OUT parameters (IN-OUT or OUT-only), wrap in Ptr[T] */
     if (*ppArg != NULL && (flags & ECO_PARAM_OUT)) {
         PyObject* pPtr = WrapAsPtr(*ppArg);
-        Py_DECREF(*ppArg);
+        Py_DecRef(*ppArg);
         *ppArg = pPtr;
     }
 
 Done:
     if (*ppArg == NULL) {
-        Py_INCREF(Py_None);
+        Py_IncRef(Py_None);
         *ppArg = Py_None;
     }
 }
@@ -723,46 +725,46 @@ static void PyObjectToCSlot(EcoPythonComponentContext* component, PyObject* pVal
         /* Scalar primitives — unwrap typed ctypes scalar via `.value` */
         case ECO_TYPE_INT8:
             pInner = UnwrapCTypeValue(pVal);
-            if (pInner != NULL) { *(int8_t*)dst = (int8_t)PyLong_AsLong(pInner); Py_DECREF(pInner); } break;
+            if (pInner != NULL) { *(int8_t*)dst = (int8_t)PyLong_AsLong(pInner); Py_DecRef(pInner); } break;
         case ECO_TYPE_UINT8:
             pInner = UnwrapCTypeValue(pVal);
-            if (pInner != NULL) { *(uint8_t*)dst = (uint8_t)PyLong_AsLong(pInner); Py_DECREF(pInner); } break;
+            if (pInner != NULL) { *(uint8_t*)dst = (uint8_t)PyLong_AsLong(pInner); Py_DecRef(pInner); } break;
         case ECO_TYPE_INT16:
             pInner = UnwrapCTypeValue(pVal);
-            if (pInner != NULL) { *(int16_t*)dst = (int16_t)PyLong_AsLong(pInner); Py_DECREF(pInner); } break;
+            if (pInner != NULL) { *(int16_t*)dst = (int16_t)PyLong_AsLong(pInner); Py_DecRef(pInner); } break;
         case ECO_TYPE_UINT16:
             pInner = UnwrapCTypeValue(pVal);
-            if (pInner != NULL) { *(uint16_t*)dst = (uint16_t)PyLong_AsLong(pInner); Py_DECREF(pInner); } break;
+            if (pInner != NULL) { *(uint16_t*)dst = (uint16_t)PyLong_AsLong(pInner); Py_DecRef(pInner); } break;
         case ECO_TYPE_INT32:
             pInner = UnwrapCTypeValue(pVal);
-            if (pInner != NULL) { *(int32_t*)dst = (int32_t)PyLong_AsLong(pInner); Py_DECREF(pInner); } break;
+            if (pInner != NULL) { *(int32_t*)dst = (int32_t)PyLong_AsLong(pInner); Py_DecRef(pInner); } break;
         case ECO_TYPE_UINT32:
             pInner = UnwrapCTypeValue(pVal);
-            if (pInner != NULL) { *(uint32_t*)dst = (uint32_t)PyLong_AsUnsignedLong(pInner); Py_DECREF(pInner); } break;
+            if (pInner != NULL) { *(uint32_t*)dst = (uint32_t)PyLong_AsUnsignedLong(pInner); Py_DecRef(pInner); } break;
         case ECO_TYPE_INT64:
             pInner = UnwrapCTypeValue(pVal);
-            if (pInner != NULL) { *(int64_t*)dst = (int64_t)PyLong_AsLongLong(pInner); Py_DECREF(pInner); } break;
+            if (pInner != NULL) { *(int64_t*)dst = (int64_t)PyLong_AsLongLong(pInner); Py_DecRef(pInner); } break;
         case ECO_TYPE_UINT64:
             pInner = UnwrapCTypeValue(pVal);
-            if (pInner != NULL) { *(uint64_t*)dst = (uint64_t)PyLong_AsUnsignedLongLong(pInner); Py_DECREF(pInner); } break;
+            if (pInner != NULL) { *(uint64_t*)dst = (uint64_t)PyLong_AsUnsignedLongLong(pInner); Py_DecRef(pInner); } break;
         case ECO_TYPE_FLOAT:
             pInner = UnwrapCTypeValue(pVal);
-            if (pInner != NULL) { *(float*)dst = (float)PyFloat_AsDouble(pInner); Py_DECREF(pInner); } break;
+            if (pInner != NULL) { *(float*)dst = (float)PyFloat_AsDouble(pInner); Py_DecRef(pInner); } break;
         case ECO_TYPE_DOUBLE:
             pInner = UnwrapCTypeValue(pVal);
-            if (pInner != NULL) { *(double*)dst = PyFloat_AsDouble(pInner); Py_DECREF(pInner); } break;
+            if (pInner != NULL) { *(double*)dst = PyFloat_AsDouble(pInner); Py_DecRef(pInner); } break;
         case ECO_TYPE_BOOLEAN:
             pInner = UnwrapCTypeValue(pVal);
-            if (pInner != NULL) { *(uint8_t*)dst = (uint8_t)(PyObject_IsTrue(pInner) ? 1 : 0); Py_DECREF(pInner); } break;
+            if (pInner != NULL) { *(uint8_t*)dst = (uint8_t)(PyObject_IsTrue(pInner) ? 1 : 0); Py_DecRef(pInner); } break;
         case ECO_TYPE_CHAR:
             pInner = UnwrapCTypeValue(pVal);
             if (pInner != NULL && PyBytes_Check(pInner)) { *(char_t*)dst = *PyBytes_AsString(pInner); }
-            Py_XDECREF(pInner);
+            Py_DecRef(pInner);
             break;
         case ECO_TYPE_WCHAR:
             pInner = UnwrapCTypeValue(pVal);
             if (pInner != NULL && PyUnicode_Check(pInner)) { PyUnicode_AsWideChar(pInner, (wchar_t*)dst, 1); }
-            Py_XDECREF(pInner);
+            Py_DecRef(pInner);
             break;
 
         /* Pointer types */
@@ -785,7 +787,7 @@ static void PyObjectToCSlot(EcoPythonComponentContext* component, PyObject* pVal
                     }
                 }
             }
-            Py_XDECREF(pInner);
+            Py_DecRef(pInner);
             break;
         }
         case ECO_TYPE_WSTRING: {
@@ -803,7 +805,7 @@ static void PyObjectToCSlot(EcoPythonComponentContext* component, PyObject* pVal
                 }
                 if (src != NULL) PyMem_Free(src);
             }
-            Py_XDECREF(pInner);
+            Py_DecRef(pInner);
             break;
         }
 
@@ -835,7 +837,7 @@ static void PyObjectToParam(EcoPythonComponentContext* component, PyObject* pVal
 
     PyObjectToCSlot(component, pVal, typeTag, *arg);
 
-    Py_XDECREF(pDeref);
+    Py_DecRef(pDeref);
 }
 
 /*
@@ -860,7 +862,7 @@ static void CallPythonMethod(EcoPythonComponentContext* component, PyObject* pMe
         pArgs = pEmptyArgs;
     }
     pResult = PyObject_Call(pMethod, pArgs, NULL);
-    Py_XDECREF(pEmptyArgs);
+    Py_DecRef(pEmptyArgs);
 
     if (pResult == NULL) {
         if (PyErr_Occurred()) PyErr_Clear();
@@ -869,11 +871,11 @@ static void CallPythonMethod(EcoPythonComponentContext* component, PyObject* pMe
 
     /* Return `None` for void-returning methods */
     if (pResult == Py_None || typeTag == ECO_TYPE_VOID) {
-        Py_DECREF(pResult);
+        Py_DecRef(pResult);
         return;
     }
     PyObjectToCSlot(component, pResult, typeTag, ret);
-    Py_DECREF(pResult);
+    Py_DecRef(pResult);
 }
 
 
@@ -883,6 +885,8 @@ static void CallPythonMethod(EcoPythonComponentContext* component, PyObject* pMe
 
 static int16_t ECOCALLMETHOD EcoPythonComponentContext_IEcoUnknown_QueryInterface(IEcoUnknownPtr_t me, const UGUID* riid, voidptr_t* ppv) {
     EcoPythonComponentContext* proxy = (EcoPythonComponentContext*) me;
+    EcoPythonComponentContext* newProxy = NULL;
+    IEcoInterfaceDescriptor1* pNewDesc = NULL;
     PyGILState_STATE gil;
     PyObject* pIid = NULL;
     PyObject* pOut = NULL;
@@ -907,15 +911,26 @@ static int16_t ECOCALLMETHOD EcoPythonComponentContext_IEcoUnknown_QueryInterfac
     status = (int16_t)PyLong_AsLong(pStatusValue);
     if (status != ERR_ECO_SUCCESES) goto Cleanup;
 
-    ++proxy->m_cRef;
-    *ppv = proxy;
+    /* Build a new proxy with a vtable for the requested interface */
+    pNewDesc = GetInterfaceDescriptorByUGUID(proxy->m_pITypeLib, riid);
+    if (pNewDesc == NULL) {
+        status = ERR_ECO_NOINTERFACE;
+        goto Cleanup;
+    }
+    newProxy = CreateEcoPythonComponentContext(proxy->m_obj, pNewDesc, proxy->m_pIMem, proxy->m_pITypeLib);
+    if (newProxy == NULL) {
+        pNewDesc->pVTbl->Release(pNewDesc);
+        status = ERR_ECO_OUTOFMEMORY;
+        goto Cleanup;
+    }
+    *ppv = newProxy;
 
 Cleanup:
     if (PyErr_Occurred()) PyErr_Clear();
-    Py_XDECREF(pStatusValue);
-    Py_XDECREF(pCallResult);
-    Py_XDECREF(pOut);
-    Py_XDECREF(pIid);
+    Py_DecRef(pStatusValue);
+    Py_DecRef(pCallResult);
+    Py_DecRef(pOut);
+    Py_DecRef(pIid);
     PyGILState_Release(gil);
     return status;
 }
@@ -929,7 +944,7 @@ static uint32_t ECOCALLMETHOD EcoPythonComponentContext_IEcoUnknown_AddRef(IEcoU
 
     gil = PyGILState_Ensure();
     pResult = PyObject_CallMethod(proxy->m_obj, "AddRef", NULL);
-    if (pResult != NULL) Py_DECREF(pResult);
+    if (pResult != NULL) Py_DecRef(pResult);
 
     if (PyErr_Occurred()) PyErr_Clear();
     PyGILState_Release(gil);
@@ -949,12 +964,12 @@ static uint32_t ECOCALLMETHOD EcoPythonComponentContext_IEcoUnknown_Release(IEco
 
     gil = PyGILState_Ensure();
     pResult = PyObject_CallMethod(proxy->m_obj, "Release", NULL);
-    if (pResult != NULL) Py_DECREF(pResult);
+    if (pResult != NULL) Py_DecRef(pResult);
     if (PyErr_Occurred()) PyErr_Clear();
 
     cRef = --proxy->m_cRef;
     if (cRef == 0) {
-        Py_XDECREF(proxy->m_obj);
+        Py_DecRef(proxy->m_obj);
         proxy->m_obj = NULL;
     }
     PyGILState_Release(gil);
@@ -1033,7 +1048,7 @@ static void EcoPythonGlobalDispatcher(ffi_cif* cif, void* ret, void** args, void
             ParamToPyObject(args[i + 1], typeTag, flags, &pArg);
         }
         if (pArg == NULL) {
-            Py_INCREF(Py_None);
+            Py_IncRef(Py_None);
             pArg = Py_None;
         }
         PyTuple_SetItem(pTuple, i, pArg); /* steals reference */
@@ -1060,8 +1075,8 @@ static void EcoPythonGlobalDispatcher(ffi_cif* cif, void* ret, void** args, void
 
 Cleanup:
     if (PyErr_Occurred()) PyErr_Clear();
-    Py_XDECREF(pTuple);
-    Py_XDECREF(pMethod);
+    Py_DecRef(pTuple);
+    Py_DecRef(pMethod);
     PyGILState_Release(gil);
 }
 
@@ -1098,7 +1113,7 @@ static EcoPythonComponentContext* CreateEcoPythonComponentContext(PyObject* pObj
     proxy->m_pIMem = pIMem;
     proxy->m_pITypeLib = pITypeLib;
     proxy->m_pIDesc = pIDesc;
-    Py_INCREF(pObj);
+    Py_IncRef(pObj);
     proxy->m_obj = pObj;
 
     proxy->m_pVTbl[IECOUNKNOWN_METHOD_COUNT - 3] = (void*) EcoPythonComponentContext_IEcoUnknown_QueryInterface;
@@ -1154,7 +1169,14 @@ static EcoPythonComponentContext* CreateEcoPythonComponentContext(PyObject* pObj
         ctx->closure = (ffi_closure*) ffi_closure_alloc(sizeof(ffi_closure), &execAddr);
         if (ctx->closure == NULL) continue;
 
+        /* Match the calling convention used by `ECOCALLMETHOD` (`__stdcall` on Win32,
+           plain win64 on x64). On x64 Windows there is only one calling convention,
+           so `FFI_DEFAULT_ABI` is the right choice; on Win32 we explicitly need stdcall. */
+#if defined(_WIN32) && !defined(_WIN64)
+        status = ffi_prep_cif(&ctx->cif, FFI_STDCALL, (unsigned int)(pCount + 1), retType, ctx->argTypes);
+#else
         status = ffi_prep_cif(&ctx->cif, FFI_DEFAULT_ABI, (unsigned int)(pCount + 1), retType, ctx->argTypes);
+#endif
         if (status != FFI_OK) {
             ffi_closure_free(ctx->closure);
             ctx->closure = NULL;
@@ -1319,7 +1341,7 @@ static int16_t ECOCALLMETHOD CEcoACOM2Python_566F1CC3_UnRegisterComponent(/* in 
 
     if (pClass != NULL) {
         PyGILState_STATE gil = PyGILState_Ensure();
-        Py_DECREF(pClass);
+        Py_DecRef(pClass);
         PyGILState_Release(gil);
     }
 
@@ -1394,11 +1416,11 @@ static int16_t ECOCALLMETHOD CEcoACOM2Python_566F1CC3_QueryComponent(/* in */ IE
 
 Cleanup:
     if (PyErr_Occurred()) PyErr_Clear();
-    Py_XDECREF(pStatusValue);
-    Py_XDECREF(pCallResult);
-    Py_XDECREF(pOut);
-    Py_XDECREF(pIid);
-    Py_XDECREF(pInstance);
+    Py_DecRef(pStatusValue);
+    Py_DecRef(pCallResult);
+    Py_DecRef(pOut);
+    Py_DecRef(pIid);
+    Py_DecRef(pInstance);
     PyGILState_Release(gil);
     return status;
 }
@@ -1420,44 +1442,29 @@ Cleanup:
  *
  */
 static int16_t BootPythonInterpreter(int16_t* pInitialised) {
-    PyConfig config;
-    PyStatus status;
     const char_t* home = NULL;
     wchar_t* wHome = NULL;
     size_t homeLen = 0;
-    size_t converted = 0;
+    size_t i = 0;
 
     if (pInitialised == NULL) return ERR_ECO_POINTER;
     *pInitialised = 0;
 
     if (Py_IsInitialized()) return ERR_ECO_SUCCESES;
 
-    PyConfig_InitPythonConfig(&config);
-
     home = getenv("PYTHON_HOME");
     if (home != NULL && *home != '\0') {
-        homeLen = strlen(home) + 1;
-        wHome = (wchar_t*)malloc(homeLen * sizeof(wchar_t));
-        if (wHome == NULL) {
-            PyConfig_Clear(&config);
-            return ERR_ECO_OUTOFMEMORY;
-        }
-        if (mbstowcs_s(&converted, wHome, homeLen, home, homeLen - 1) != 0) {
-            free(wHome);
-            PyConfig_Clear(&config);
-            return ERR_ECO_FAIL;
-        }
-        status = PyConfig_SetString(&config, &config.home, wHome);
-        free(wHome);
-        if (PyStatus_Exception(status)) {
-            PyConfig_Clear(&config);
-            return ERR_ECO_FAIL;
-        }
+        homeLen = strlen(home);
+        wHome = (wchar_t*)malloc((homeLen + 1) * sizeof(wchar_t));
+        if (wHome == NULL) return ERR_ECO_OUTOFMEMORY;
+        for (i = 0; i < homeLen; i++) wHome[i] = (wchar_t)(unsigned char)home[i];
+        wHome[homeLen] = L'\0';
+        Py_SetPythonHome(wHome);
     }
 
-    status = Py_InitializeFromConfig(&config);
-    PyConfig_Clear(&config);
-    if (PyStatus_Exception(status)) {
+    Py_Initialize();
+    if (!Py_IsInitialized()) {
+        if (wHome != NULL) free(wHome);
         return ERR_ECO_FAIL;
     }
 
@@ -1506,7 +1513,7 @@ static PyObject* ImportModuleAttr(const char_t* moduleName, const char_t* attrNa
     if (pModule == NULL) return NULL;
 
     pAttr = PyObject_GetAttrString(pModule, attrName);
-    Py_DECREF(pModule);
+    Py_DecRef(pModule);
     return pAttr;
 }
 
@@ -1549,7 +1556,7 @@ static int16_t LoadPythonComponentClass(const char_t* pathName, const char_t* cl
             if (pSysPath != NULL && pDir != NULL && PySequence_Contains(pSysPath, pDir) == 0) {
                 PyList_Insert(pSysPath, 0, pDir);
             }
-            Py_XDECREF(pDir);
+            Py_DecRef(pDir);
             if (PyErr_Occurred()) PyErr_Clear();
         }
     }
@@ -1590,14 +1597,14 @@ static int16_t LoadPythonComponentClass(const char_t* pathName, const char_t* cl
 
 Cleanup:
     if (PyErr_Occurred()) { PyErr_Clear(); }
-    Py_XDECREF(pClass);
-    Py_XDECREF(pExecResult);
-    Py_XDECREF(pLoader);
-    Py_XDECREF(pModule);
-    Py_XDECREF(pSpec);
-    Py_XDECREF(pModuleFromSpec);
-    Py_XDECREF(pSpecFromFile);
-    Py_XDECREF(pImportlibUtil);
+    Py_DecRef(pClass);
+    Py_DecRef(pExecResult);
+    Py_DecRef(pLoader);
+    Py_DecRef(pModule);
+    Py_DecRef(pSpec);
+    Py_DecRef(pModuleFromSpec);
+    Py_DecRef(pSpecFromFile);
+    Py_DecRef(pImportlibUtil);
     return result;
 }
 
@@ -1716,7 +1723,7 @@ static void ECOCALLMETHOD deleteCEcoACOM2Python_566F1CC3(/* in */ CEcoACOM2Pytho
         count = pCMe->m_pIListComponents->pVTbl->Count(pCMe->m_pIListComponents);
         for (i = 1; i < count; i += 2) {
             pClass = (PyObject*) pCMe->m_pIListComponents->pVTbl->Item(pCMe->m_pIListComponents, i);
-            if (pClass != NULL) Py_DECREF(pClass);
+            if (pClass != NULL) Py_DecRef(pClass);
         }
         pCMe->m_pIListComponents->pVTbl->Clear(pCMe->m_pIListComponents);
         pCMe->m_pIListComponents->pVTbl->Release(pCMe->m_pIListComponents);

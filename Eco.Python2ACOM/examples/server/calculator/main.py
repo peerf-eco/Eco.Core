@@ -8,6 +8,8 @@ Aggregation model ("none"):
     - `AddRef` and `Release` operate on the component's own reference counter;
 """
 
+from interfaces import IEcoCalculatorX, IEcoCalculatorY, IID_IEcoCalculatorX, IID_IEcoCalculatorY
+
 from eco_python2acom.decorators.component import component
 from eco_python2acom.guids.iid import IID_IEcoUnknown
 from eco_python2acom.types.core import Int16, Int32, UInt32, Void
@@ -15,12 +17,6 @@ from eco_python2acom.types.errors import EcoErrorCode
 from eco_python2acom.types.guid import UGUID
 from eco_python2acom.types.pointer import Ptr
 from eco_python2acom.types.utils import addressof
-from examples.server.calculator.interfaces import (
-    IEcoCalculatorX,
-    IEcoCalculatorY,
-    IID_IEcoCalculatorX,
-    IID_IEcoCalculatorY,
-)
 
 CID_EcoCalculator = UGUID("4828F655-2E45-40E7-8121-EBD220DC360E")
 
@@ -31,7 +27,7 @@ class EcoCalculator(IEcoCalculatorX, IEcoCalculatorY):
 
     def __init__(self) -> Void:
         """Initialize the component and its reference count."""
-        self.refs: UInt32 = 0
+        self.refs = UInt32()
 
     def QueryInterface(self, iid: Ptr[UGUID], out: Ptr[Ptr[Void]]) -> Int16:
         """Query for another interface on this component.
@@ -60,8 +56,8 @@ class EcoCalculator(IEcoCalculatorX, IEcoCalculatorY):
         Returns:
             The new reference count.
         """
-        self.refs += 1
-        return UInt32(self.refs)
+        self.refs.value += 1
+        return self.refs
 
     def Release(self) -> UInt32:
         """Decrement the reference count.
@@ -71,23 +67,23 @@ class EcoCalculator(IEcoCalculatorX, IEcoCalculatorY):
         Returns:
             The new reference count.
         """
-        self.refs -= 1
-        if self.refs == 0:
+        self.refs.value -= 1
+        if self.refs.value == 0:
             pass
-        return UInt32(self.refs)
+        return self.refs
 
     def Addition(self, a: Int16, b: Int16) -> Int32:
         """Return the sum of two integers."""
-        return a + b
+        return Int32(a.value + b.value)
 
     def Subtraction(self, a: Int16, b: Int16) -> Int16:
         """Return the difference of two integers."""
-        return a - b
+        return Int16(a.value - b.value)
 
     def Multiplication(self, a: Int16, b: Int16) -> Int32:
         """Return the product of two integers."""
-        return a * b
+        return Int32(a.value * b.value)
 
     def Division(self, a: Int16, b: Int16) -> Int16:
         """Return the integer quotient of two integers."""
-        return a // b
+        return Int16(a.value // b.value)

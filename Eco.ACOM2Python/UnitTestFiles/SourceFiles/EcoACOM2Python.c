@@ -30,7 +30,7 @@
 #include "IEcoCalculatorY.h"
 
 
-#define ECO_EXAMPLE_PATH       "main.py"
+#define ECO_EXAMPLE_PATH       "AbsolutePathToThePythonFile"
 #define ECO_EXAMPLE_CLASS_NAME "EcoCalculator"
 
 /*

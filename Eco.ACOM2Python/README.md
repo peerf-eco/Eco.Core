@@ -25,7 +25,7 @@ After setting them, restart `Visual Studio` so the values are picked up.
 
 ### 2.5. Build static libffi via `vcpkg`
 
-The bridge links `libffi` **statically** so no extra DLL has to be shipped next to `.exe`. Get a static `libffi.lib` like this:
+The bridge links `libffi` **statically** so no extra DLL has to be shipped next to `.exe`. Get a static `ffi.lib` like this:
 
 ```cmd
 git clone https://github.com/microsoft/vcpkg.git C:\vcpkg
@@ -37,10 +37,10 @@ C:\vcpkg\vcpkg.exe install libffi:x64-windows-static libffi:x86-windows-static
 
 After the install finishes, point `LIBFFI_HOME` at the relevant triplet:
 
-| Build platform | `LIBFFI_HOME` value                            |
-|----------------|------------------------------------------------|
-| `amd64`        | `C:\vcpkg\installed\x64-windows-static`        |
-| `x86`          | `C:\vcpkg\installed\x86-windows-static`        |
+| Build platform | `LIBFFI_HOME` value                                         |
+|----------------|-------------------------------------------------------------|
+| `amd64`        | `C:\vcpkg\buildtrees\libffi\x64-windows-static-[dbg / rel]` |
+| `x86`          | `C:\vcpkg\buildtrees\libffi\x64-windows-static-[dbg / rel]` |
 
 (If you build for both architectures, switch `LIBFFI_HOME` between the two as needed.)
 
@@ -51,8 +51,8 @@ LIBFFI_HOME\
 ├── include\
 │   ├── ffi.h
 │   └── ffitarget.h
-└── lib\
-    └── libffi.lib   (static)
+└── .libs\
+    └── ffi.lib   (static)
 ```
 
 ### 3. Install the Python runtime package
