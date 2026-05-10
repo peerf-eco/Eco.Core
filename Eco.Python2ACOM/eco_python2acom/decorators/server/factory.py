@@ -8,7 +8,11 @@ instances of the component.
 from collections.abc import Callable
 from typing import Any, Optional, TypeVar
 
-from eco_python2acom.decorators.server.utils import _build_layout_class, _make_install_vtables
+from eco_python2acom.decorators.server.utils import (
+    _alive,
+    _build_layout_class,
+    _make_install_vtables,
+)
 from eco_python2acom.decorators.server.view import view
 from eco_python2acom.guids.iid import IID_IEcoComponentFactory, IID_IEcoUnknown
 from eco_python2acom.interfaces.factory import IEcoComponentFactory
@@ -74,6 +78,8 @@ def _make_alloc(cls: type) -> Callable[..., Int16]:
         result = instance.__eco_init__(system)
         if result.value != 0:
             return result
+
+        _alive[addressof(instance)] = instance
 
         result = instance.QueryInterface(iid, out)
         if result.value != 0:

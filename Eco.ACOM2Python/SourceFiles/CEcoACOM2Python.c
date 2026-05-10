@@ -41,6 +41,7 @@
 static int16_t BootPythonInterpreter(int16_t* pInitialised);
 static void TeardownPythonInterpreter(int16_t initialised);
 static int16_t LoadPythonFactoryInstance(const char_t* pathName, PyObject** ppModule, IEcoUnknownPtr_t* ppIUnk);
+static void ECOCALLMETHOD deleteCEcoACOM2Python_566F1CC3(/* in */ CEcoACOM2Python_566F1CC3Ptr_t pCMe);
 
 
 /* -------------------------------------------------------------------------
@@ -415,7 +416,7 @@ static int16_t ECOCALLMETHOD initCEcoACOM2Python_566F1CC3(/* in */ CEcoACOM2Pyth
     UGUID* rcid = (UGUID*)&CID_EcoMemoryManager1;
     int16_t result = ERR_ECO_POINTER;
 
-    if (me == 0) return result;
+    if (pCMe == NULL) return result;
 
     pCMe->m_pISys = (IEcoSystem1*) pIUnkSystem;
 

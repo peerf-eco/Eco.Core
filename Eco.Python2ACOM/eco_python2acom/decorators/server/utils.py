@@ -15,6 +15,10 @@ from eco_python2acom.types.guid import UGUID
 from eco_python2acom.types.pointer import Ptr
 from eco_python2acom.types.utils import addressof, cast
 
+# Holds Python instances whose vtable address is currently exposed to C, so
+# refcount-based collection cannot pull them out from under the C caller.
+_alive: dict[int, Any] = {}
+
 
 def _vtbl_field_name(iface: type) -> str:
     """Return the layout field name for the vtable pointer of `iface`."""
@@ -195,6 +199,7 @@ def _make_release() -> Callable[..., UInt32]:
         self.refs -= 1
         if self.refs == 0:
             self.__eco_del__()
+            _alive.pop(addressof(self), None)
         return self.refs
 
     return Release
