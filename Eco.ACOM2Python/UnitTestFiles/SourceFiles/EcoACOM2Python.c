@@ -25,13 +25,11 @@
 #include "IEcoInterfaceBus1.h"
 #include "IdEcoACOM2Python.h"
 #include "IdEcoList1.h"
-#include "IdEcoTypeLib1.h"
 #include "IEcoCalculatorX.h"
 #include "IEcoCalculatorY.h"
 
 
 #define ECO_EXAMPLE_PATH       "AbsolutePathToThePythonFile"
-#define ECO_EXAMPLE_CLASS_NAME "EcoCalculator"
 
 /*
  *
@@ -81,10 +79,6 @@ int16_t EcoMain(IEcoUnknown* pIUnk) {
     if (result != 0) {
         goto Release;
     }
-    result = pIBus->pVTbl->RegisterComponent(pIBus, &CID_EcoTypeLib1, (IEcoUnknown*)GetIEcoComponentFactoryPtr_8039E233E9A34D43BAF7833001434A0B);
-    if (result != 0) {
-        goto Release;
-    }
 #endif
 
     /* Getting the tested interface */
@@ -94,7 +88,7 @@ int16_t EcoMain(IEcoUnknown* pIUnk) {
     }
 
     /* Register the calculator component */
-    result = pIEcoACOM2Python->pVTbl->RegisterComponent(pIEcoACOM2Python, ECO_EXAMPLE_PATH, ECO_EXAMPLE_CLASS_NAME, &CID_EcoCalculator);
+    result = pIEcoACOM2Python->pVTbl->RegisterComponent(pIEcoACOM2Python, ECO_EXAMPLE_PATH, &CID_EcoCalculator);
     if (result != 0) {
         goto Release;
     }

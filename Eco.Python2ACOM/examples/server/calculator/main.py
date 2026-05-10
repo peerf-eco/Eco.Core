@@ -8,82 +8,88 @@ Aggregation model ("none"):
     - `AddRef` and `Release` operate on the component's own reference counter;
 """
 
-from interfaces import IEcoCalculatorX, IEcoCalculatorY, IID_IEcoCalculatorX, IID_IEcoCalculatorY
+from typing import Optional
 
-from eco_python2acom.decorators.component import component
-from eco_python2acom.guids.iid import IID_IEcoUnknown
-from eco_python2acom.types.core import Int16, Int32, UInt32, Void
+from interfaces import IEcoCalculatorX, IEcoCalculatorY
+
+from eco_python2acom.decorators.server.component import component
+from eco_python2acom.decorators.server.factory import export, factory
+from eco_python2acom.decorators.server.view import view
+from eco_python2acom.guids.gid import GID_IEcoSystem
+from eco_python2acom.interfaces.factory import IEcoComponentFactory
+from eco_python2acom.interfaces.system import IEcoSystem1
+from eco_python2acom.interfaces.unknown import IEcoUnknown
+from eco_python2acom.types.core import CString, Int16, Int32, Void
 from eco_python2acom.types.errors import EcoErrorCode
 from eco_python2acom.types.guid import UGUID
 from eco_python2acom.types.pointer import Ptr
-from eco_python2acom.types.utils import addressof
+from eco_python2acom.types.utils import byref, cast
 
 CID_EcoCalculator = UGUID("4828F655-2E45-40E7-8121-EBD220DC360E")
 
 
 @component(cid=CID_EcoCalculator)
-class EcoCalculator(IEcoCalculatorX, IEcoCalculatorY):
-    """Standalone arithmetic component implementing `IEcoCalculatorX` and `IEcoCalculatorY`."""
+class EcoCalculator:
+    """Standalone calculator component aggregating two arithmetic interfaces."""
 
-    def __init__(self) -> Void:
-        """Initialize the component and its reference count."""
-        self.refs = UInt32()
+    system: Optional[Ptr[IEcoSystem1]]
 
-    def QueryInterface(self, iid: Ptr[UGUID], out: Ptr[Ptr[Void]]) -> Int16:
-        """Query for another interface on this component.
-
-        Args:
-            iid: Pointer to the requested interface ID.
-            out: Output pointer to receive the interface.
-
-        Returns:
-            0 on success, error code otherwise.
-        """
-        if not bool(iid) or not bool(out):
+    def __eco_new__(self, system: Ptr[IEcoUnknown], outer: Ptr[IEcoUnknown]) -> Int16:
+        """Allocation phase — pull `IEcoSystem1` out of the system unknown."""
+        self.system = None
+        if not bool(system):
             return Int16(EcoErrorCode.POINTER)
 
-        if iid.obj in (IID_IEcoCalculatorX, IID_IEcoCalculatorY, IID_IEcoUnknown):
-            out.obj.value = addressof(self)
-            self.AddRef()
-            return Int16(EcoErrorCode.SUCCESS)
+        system_ptr = Ptr[Void]()
+        result = system.obj.QueryInterface(byref(GID_IEcoSystem), byref(system_ptr))
+        if result.value != 0 or not system_ptr.value:
+            return Int16(EcoErrorCode.NOSYSTEM)
+        self.system = cast(system_ptr, Ptr[IEcoSystem1])
 
-        out.obj.value = 0
-        return Int16(EcoErrorCode.NOINTERFACE)
+        return Int16(EcoErrorCode.SUCCESS)
 
-    def AddRef(self) -> UInt32:
-        """Increment the reference count.
+    def __eco_init__(self, system: Ptr[IEcoUnknown]) -> Int16:
+        """Initialisation phase — nothing to do for this component."""
+        return Int16(EcoErrorCode.SUCCESS)
 
-        Returns:
-            The new reference count.
-        """
-        self.refs.value += 1
-        return self.refs
+    def __eco_del__(self) -> Void:
+        """Cleanup phase — release the cached `IEcoSystem1` pointer."""
+        if bool(self.system):
+            self.system.obj.Release()
+        self.system = None
 
-    def Release(self) -> UInt32:
-        """Decrement the reference count.
+    @view
+    class X(IEcoCalculatorX):
+        """`IEcoCalculatorX` view — addition and subtraction."""
 
-        When the count reaches zero, the component is freed.
+        def Addition(self, a: Int16, b: Int16) -> Int32:
+            """Return the sum of two integers."""
+            return a + b
 
-        Returns:
-            The new reference count.
-        """
-        self.refs.value -= 1
-        if self.refs.value == 0:
-            pass
-        return self.refs
+        def Subtraction(self, a: Int16, b: Int16) -> Int16:
+            """Return the difference of two integers."""
+            return a - b
 
-    def Addition(self, a: Int16, b: Int16) -> Int32:
-        """Return the sum of two integers."""
-        return Int32(a.value + b.value)
+    @view
+    class Y(IEcoCalculatorY):
+        """`IEcoCalculatorY` view — multiplication and division."""
 
-    def Subtraction(self, a: Int16, b: Int16) -> Int16:
-        """Return the difference of two integers."""
-        return Int16(a.value - b.value)
+        def Multiplication(self, a: Int16, b: Int16) -> Int32:
+            """Return the product of two integers."""
+            return a * b
 
-    def Multiplication(self, a: Int16, b: Int16) -> Int32:
-        """Return the product of two integers."""
-        return Int32(a.value * b.value)
+        def Division(self, a: Int16, b: Int16) -> Int16:
+            """Return the integer quotient of two integers."""
+            return a // b
 
-    def Division(self, a: Int16, b: Int16) -> Int16:
-        """Return the integer quotient of two integers."""
-        return Int16(a.value // b.value)
+
+@factory(component=EcoCalculator)
+class EcoCalculatorFactory(IEcoComponentFactory):
+    """Factory for `Eco.Calculator`."""
+
+    name: CString = b"Eco.Calculator"
+    version: CString = b"1.0.0.0"
+    manufacturer: CString = b"Eco"
+
+
+singleton, get_component_factory = export(EcoCalculatorFactory)
