@@ -21,7 +21,7 @@ from eco_python2acom.interfaces.unknown import IEcoUnknown
 from eco_python2acom.types.core import CSimpleData, CStructure, UInt32, Void
 from eco_python2acom.types.guid import UGUID
 from eco_python2acom.types.pointer import Ptr
-from eco_python2acom.types.utils import cast
+from eco_python2acom.types.utils import cast, offsetof
 
 # -----------------------------------------------------------------------------
 # View collection
@@ -183,9 +183,9 @@ def _build_server_vtbl(
 ) -> Any:
     """Build the singleton vtable instance for one view.
 
-    Each slot is filled with a `Func[...]`-wrapped trampoline. User slots
-    invoke the view's method; `IEcoUnknown` slots come from `parent` unless
-    explicitly overridden via `iecounknown_overrides`.
+    Each slot is filled with a `Func[...]`-wrapped trampoline. For `IEcoUnknown`
+    slots the priority is: a method declared on the view itself takes precedence,
+    then an entry in `iecounknown_overrides`, finally the parent's method.
 
     Args:
         view: The `@view`-decorated namespace whose methods populate the user slots.
@@ -205,7 +205,9 @@ def _build_server_vtbl(
     for field_name, slot_type in vtbl._fields_:
         method_name = field_name.removeprefix("_func_")
         if method_name in iecounknown_methods:
-            if method_name in iecounknown_overrides:
+            if method_name in view.__dict__:
+                method = view.__dict__[method_name]
+            elif method_name in iecounknown_overrides:
                 method = iecounknown_overrides[method_name]
             else:
                 method = getattr(parent, method_name)
@@ -266,12 +268,13 @@ def _eco_server_class(
     offsets: dict[UGUID, int] = {}
     for view_cls in views.values():
         iface = view_cls._eco_iface_
-        offsets[iface._iid_] = getattr(new_cls, f"_vtbl_{iface.__name__}").offset
+        offsets[iface._iid_] = offsetof(new_cls, iface)
 
     # Install the non-delegating IEcoUnknown triple on `new_cls`
     primary_iid = next(iid for iid in views if iid != IID_IEcoUnknown)
     for name, method in IEcoUnknownMethods.build(primary_iid, offsets).items():
-        setattr(new_cls, name, method)
+        if name not in new_cls.__dict__:
+            setattr(new_cls, name, method)
 
     vtbls: dict[UGUID, Any] = {}
     delegating = DelegatingIEcoUnknownMethods.build() if aggregatable else None

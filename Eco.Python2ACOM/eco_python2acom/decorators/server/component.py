@@ -20,7 +20,7 @@ from eco_python2acom.interfaces.unknown import IEcoUnknown
 from eco_python2acom.types.core import Int16
 from eco_python2acom.types.guid import UGUID
 from eco_python2acom.types.pointer import Ptr
-from eco_python2acom.types.utils import addressof, cast
+from eco_python2acom.types.utils import addressof, cast, offsetof
 
 C = TypeVar("C", bound=type)
 
@@ -47,8 +47,9 @@ def _make_component_new(
                 self.outer = outer
             else:
                 # Self-loop: route delegating IEcoUnknown calls back into our NDU.
-                ndu_field = getattr(type(self), f"_vtbl_{NonDelegatingUnknown.__name__}")
-                self.outer = cast(addressof(self) + ndu_field.offset, Ptr[IEcoUnknown])
+                self.outer = cast(
+                    addressof(self) + offsetof(self, NonDelegatingUnknown), Ptr[IEcoUnknown]
+                )
         return original(self, system, outer)
 
     return __eco_new__

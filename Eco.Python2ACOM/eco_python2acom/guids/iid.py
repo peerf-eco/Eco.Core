@@ -91,3 +91,11 @@ IID_IEcoEnumConnectionPoints = UGUID("00000004-0000-0000-C000-000000000046")
 
 # IEcoConnectionPointContainer IID = {00000005-0000-0000-C000-000000000046}
 IID_IEcoConnectionPointContainer = UGUID("00000005-0000-0000-C000-000000000046")
+
+
+# =============================================================================
+# ACOM2Python bridge
+# =============================================================================
+
+# IEcoACOM2Python IID = {107F4B5C-1FEF-47CC-A7E6-3167ABB9E0A7}
+IID_IEcoACOM2Python = UGUID("107F4B5C-1FEF-47CC-A7E6-3167ABB9E0A7")

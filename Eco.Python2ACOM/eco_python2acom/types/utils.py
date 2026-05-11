@@ -86,4 +86,20 @@ def sizeof(obj_or_type: Any) -> int:
     return ctypes.sizeof(obj_or_type)
 
 
-__all__ = ["pointer_type", "pointer", "cast", "byref", "addressof", "sizeof"]
+def offsetof(obj_or_type: Any, iface: type) -> int:
+    """Get the byte offset of an interface's vtable field within a server layout.
+
+    Resolves the `_vtbl_<iface>` field on either a class or one of its instances.
+
+    Args:
+        obj_or_type: A `@component`/`@factory` class or one of its instances.
+        iface: The interface whose vtable field is being looked up.
+
+    Returns:
+        Byte offset of `_vtbl_<iface.__name__>` within the structure.
+    """
+    cls = obj_or_type if isinstance(obj_or_type, type) else type(obj_or_type)
+    return getattr(cls, f"_vtbl_{iface.__name__}").offset
+
+
+__all__ = ["pointer_type", "pointer", "cast", "byref", "addressof", "sizeof", "offsetof"]

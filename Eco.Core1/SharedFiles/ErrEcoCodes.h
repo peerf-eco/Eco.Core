@@ -223,4 +223,15 @@
  */
 #define ERR_ECO_OUTINTERFACE_NOCONNECTION   0xFFE0
 
+/*
+ * <код ошибки>
+ *   ERR_ECO_NOPYTHONBRIDGE
+ * </код ошибки>
+ *
+ * <описание>
+ *  Компонент моста Python (Eco.ACOM2Python) недоступен или не зарегистрирован.
+ * </описание>
+ */
+#define ERR_ECO_NOPYTHONBRIDGE              0xFFDF
+
 #endif /* __ERR_ECO_CODES_H__ */

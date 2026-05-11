@@ -1,6 +1,6 @@
-"""`Eco.Calculator` — Python implementation.
+"""`Eco.Calculator` — standalone calculator variant.
 
-The component implements both `IEcoCalculatorX` and `IEcoCalculatorY` directly
+Implements both `IEcoCalculatorX` and `IEcoCalculatorY` directly
 and owns its reference count, with no participation in aggregation.
 
 Aggregation model ("none"):
@@ -30,7 +30,7 @@ CID_EcoCalculator = UGUID("4828F655-2E45-40E7-8121-EBD220DC360E")
 
 @component(cid=CID_EcoCalculator)
 class EcoCalculator:
-    """Standalone calculator component aggregating two arithmetic interfaces."""
+    """Standalone calculator implementing `IEcoCalculatorX` and `IEcoCalculatorY`."""
 
     system: Optional[Ptr[IEcoSystem1]]
 
