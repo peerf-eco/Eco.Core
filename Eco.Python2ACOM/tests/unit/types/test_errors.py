@@ -47,7 +47,6 @@ class TestEcoErrorCode:
             (EcoErrorCode.FILEMGR_NOTREG, 0xFFE2),
             (EcoErrorCode.NETMGR_NOTREG, 0xFFE1),
             (EcoErrorCode.OUTINTERFACE_NOCONNECTION, 0xFFE0),
-            (EcoErrorCode.NOPYTHONBRIDGE, 0xFFDF),
         ],
         ids=[code.name.lower() for code in EcoErrorCode],
     )

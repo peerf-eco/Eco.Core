@@ -202,7 +202,7 @@ int16_t EcoMain(IEcoUnknown* pIUnk) {
     printf(">    30 - 45 = " COLOR_YELLOW "%d" COLOR_RESET "\n", pIX->pVTbl->Subtraction(pIX, 30, 45));
 
 #if ECO_TEST_VARIANT != 2
-    /* Variants 1/3/4 also expose Y interface */
+    /* Variants 1 / 3 / 4 also expose Y interface */
     result = pIX->pVTbl->QueryInterface(pIX, &IID_IEcoCalculatorY, (void**)&pIY);
     if (result != 0 || pIY == 0) {
         ReportFail("QueryInterface [IID_IEcoCalculatorY]", result);
@@ -214,8 +214,6 @@ int16_t EcoMain(IEcoUnknown* pIUnk) {
     printf(">     5 *  8 = " COLOR_YELLOW "%d" COLOR_RESET "\n", pIY->pVTbl->Multiplication(pIY, 5, 8));
     printf(">    42 /  7 = " COLOR_YELLOW "%d" COLOR_RESET "\n", pIY->pVTbl->Division(pIY, 42, 7));
 #endif
-
-    printf("\n");
 
 Release:
 

@@ -9,3 +9,4 @@
         - pointer_type
         - byref
         - addressof
+        - offsetof

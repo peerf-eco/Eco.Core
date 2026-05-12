@@ -14,7 +14,8 @@ Provides declarative decorators for defining and consuming `EcoOS` interfaces fr
 
 `eco-python2acom` lets you interact with `EcoOS` shared libraries directly from Python:
 
-- **Define interfaces** declaratively using `@interface`, `@model`, `@union`
+- **Define interfaces and data layouts** declaratively using `@interface`, `@model`, `@union`
+- **Implement ACOM components in Python** using `@component`, `@view`, `@factory`
 - **Bootstrap the runtime** (`InterfaceBus`, `MemoryManager`, `FileSystemManagement`) with a single `EcoSystem` context manager
 - **Load components** by CID and query interfaces by IID, exactly as in C
 
@@ -28,9 +29,9 @@ from eco_python2acom.types.utils import byref, cast
 
 with EcoSystem(runtime_path="/path/to/rt", user_lib_dir="/path/to/components") as eco:
     ppv = Ptr[Void]()
-    eco.bus.QueryComponent(byref(cid), None, byref(iid), byref(ppv))
+    eco.bus.obj.QueryComponent(byref(cid), None, byref(iid), byref(ppv))
     calc = cast(ppv, Ptr[IEcoCalculatorX])
-    result = calc.Addition(10, 20)
+    result = calc.obj.Addition(10, 20)
     calc.Release()
 ```
 
@@ -38,8 +39,8 @@ with EcoSystem(runtime_path="/path/to/rt", user_lib_dir="/path/to/components") a
 
 | Package | Description |
 |---|---|
-| `eco_python2acom.decorators` | `@model`, `@union`, `@interface` decorators |
-| `eco_python2acom.types` | Primitive types, `Ptr`, `Array`, `UGUID`, errors |
+| `eco_python2acom.decorators` | `@model`, `@union`, `@stub`, `@interface`, `@view`, `@component`, `@factory` decorators |
+| `eco_python2acom.types` | Primitive types, `Ptr`, `Array`, `UGUID`, errors, utilities (`sizeof`, `cast`, `pointer`, `byref`, `addressof`, `offsetof`) |
 | `eco_python2acom.guids` | IID, CID, GID constants |
-| `eco_python2acom.interfaces` | Built-in EcoOS interface definitions |
+| `eco_python2acom.interfaces` | Built-in EcoOS interface definitions (`IEcoUnknown`, `IEcoInterfaceBus1`, `IEcoMemoryManager1`, `IEcoFileManager1`, etc.) |
 | `eco_python2acom.runtime` | `EcoSystem` bootstrap and library loader |

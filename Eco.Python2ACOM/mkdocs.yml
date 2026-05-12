@@ -109,3 +109,4 @@ nav:
     - Interface Bus: interfaces/interface_bus.md
     - Memory Manager: interfaces/memory_manager.md
     - File Manager: interfaces/file_manager.md
+    - ACOM2Python: interfaces/acom2python.md
