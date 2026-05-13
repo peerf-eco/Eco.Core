@@ -13,7 +13,7 @@ from examples.client.calculator.interfaces import (
     IID_IEcoCalculatorX,
     IID_IEcoCalculatorY,
 )
-from examples.console import console
+from examples.client.console import console
 
 
 def show(name: str, a: int, oper: str, b: int, result: int) -> None:
