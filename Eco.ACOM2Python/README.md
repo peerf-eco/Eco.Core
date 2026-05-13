@@ -40,8 +40,7 @@ lifecycle, GIL, module import) are hidden inside the bridge.
 
 ## Architecture
 
-> A visual overview of how the bridge sits between native EcoOS callers and
-> Python-implemented components will be added here (`Miro`).
+![Architecture](DesignFiles/server-flow.png)
 
 ## Build & Run (Windows, MSVC + CPython)
 
@@ -92,5 +91,5 @@ at compile time via the `ECO_TEST_VARIANT` define (`1`..`4`).
 
 ## See also
 
-- [`Eco.Python2ACOM`](../Eco.Python2ACOM/) — the Python-side runtime that
-  authors components consumed by this bridge.
+- [`Eco.Python2ACOM`](../Eco.Python2ACOM/README.md) — the Python-side runtime
+  that authors components consumed by this bridge.

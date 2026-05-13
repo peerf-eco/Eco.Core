@@ -32,8 +32,7 @@ classes.
 
 ## Architecture
 
-> A visual overview of how the Python side composes with the C bridge and
-> the EcoOS runtime will be added here (`Miro`).
+![Architecture](docs/images/client-flow.png)
 
 ## Installation
 
@@ -99,6 +98,6 @@ calls their methods from Python as if they were regular native components.
 
 ## See also
 
-- [`Eco.ACOM2Python`](../Eco.ACOM2Python/) — the C-side bridge that loads
-  Python modules, embeds `CPython`, and exposes Python factories to native
-  EcoOS code.
+- [`Eco.ACOM2Python`](../Eco.ACOM2Python/README.md) — the C-side bridge that
+  loads Python modules, embeds `CPython`, and exposes Python factories to
+  native EcoOS code.
