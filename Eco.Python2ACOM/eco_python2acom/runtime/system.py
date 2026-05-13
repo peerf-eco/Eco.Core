@@ -9,10 +9,11 @@ The bootstrap sequence mirrors `createCEcoSystem1` from C:
     2. Load `MemoryManager` library -> register factory with bus
     3. Configure `MemExt` -> set manager CID, enable pool
     4. Query component `MemoryManager` -> initialize heap
-    5. Load `FileSystemManagement` library -> register factory with bus (optional)
-    6. Configure `FileExt` (optional)
-    7. Scan user paths for component shared libraries -> register each
-    8. Init bus factory -> finalize bus setup
+    5. Query interface `MemoryAllocator` from `MemoryManager`
+    6. Load `FileSystemManagement` library -> register factory with bus (optional)
+    7. Configure `FileExt` (optional)
+    8. Scan user paths for component shared libraries -> register each
+    9. Init bus factory -> finalize bus setup
 
 Example:
     >>> with EcoSystem() as eco:
@@ -21,6 +22,7 @@ Example:
     ...     bus.obj.QueryComponent(byref(cid), None, byref(iid), byref(ppv))
 """
 
+import logging
 import os
 from pathlib import Path
 from typing import Any, ClassVar, Optional, Self, Union
@@ -47,6 +49,7 @@ from eco_python2acom.interfaces.interface_bus import (
 from eco_python2acom.interfaces.memory_manager import IEcoMemoryAllocator1, IEcoMemoryManager1
 from eco_python2acom.interfaces.unknown import IEcoUnknown
 from eco_python2acom.runtime.loader import EcoLib, EcoLibLoader
+from eco_python2acom.runtime.logging import eco_logger
 from eco_python2acom.runtime.utils import is_eco_lib, lib_filename_to_guid
 from eco_python2acom.types.core import Bool, UInt32, Void
 from eco_python2acom.types.errors import EcoError
@@ -88,6 +91,7 @@ class EcoSystem:
         user_lib_dir: Optional[Union[str, Path]] = None,
         heap_size: int = DEFAULT_HEAP_SIZE,
         gid: Optional[UGUID] = None,
+        logger: Optional[logging.Logger] = None,
     ) -> None:
         """Initialize `EcoSystem` container.
 
@@ -100,10 +104,13 @@ class EcoSystem:
                 Defaults to ~1.5 GB (0x60000000).
             gid: Generation ID (GID) of the system.
                 If None, uses the default GID for the current architecture.
+            logger: Logger used to report bootstrap and release events.
+                Defaults to the package-wide `system` child logger.
         """
         self._runtime_path = runtime_path or os.environ.get("ECO_FRAMEWORK_RT", None)
         self._user_lib_dir = Path(user_lib_dir) if user_lib_dir else Path.cwd()
         self._gid = gid or GID_IEcoSystem
+        self.logger = logger if logger is not None else eco_logger.getChild(type(self).__name__)
 
         # Initialize internal references (set during init, released during cleanup)
         self._bus_factory: Optional[Ptr[IEcoComponentFactory]] = None
@@ -116,7 +123,7 @@ class EcoSystem:
         )
 
         # Keep loaded libraries alive
-        self._loader = EcoLibLoader()
+        self._loader = EcoLibLoader(logger=logger)
         self._loaded_libs: list[EcoLib] = []
 
         # Initialize state
@@ -192,11 +199,15 @@ class EcoSystem:
             return
 
         if self._runtime_path is None:
+            self.logger.error("Runtime path not configured")
             raise FileNotFoundError("Runtime path not configured")
 
         self._full_runtime_path = Path(self._runtime_path) / self._gid.to_string(with_hyphens=False)
         if not self._full_runtime_path.exists():
+            self.logger.error("Runtime path not found ---> '%s'", self._full_runtime_path)
             raise FileNotFoundError(f"Runtime path not found: '{self._full_runtime_path}'")
+
+        self.logger.debug("Bootstrap starting | GID = <%s>", self._gid)
 
         # Step 1: Load InterfaceBus and create instance
         self._init_interface_bus(self._full_runtime_path)
@@ -210,21 +221,29 @@ class EcoSystem:
         # Step 4: Initialize MemoryManager heap
         self._init_memory_manager()
 
-        # Step 5: Register FileSystemManagement factory
+        # Step 5: Query MemoryAllocator interface
+        self._init_memory_allocator()
+
+        # Step 6: Register FileSystemManagement factory
         self._register_file_system(self._full_runtime_path)
 
-        # Step 6: Configure FileExt on the bus
+        # Step 7: Configure FileExt on the bus
         self._configure_file_ext()
 
-        # Step 7: Auto-register user component libraries
+        # Step 8: Auto-register user component libraries
         self._scan_and_register_user_libs()
 
-        # Step 8: Finalize bus factory
+        # Step 9: Finalize bus factory
         if self._bus_factory is not None and self._bus is not None:
+            self.logger.debug("Step [9/9] ---> Finalizing 'InterfaceBus' factory")
             factory = self._bus_factory
             factory.obj.Init(None, cast(self._bus, Ptr[Void]))
+            self.logger.debug("Step [9/9] ---> 'InterfaceBus' factory ---> OK")
+        else:
+            self.logger.debug("Step [9/9] ---> 'InterfaceBus' factory not available ---> Skipped")
 
         self._initialized = True
+        self.logger.debug("Bootstrap complete ---> OK")
 
     # =========================================================================
     # Bootstrap helpers (private)
@@ -232,6 +251,7 @@ class EcoSystem:
 
     def _init_interface_bus(self, runtime_path: Path) -> None:
         """Load `InterfaceBus` component, create bus instance via factory."""
+        self.logger.debug("Step [1/9] ---> Loading 'InterfaceBus'")
         loaded = self._loader.load_by_cid(CID_EcoInterfaceBus1, [runtime_path])
         self._loaded_libs.append(loaded)
         self._bus_factory = loaded.factory
@@ -241,12 +261,17 @@ class EcoSystem:
             None, None, byref(IID_IEcoInterfaceBus1), byref(bus_ptr)
         )
         if result.value != 0 or not bus_ptr.value:
+            self.logger.error(
+                "Step [1/9] ---> 'InterfaceBus' allocation failed | code = 0x%X", result.value
+            )
             raise EcoError(result.value, "Failed to create `InterfaceBus` instance")
 
         self._bus = cast(bus_ptr, Ptr[IEcoInterfaceBus1])
+        self.logger.debug("Step [1/9] ---> 'InterfaceBus' ---> OK")
 
     def _register_memory_manager(self, runtime_path: Path) -> None:
         """Load `MemoryManager` component and register its factory with the bus."""
+        self.logger.debug("Step [2/9] ---> Registering 'MemoryManager'")
         loaded = self._loader.load_by_cid(CID_EcoMemoryManager1, [runtime_path])
         self._loaded_libs.append(loaded)
 
@@ -254,10 +279,15 @@ class EcoSystem:
             byref(CID_EcoMemoryManager1), cast(loaded.factory, Ptr[IEcoUnknown])
         )
         if result.value != 0:
+            self.logger.error(
+                "Step [2/9] ---> 'MemoryManager' register failed | code = 0x%X", result.value
+            )
             raise EcoError(result.value, "Failed to register `MemoryManager`")
+        self.logger.debug("Step [2/9] ---> 'MemoryManager' ---> OK")
 
     def _configure_mem_ext(self) -> None:
         """Configure `InterfaceBus` memory extension."""
+        self.logger.debug("Step [3/9] ---> Configuring 'MemExt'")
         mem_ext_ptr = Ptr[Void]()
         result = self._bus.obj.QueryInterface(
             byref(IID_IEcoInterfaceBus1MemExt), byref(mem_ext_ptr)
@@ -267,9 +297,15 @@ class EcoSystem:
             mem_ext.obj.set_Manager(byref(CID_EcoMemoryManager1))
             mem_ext.obj.set_ExpandPool(Bool(True))
             mem_ext.obj.Release()
+            self.logger.debug("Step [3/9] ---> 'MemExt' ---> OK")
+        else:
+            self.logger.debug("Step [3/9] ---> 'MemExt' not available ---> Skipped")
 
     def _init_memory_manager(self) -> None:
         """Query and initialize `MemoryManager` with heap."""
+        self.logger.debug(
+            "Step [4/9] ---> Initializing 'MemoryManager' | heap = %d bytes", self._heap_size.value
+        )
         mgr_ptr = Ptr[Void]()
         result = self._bus.obj.QueryComponent(
             byref(CID_EcoMemoryManager1),
@@ -278,26 +314,34 @@ class EcoSystem:
             byref(mgr_ptr),
         )
         if result.value != 0 or not mgr_ptr.value:
+            self.logger.error(
+                "Step [4/9] ---> 'MemoryManager' query failed | code = 0x%X", result.value
+            )
             raise EcoError(result.value, "Failed to get `MemoryManager` interface")
 
         self._mem_manager = cast(mgr_ptr, Ptr[IEcoMemoryManager1])
         self._mem_manager.obj.Init(None, self._heap_size)
+        self.logger.debug("Step [4/9] ---> 'MemoryManager' ---> OK")
 
-        # Also get `IEcoMemoryAllocator1` for convenience
+    def _init_memory_allocator(self) -> None:
+        """Query the `MemoryAllocator` interface from `MemoryManager`."""
+        self.logger.debug("Step [5/9] ---> Initializing 'MemoryAllocator'")
         alloc_ptr = Ptr[Void]()
-        result = self._bus.obj.QueryComponent(
-            byref(CID_EcoMemoryManager1),
-            None,
-            byref(IID_IEcoMemoryAllocator1),
-            byref(alloc_ptr),
+        result = self._mem_manager.obj.QueryInterface(
+            byref(IID_IEcoMemoryAllocator1), byref(alloc_ptr)
         )
         if result.value != 0 or not alloc_ptr.value:
+            self.logger.error(
+                "Step [5/9] ---> 'MemoryAllocator' query failed | code = 0x%X", result.value
+            )
             raise EcoError(result.value, "Failed to get `MemoryAllocator` interface")
 
         self._mem_allocator = cast(alloc_ptr, Ptr[IEcoMemoryAllocator1])
+        self.logger.debug("Step [5/9] ---> 'MemoryAllocator' ---> OK")
 
     def _register_file_system(self, runtime_path: Path) -> None:
         """Load `FileSystemManagement` component and register with bus."""
+        self.logger.debug("Step [6/9] ---> Registering 'FileSystemManagement'")
         loaded = self._loader.load_by_cid(CID_EcoFileSystemManagement1, [runtime_path])
         self._loaded_libs.append(loaded)
 
@@ -305,10 +349,16 @@ class EcoSystem:
             byref(CID_EcoFileSystemManagement1), cast(loaded.factory, Ptr[IEcoUnknown])
         )
         if result.value != 0:
+            self.logger.error(
+                "Step [6/9] ---> 'FileSystemManagement' register failed | code = 0x%X",
+                result.value,
+            )
             raise EcoError(result.value, "Failed to register `FileSystemManagement`")
+        self.logger.debug("Step [6/9] ---> 'FileSystemManagement' ---> OK")
 
     def _configure_file_ext(self) -> None:
         """Configure `InterfaceBus` file extension."""
+        self.logger.debug("Step [7/9] ---> Configuring 'FileExt'")
         file_ext_ptr = Ptr[Void]()
         result = self._bus.obj.QueryInterface(
             byref(IID_IEcoInterfaceBus1FileExt),
@@ -318,6 +368,9 @@ class EcoSystem:
             file_ext = cast(file_ext_ptr, Ptr[IEcoInterfaceBus1FileExt])
             file_ext.obj.set_Manager(byref(CID_EcoFileSystemManagement1))
             file_ext.obj.Release()
+            self.logger.debug("Step [7/9] ---> 'FileExt' ---> OK")
+        else:
+            self.logger.debug("Step [7/9] ---> 'FileExt' not available ---> Skipped")
 
     def _scan_and_register_user_libs(self) -> None:
         """Scan user paths for EcoOS libraries and register each with the bus.
@@ -329,14 +382,24 @@ class EcoSystem:
             FileNotFoundError: If user library path not found.
             NotADirectoryError: If user library path is not a directory.
         """
+        self.logger.debug("Step [8/9] ---> Scanning user libs in '%s'", self._user_lib_dir)
+
         if not self._user_lib_dir.exists():
+            self.logger.error(
+                "Step [8/9] ---> User lib path not found ---> '%s'", self._user_lib_dir
+            )
             raise FileNotFoundError(f"User library path not found: '{self._user_lib_dir}'")
 
         if not self._user_lib_dir.is_dir():
+            self.logger.error(
+                "Step [8/9] ---> User lib path is not a directory ---> '%s'",
+                self._user_lib_dir,
+            )
             raise NotADirectoryError(
                 f"User library path is not a directory: '{self._user_lib_dir}'"
             )
 
+        registered = 0
         for lib_file in self._user_lib_dir.iterdir():
             if not lib_file.is_file() or not is_eco_lib(lib_file.name):
                 continue
@@ -348,6 +411,9 @@ class EcoSystem:
 
             # Skip system components (already registered)
             if bytes(cid.data) in self._system_cids:
+                self.logger.debug(
+                    "Step [8/9] ---> Skipping system component ---> '%s'", lib_file.name
+                )
                 continue
 
             loaded = self._loader.load(lib_file)
@@ -358,7 +424,16 @@ class EcoSystem:
                 cast(loaded.factory, Ptr[IEcoUnknown]),
             )
             if result.value != 0:
+                self.logger.error(
+                    "Step [8/9] ---> Register failed ---> '%s' | code = 0x%X",
+                    lib_file.name,
+                    result.value,
+                )
                 raise EcoError(result.value, f"Failed to register component: '{lib_file.name}'")
+            registered += 1
+            self.logger.debug("Step [8/9] ---> Registered ---> '%s'", lib_file.name)
+
+        self.logger.debug("Step [8/9] ---> Scan complete | registered = %d", registered)
 
     # =========================================================================
     # Cleanup
@@ -369,12 +444,14 @@ class EcoSystem:
         if not self._initialized:
             return
 
+        self.logger.debug("Releasing resources")
+
         # Release in reverse initialization order
         for iface_ptr in (self._mem_allocator, self._mem_manager, self._bus, self._bus_factory):
             try:
                 iface_ptr.obj.Release()
-            except Exception:
-                pass
+            except Exception as err:
+                self.logger.debug("Ignoring error ---> %s", err)
 
         self._loaded_libs.clear()
         self._initialized = False
@@ -382,6 +459,7 @@ class EcoSystem:
         self._bus_factory = None
         self._mem_allocator = None
         self._mem_manager = None
+        self.logger.debug("OK")
 
     def __repr__(self) -> str:
         status = "initialized" if self._initialized else "not initialized"

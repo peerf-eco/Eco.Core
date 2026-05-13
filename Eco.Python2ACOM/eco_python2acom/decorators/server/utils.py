@@ -18,6 +18,7 @@ from eco_python2acom.decorators.utils import _build_namespace, _resolve_fields
 from eco_python2acom.guids.iid import IID_IEcoComponentFactory, IID_IEcoUnknown
 from eco_python2acom.interfaces.factory import IEcoComponentFactory
 from eco_python2acom.interfaces.unknown import IEcoUnknown
+from eco_python2acom.runtime.logging import eco_logger
 from eco_python2acom.types.core import CSimpleData, CStructure, UInt32, Void
 from eco_python2acom.types.guid import UGUID
 from eco_python2acom.types.pointer import Ptr
@@ -284,4 +285,5 @@ def _eco_server_class(
 
     new_cls._eco_vtbls_ = vtbls
     new_cls._eco_views_ = views
+    new_cls.logger = eco_logger.getChild(new_cls.__name__)
     return new_cls, vtbls

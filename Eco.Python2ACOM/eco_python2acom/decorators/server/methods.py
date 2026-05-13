@@ -17,7 +17,7 @@ from eco_python2acom.types.utils import addressof
 
 # Holds Python instances whose vtable address is currently exposed to C, so
 # refcount-based collection cannot pull them out from under the C caller.
-_alive: dict[int, Any] = {}
+ALIVE: dict[int, Any] = {}
 
 
 # -----------------------------------------------------------------------------
@@ -43,6 +43,7 @@ class IEcoUnknownMethods:
                 0 on success, error code otherwise.
             """
             if not bool(iid) or not bool(out):
+                self.logger.debug("Null pointer")
                 return Int16(EcoErrorCode.POINTER)
 
             target = iid.obj
@@ -51,11 +52,13 @@ class IEcoUnknownMethods:
             if offset is None and target == IID_IEcoUnknown:
                 offset = offsets.get(primary)
             if offset is None:
+                self.logger.debug("IID = <%s> ---> Interface not supported", target)
                 out.obj.value = 0
                 return Int16(EcoErrorCode.NOINTERFACE)
 
             out.obj.value = addressof(self) + offset
             self.AddRef()
+            self.logger.debug("IID = <%s> ---> OK", target)
             return Int16(EcoErrorCode.SUCCESS)
 
         def AddRef(self) -> UInt32:
@@ -65,6 +68,7 @@ class IEcoUnknownMethods:
                 The new reference count.
             """
             self.refs += 1
+            self.logger.debug("Refs = %d", self.refs)
             return self.refs
 
         def Release(self) -> UInt32:
@@ -78,7 +82,10 @@ class IEcoUnknownMethods:
             self.refs -= 1
             if self.refs == 0:
                 self.__eco_del__()
-                _alive.pop(addressof(self), None)
+                ALIVE.pop(addressof(self), None)
+                self.logger.debug("Refs = 0 ---> Destroyed")
+            else:
+                self.logger.debug("Refs = %d", self.refs)
             return self.refs
 
         return {"QueryInterface": QueryInterface, "AddRef": AddRef, "Release": Release}
@@ -106,6 +113,7 @@ class DelegatingIEcoUnknownMethods:
             Returns:
                 0 on success, error code otherwise.
             """
+            self.logger.debug("Delegating to outer")
             return self.outer.obj.QueryInterface(iid, out)
 
         def AddRef(self) -> UInt32:
@@ -114,6 +122,7 @@ class DelegatingIEcoUnknownMethods:
             Returns:
                 The new reference count.
             """
+            self.logger.debug("Delegating to outer")
             return self.outer.obj.AddRef()
 
         def Release(self) -> UInt32:
@@ -124,6 +133,7 @@ class DelegatingIEcoUnknownMethods:
             Returns:
                 The new reference count.
             """
+            self.logger.debug("Delegating to outer")
             return self.outer.obj.Release()
 
         return {"QueryInterface": QueryInterface, "AddRef": AddRef, "Release": Release}
@@ -160,24 +170,30 @@ class IEcoComponentFactoryMethods:
                 0 on success, error code otherwise.
             """
             if not bool(iid) or not bool(out) or not bool(system):
+                cls.logger.debug("Null pointer")
                 return Int16(EcoErrorCode.POINTER)
 
             if bool(outer) and iid.obj != IID_IEcoUnknown:
+                cls.logger.debug("Aggregation requires 'IID_IEcoUnknown'")
                 return Int16(EcoErrorCode.NOAGGREGATION)
 
             instance = cls()
             result = instance.__eco_new__(system, outer)
             if result.value != 0:
+                cls.logger.debug("Instance creation failed | code = 0x%X", result.value)
                 return result
 
             result = instance.__eco_init__(system)
             if result.value != 0:
+                cls.logger.debug("Instance init failed | code = 0x%X", result.value)
                 return result
 
-            _alive[addressof(instance)] = instance
+            ALIVE[addressof(instance)] = instance
+            instance.logger.debug("At <0x%x> ---> OK", addressof(instance))
 
             result = instance.QueryInterface(iid, out)
             if result.value != 0:
+                cls.logger.debug("Interface query failed | code = 0x%X", result.value)
                 return result
 
             instance.Release()
@@ -228,8 +244,4 @@ class IEcoComponentFactoryMethods:
         }
 
 
-__all__ = [
-    "IEcoUnknownMethods",
-    "DelegatingIEcoUnknownMethods",
-    "IEcoComponentFactoryMethods",
-]
+__all__ = ["IEcoUnknownMethods", "DelegatingIEcoUnknownMethods", "IEcoComponentFactoryMethods"]

@@ -101,6 +101,7 @@ nav:
   - Runtime:
     - EcoSystem: runtime/system.md
     - Loader: runtime/loader.md
+    - Logging: runtime/logging.md
   - Interfaces:
     - Unknown: interfaces/unknown.md
     - Factory: interfaces/factory.md
