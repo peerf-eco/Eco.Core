@@ -52,13 +52,17 @@ def factory(component: type) -> Callable[[C], C]:
         A decorator that turns the class into an EcoOS factory class.
 
     Raises:
-        TypeError: If `component` is not decorated with `@component`, or the
-            decorated class does not inherit from `IEcoComponentFactory`.
+        TypeError: If `component` is not decorated with `@component`, has no
+            CID assigned, or the decorated class does not inherit from
+            `IEcoComponentFactory`.
     """
     if not isinstance(component, type) or not getattr(component, "_eco_component_", False):
         raise TypeError(
             f"Class '{component.__name__}' is not a component and cannot be used in a factory"
         )
+
+    if getattr(component, "_cid_", None) is None:
+        raise TypeError(f"Component '{component.__name__}' has no CID and cannot have a factory")
 
     def decorator(cls: C) -> C:
         """Convert `cls` into an `IEcoComponentFactory` implementation."""

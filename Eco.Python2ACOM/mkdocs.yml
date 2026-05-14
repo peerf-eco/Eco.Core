@@ -106,8 +106,11 @@ nav:
     - Unknown: interfaces/unknown.md
     - Factory: interfaces/factory.md
     - System: interfaces/system.md
+    - Error: interfaces/error.md
     - Connections: interfaces/connections.md
     - Interface Bus: interfaces/interface_bus.md
     - Memory Manager: interfaces/memory_manager.md
     - File Manager: interfaces/file_manager.md
+    - List: interfaces/list.md
     - ACOM2Python: interfaces/acom2python.md
+    - ACOM2Java: interfaces/acom2java.md

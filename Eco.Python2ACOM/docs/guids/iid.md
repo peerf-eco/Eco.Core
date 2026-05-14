@@ -25,4 +25,9 @@ Interface identifiers uniquely identify interface types in the ACOM system.
         - IID_IEcoConnectionPointContainer
         - IID_IEcoEnumConnectionPoints
         - IID_IEcoEnumConnections
+        - IID_IEcoList1
+        - IID_IEcoError1
+        - IID_IEcoCommandArguments1
+        - IID_IEcoSystemInformation1
         - IID_IEcoACOM2Python
+        - IID_IEcoACOM2Java

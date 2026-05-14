@@ -19,6 +19,7 @@
 
 /* Eco OS */
 #include "IEcoSystem1.h"
+#include "IEcoInterfaceBus1.h"
 #include "IEcoACOM2Python.h"
 #include "IEcoCalculatorX.h"
 #include "IEcoCalculatorY.h"
@@ -128,6 +129,7 @@ int16_t EcoMain(IEcoUnknown* pIUnk) {
     int16_t result = -1;
 
     IEcoSystem1* pISys = 0;
+    IEcoInterfaceBus1* pIBus = 0;
     IEcoACOM2Python* pIEcoACOM2Python = 0;
     IEcoCalculatorX* pIX = 0;
     IEcoCalculatorY* pIY = 0;
@@ -147,8 +149,16 @@ int16_t EcoMain(IEcoUnknown* pIUnk) {
     }
     ReportOk("QueryInterface [GID_IEcoSystem]");
 
-    /* Python bridge — loaded on demand and cached inside `IEcoSystem1` */
-    result = pISys->pVTbl->QueryInterface(pISys, &IID_IEcoACOM2Python, (void**)&pIEcoACOM2Python);
+    /* Interface bus — through the system interface */
+    result = pISys->pVTbl->QueryInterface(pISys, &IID_IEcoInterfaceBus1, (void**)&pIBus);
+    if (result != 0 || pIBus == 0) {
+        ReportFail("QueryInterface [IID_IEcoInterfaceBus1]", result);
+        goto Release;
+    }
+    ReportOk("QueryInterface [IID_IEcoInterfaceBus1]");
+
+    /* Python bridge — through the interface bus */
+    result = pIBus->pVTbl->QueryInterface(pIBus, &IID_IEcoACOM2Python, (void**)&pIEcoACOM2Python);
     if (result != 0 || pIEcoACOM2Python == 0) {
         ReportFail("QueryInterface [IID_IEcoACOM2Python]", result);
         goto Release;
@@ -220,6 +230,7 @@ Release:
     if (pIX != 0) pIX->pVTbl->Release(pIX);
     if (pIY != 0) pIY->pVTbl->Release(pIY);
     if (pIEcoACOM2Python != 0) pIEcoACOM2Python->pVTbl->Release(pIEcoACOM2Python);
+    if (pIBus != 0) pIBus->pVTbl->Release(pIBus);
     if (pISys != 0) pISys->pVTbl->Release(pISys);
 
     return result;

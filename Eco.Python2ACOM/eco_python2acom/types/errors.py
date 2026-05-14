@@ -57,6 +57,7 @@ class EcoErrorCode(IntEnum):
     FILEMGR_NOTREG = 0xFFE2  # File manager not registered
     NETMGR_NOTREG = 0xFFE1  # Network manager not registered
     OUTINTERFACE_NOCONNECTION = 0xFFE0  # Outgoing interface not connected
+    NOPYTHONBRIDGE = 0xFFDF  # Python bridge not supported
 
 
 # Human-readable error messages
@@ -78,6 +79,7 @@ ERROR_MESSAGES: dict[EcoErrorCode, str] = {
     EcoErrorCode.FILEMGR_NOTREG: "File system manager is not registered",
     EcoErrorCode.NETMGR_NOTREG: "Network manager is not registered",
     EcoErrorCode.OUTINTERFACE_NOCONNECTION: "Outgoing interface has no connection",
+    EcoErrorCode.NOPYTHONBRIDGE: "Python bridge is not supported",
 }
 
 

@@ -19,9 +19,10 @@ from eco_python2acom.decorators.server.component import component
 from eco_python2acom.decorators.server.factory import export, factory
 from eco_python2acom.decorators.server.view import view
 from eco_python2acom.guids.gid import GID_IEcoSystem
-from eco_python2acom.guids.iid import IID_IEcoACOM2Python
+from eco_python2acom.guids.iid import IID_IEcoACOM2Python, IID_IEcoInterfaceBus1
 from eco_python2acom.interfaces.acom2python import IEcoACOM2Python
 from eco_python2acom.interfaces.factory import IEcoComponentFactory
+from eco_python2acom.interfaces.interface_bus import IEcoInterfaceBus1
 from eco_python2acom.interfaces.system import IEcoSystem1
 from eco_python2acom.interfaces.unknown import IEcoUnknown
 from eco_python2acom.types.core import CString, Int16, Int32, Void
@@ -60,9 +61,16 @@ class EcoCalculatorInclusion:
         if not bool(self.system):
             return Int16(EcoErrorCode.NOSYSTEM)
 
+        bus_ptr = Ptr[Void]()
+        result = self.system.obj.QueryInterface(byref(IID_IEcoInterfaceBus1), byref(bus_ptr))
+        if result.value != 0 or not bus_ptr.value:
+            return Int16(EcoErrorCode.NOBUS)
+        bus = cast(bus_ptr, Ptr[IEcoInterfaceBus1])
+
         bridge_ptr = Ptr[Void]()
-        result = self.system.obj.QueryInterface(byref(IID_IEcoACOM2Python), byref(bridge_ptr))
+        result = bus.obj.QueryInterface(byref(IID_IEcoACOM2Python), byref(bridge_ptr))
         if result.value != 0 or not bridge_ptr.value:
+            bus.obj.Release()
             return Int16(EcoErrorCode.NOPYTHONBRIDGE)
         bridge = cast(bridge_ptr, Ptr[IEcoACOM2Python])
 
@@ -71,6 +79,7 @@ class EcoCalculatorInclusion:
             byref(CID_EcoCalculator), None, byref(IID_IEcoCalculatorX), byref(inner_ptr)
         )
         bridge.obj.Release()
+        bus.obj.Release()
         if result.value != 0 or not inner_ptr.value:
             return result
         self.inner = cast(inner_ptr, Ptr[IEcoCalculatorX])

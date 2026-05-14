@@ -12,7 +12,7 @@ drives during `Alloc`:
 
 import inspect
 from collections.abc import Callable
-from typing import TypeVar, Union
+from typing import Optional, TypeVar, Union
 
 from eco_python2acom.decorators.server.ndu import NonDelegatingUnknown
 from eco_python2acom.decorators.server.utils import _eco_server_class, _make_vtbls_installer
@@ -56,15 +56,22 @@ def _make_component_new(
 
 
 def component(
-    cid: Union[str, bytes, UGUID], preamble: int = 0x01, aggregatable: bool = False
+    cid: Optional[Union[str, bytes, UGUID]] = None,
+    preamble: int = 0x01,
+    aggregatable: bool = False,
 ) -> Callable[[C], C]:
     """Decorator for defining ACOM components implemented in Python.
 
     Converts a class with nested `@view` declarations into an EcoOS component
     class, validates the lifecycle hooks, and wires the `IEcoUnknown` triple.
 
+    A `cid` is required only for components that are exposed through `@factory`.
+    Pass `cid=None` for internal helper components instantiated by hand inside
+    another component's lifecycle — sinks, connection points, enumerators, etc.
+
     Args:
         cid: Component identifier as a string, bytes, or pre-built `UGUID`.
+            When `None`, the component is treated as an internal helper.
         preamble: Preamble byte for UGUID when `cid` is a string.
         aggregatable: Whether the component can participate in aggregation as the inner part.
 
@@ -78,7 +85,9 @@ def component(
 
     def decorator(cls: C) -> C:
         """Convert `cls` into a Python ACOM component."""
-        if isinstance(cid, UGUID):
+        if cid is None:
+            guid = None
+        elif isinstance(cid, UGUID):
             guid = cid
         else:
             guid = UGUID(cid, preamble=preamble)
