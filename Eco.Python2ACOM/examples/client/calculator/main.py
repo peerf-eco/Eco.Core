@@ -67,7 +67,7 @@ def main() -> int:
             result = calc_x.obj.QueryInterface(byref(IID_IEcoCalculatorY), byref(ppv_y))
             if result != 0 or not bool(ppv_y):
                 console.error(f"Failed to query interface (code = {result})\n")
-                calc_x.Release()
+                calc_x.obj.Release()
                 return -3
             calc_y = cast(ppv_y, Ptr[IEcoCalculatorY])
             console.success(f"Got {calc_y}")
