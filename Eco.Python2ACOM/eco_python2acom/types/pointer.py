@@ -3,11 +3,13 @@
 This module provides the `Ptr[T]` generic type for type-safe pointer operations.
 """
 
+from ctypes import POINTER
 from typing import TYPE_CHECKING, Any, Generic, Optional, TypeVar
 
-from eco_python2acom.types.core import TYPE_NAMES, Void, VoidPtr
-from eco_python2acom.types.utils import addressof, pointer_type
+from eco_python2acom.types.core import TYPE_NAMES, CPointer, Void, VoidPtr
+from eco_python2acom.types.utils import addressof, byref, cast, memmove, offsetof, sizeof
 
+U = TypeVar("U")
 T = TypeVar("T")
 
 
@@ -16,8 +18,11 @@ if TYPE_CHECKING:
     class Ptr(Generic[T]):
         """Generic smart pointer type.
 
-        - For `Ptr[Void]`, the primary way to access the pointer is property `value`.
-        - For other types, use property `obj` to dereference.
+        - `.obj` — dereferences the pointer (`*p`); read or write the pointed-to value.
+        - `.value` — raw pointer address; read or re-aim the pointer.
+        - `p[i]` — pointer arithmetic with indexing (`*(p + i)`); reads or writes
+          the i-th element starting at the pointed-to memory.
+        - `Ptr[Void]` has no `.obj` or `p[i]` (void has no size); use `.value`.
 
         Type Parameters:
             T: The type being pointed to.
@@ -39,7 +44,7 @@ if TYPE_CHECKING:
 
         @property
         def obj(self) -> T:
-            """Dereference pointer to access the pointed-to value.
+            """Read the pointed-to value (`*p`).
 
             Returns:
                 The dereferenced value of type T.
@@ -48,7 +53,7 @@ if TYPE_CHECKING:
 
         @obj.setter
         def obj(self, value: T) -> None:
-            """Set the pointed-to value.
+            """Write the pointed-to value (`*p = value`).
 
             Args:
                 value: New value to store at pointer location.
@@ -60,19 +65,19 @@ if TYPE_CHECKING:
 
         @property
         def value(self) -> Optional[int]:
-            """Get raw pointer address.
+            """Read raw pointer address.
 
             Returns:
-                Integer address or None for NULL.
+                Integer address or `None` for NULL.
             """
             ...
 
         @value.setter
         def value(self, addr: Optional[int]) -> None:
-            """Set raw pointer address.
+            """Write raw pointer address (`p = (T*)addr`).
 
             Args:
-                addr: New address or None for NULL.
+                addr: New address or `None` for NULL.
             """
             ...
 
@@ -101,6 +106,26 @@ if TYPE_CHECKING:
             """
             ...
 
+        def __getitem__(self, index: int) -> T:
+            """Read the `index`-th element (`*(p + index)`).
+
+            Args:
+                index: Zero-based offset from the pointed-to memory.
+
+            Returns:
+                The element at that offset.
+            """
+            ...
+
+        def __setitem__(self, index: int, value: T) -> None:
+            """Write the `index`-th element (`*(p + index) = value`).
+
+            Args:
+                index: Zero-based offset from the pointed-to memory.
+                value: New value to store at that offset.
+            """
+            ...
+
 else:
 
     class _PtrMeta(type):
@@ -108,7 +133,7 @@ else:
 
         Handles special cases:
             - Ptr[Void]: Returns wrapper for void pointers (with `.value`)
-            - Ptr[T]: Returns wrapper for pointers to T (with `.obj`)
+            - Ptr[T]: Returns wrapper for pointers to T (with `.obj` & `.value`)
             - Ptr[Ptr[T]]: Recursive pointers work correctly
 
         Attributes:
@@ -141,9 +166,9 @@ else:
 
                     def __repr__(self) -> str:
                         """String representation with address."""
-                        if self.value is not None:
-                            return f"<Ptr[Void] 0x{self.value:X}>"
-                        return "<Ptr[Void] NULL>"
+                        if not bool(self):
+                            return "<Ptr[Void] NULL>"
+                        return f"<Ptr[Void] 0x{self.value or 0:X}>"
 
                     def __eq__(self, other: object) -> bool:
                         """Compare two void pointers by address."""
@@ -162,7 +187,7 @@ else:
 
             # Create pointer type
             try:
-                ptr_type = pointer_type(item)
+                ptr_type = POINTER(item)
             except TypeError as err:
                 raise ValueError(f"Cannot create pointer to '{type_name}': {err}") from err
 
@@ -188,29 +213,40 @@ else:
 
                 @property
                 def obj(self) -> T:
-                    """Dereference pointer to access the pointed-to value."""
+                    """Read the pointed-to value (`*p`)."""
                     return self.contents
 
                 @obj.setter
                 def obj(self, value: T) -> None:
-                    """Set the pointed-to value."""
-                    self.contents = value
+                    """Write the pointed-to value (`*p = value`)."""
+                    try:
+                        src = addressof(value)
+                    except TypeError:
+                        self.contents.value = value
+                    else:
+                        memmove(addressof(self.contents), src, sizeof(item))
+
+                @property
+                def value(self) -> Optional[int]:
+                    """Read raw pointer address."""
+                    return cast(self, Ptr[Void]).value
+
+                @value.setter
+                def value(self, addr: Optional[int]) -> None:
+                    """Write raw pointer address (`p = (T*)addr`)."""
+                    memmove(addressof(self), byref(Ptr[Void](addr)), sizeof(Ptr[Void]))
 
                 def __repr__(self) -> str:
                     """String representation with address."""
                     if not bool(self):
                         return f"<Ptr[{type_name}] NULL>"
-                    return f"<Ptr[{type_name}] 0x{addressof(self.contents):X}>"
+                    return f"<Ptr[{type_name}] 0x{self.value or 0:X}>"
 
                 def __eq__(self, other: object) -> bool:
                     """Compare two pointers by address."""
                     if not isinstance(other, SmartPtr):
                         return NotImplemented
-                    self_null = not bool(self)
-                    other_null = not bool(other)
-                    if self_null or other_null:
-                        return self_null and other_null
-                    return addressof(self.contents) == addressof(other.contents)
+                    return self.value == other.value
 
             SmartPtr.__name__ = f"Ptr[{type_name}]"
             SmartPtr.__qualname__ = f"Ptr[{type_name}]"
@@ -232,7 +268,8 @@ else:
             _type_: The pointed-to type.
 
         - `Ptr[Void]` — void pointer; use `.value` to read/write the raw address.
-        - `Ptr[T]` — typed pointer; use `.obj` to dereference and access the value.
+        - `Ptr[T]` — typed pointer; use `.obj` to dereference, `.value` for the raw address,
+          `p[i]` for pointer arithmetic indexing.
         - `Ptr[Ptr[T]]` — double pointer; works recursively.
 
         Example:
@@ -244,6 +281,10 @@ else:
             x = Int32(42)
             p = Ptr[Int32](x)
             print(p.obj.value)   # 42
+            p.obj = Int32(99)    # Write through `p`
+            p.value = addr       # Re-aim `p`
+            print(p[0])          # *(p + 0); Same as `p.obj`
+            p[1] = Int32(123)    # *(p + 1) = 123 — For array-backed pointers
 
             # Void pointer (raw address only)
             vp = Ptr[Void]()
@@ -258,4 +299,21 @@ else:
         pass
 
 
-__all__ = ["Ptr"]
+def pointer(obj: U, target: Optional[type] = None, shift: bool = False) -> CPointer:
+    """Create a pointer to an EcoOS object.
+
+    Args:
+        obj: The EcoOS object.
+        target: Result type (`Ptr[target]`). Defaults to `type(obj)`.
+        shift: If True, add `offsetof(obj, target)` before casting.
+
+    Returns:
+        An EcoOS pointer to the object.
+    """
+    if target is None:
+        target = type(obj)
+    offset = offsetof(obj, target) if shift else 0
+    return cast(addressof(obj) + offset, Ptr[target])
+
+
+__all__ = ["Ptr", "pointer"]

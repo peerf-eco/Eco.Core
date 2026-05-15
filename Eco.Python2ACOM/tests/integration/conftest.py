@@ -62,8 +62,8 @@ def eco_test(
         byref(IID_IEcoTest),
         byref(ppv),
     )
-    if result.value != 0 or not ppv.value:
-        pytest.skip(f"Failed to create 'Eco.Test' component (error = {result.value})")
+    if result != 0 or not bool(ppv):
+        pytest.skip(f"Failed to create 'Eco.Test' component (error = {result})")
 
     test_iface = cast(ppv, Ptr[IEcoTest])
     yield test_iface

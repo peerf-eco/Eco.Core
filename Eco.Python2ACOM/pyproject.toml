@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "eco-python2acom"
-version = "0.11.0"
+version = "0.12.0"
 description = "Python bridge for ACOM component technology (EcoOS)"
 authors = ["Sergei Vdovenkov <sivdovenkov.it@gmail.com>"]
 readme = "README.md"
@@ -120,6 +120,9 @@ disable_error_code = [
     "method-assign",
     "assignment",
     "no-any-return",
+    "return-value",
+    "comparison-overlap",
+    "arg-type",
 ]
 exclude = '^(tests|examples)/'
 

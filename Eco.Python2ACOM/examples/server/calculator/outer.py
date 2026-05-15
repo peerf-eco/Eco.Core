@@ -12,10 +12,12 @@ Aggregation model ("outer"):
       with `outer=self` and released in `__eco_del__`.
 """
 
-from typing import Optional
-
-from inner import CID_EcoCalculatorInner
-from interfaces import IEcoCalculatorY, IID_IEcoCalculatorY
+try:
+    from inner import CID_EcoCalculatorInner
+    from interfaces import IEcoCalculatorY, IID_IEcoCalculatorY
+except ImportError:
+    from examples.server.calculator.inner import CID_EcoCalculatorInner
+    from examples.server.calculator.interfaces import IEcoCalculatorY, IID_IEcoCalculatorY
 
 from eco_python2acom.decorators.server.component import component
 from eco_python2acom.decorators.server.factory import export, factory
@@ -30,7 +32,7 @@ from eco_python2acom.interfaces.unknown import IEcoUnknown
 from eco_python2acom.types.core import CString, Int16, Int32, UInt32, Void
 from eco_python2acom.types.errors import EcoErrorCode
 from eco_python2acom.types.guid import UGUID
-from eco_python2acom.types.pointer import Ptr
+from eco_python2acom.types.pointer import Ptr, pointer
 from eco_python2acom.types.utils import addressof, byref, cast, offsetof
 
 CID_EcoCalculatorOuter = UGUID("872FEFD1-E331-4887-AD44-D1E7C232C2F0")
@@ -40,45 +42,45 @@ CID_EcoCalculatorOuter = UGUID("872FEFD1-E331-4887-AD44-D1E7C232C2F0")
 class EcoCalculatorOuter:
     """Aggregated calculator implementing `IEcoCalculatorY`."""
 
-    system: Optional[Ptr[IEcoSystem1]]
-    inner: Optional[Ptr[IEcoUnknown]]
+    system: Ptr[IEcoSystem1]
+    inner: Ptr[IEcoUnknown]
 
     def __eco_new__(self, system: Ptr[IEcoUnknown], outer: Ptr[IEcoUnknown]) -> Int16:
         """Allocation phase — pull `IEcoSystem1` out of the system unknown."""
-        self.system = None
-        self.inner = None
+        self.system = Ptr[IEcoSystem1]()
+        self.inner = Ptr[IEcoUnknown]()
         if not bool(system):
-            return Int16(EcoErrorCode.POINTER)
+            return EcoErrorCode.POINTER
 
         system_ptr = Ptr[Void]()
         result = system.obj.QueryInterface(byref(GID_IEcoSystem), byref(system_ptr))
-        if result.value != 0 or not system_ptr.value:
-            return Int16(EcoErrorCode.NOSYSTEM)
+        if result != 0 or not bool(system_ptr):
+            return EcoErrorCode.NOSYSTEM
         self.system = cast(system_ptr, Ptr[IEcoSystem1])
 
-        return Int16(EcoErrorCode.SUCCESS)
+        return EcoErrorCode.SUCCESS
 
     def __eco_init__(self, system: Ptr[IEcoUnknown]) -> Int16:
         """Initialisation phase — aggregate the inner under our own identity."""
         if not bool(self.system):
-            return Int16(EcoErrorCode.NOSYSTEM)
+            return EcoErrorCode.NOSYSTEM
 
         bus_ptr = Ptr[Void]()
         result = self.system.obj.QueryInterface(byref(IID_IEcoInterfaceBus1), byref(bus_ptr))
-        if result.value != 0 or not bus_ptr.value:
-            return Int16(EcoErrorCode.NOBUS)
+        if result != 0 or not bool(bus_ptr):
+            return EcoErrorCode.NOBUS
         bus = cast(bus_ptr, Ptr[IEcoInterfaceBus1])
 
         bridge_ptr = Ptr[Void]()
         result = bus.obj.QueryInterface(byref(IID_IEcoACOM2Python), byref(bridge_ptr))
-        if result.value != 0 or not bridge_ptr.value:
+        if result != 0 or not bool(bridge_ptr):
             bus.obj.Release()
-            return Int16(EcoErrorCode.NOPYTHONBRIDGE)
+            return EcoErrorCode.NOPYTHONBRIDGE
         bridge = cast(bridge_ptr, Ptr[IEcoACOM2Python])
 
         # Pass *ourselves* as the outer so the inner's delegating triple loops
         # back through our `QueryInterface` / `AddRef` / `Release`.
-        outer_self = cast(addressof(self), Ptr[IEcoUnknown])
+        outer_self = pointer(self, IEcoUnknown)
 
         inner_ptr = Ptr[Void]()
         result = bridge.obj.QueryComponent(
@@ -86,17 +88,16 @@ class EcoCalculatorOuter:
         )
         bridge.obj.Release()
         bus.obj.Release()
-        if result.value != 0 or not inner_ptr.value:
+        if result != 0 or not bool(inner_ptr):
             return result
         self.inner = cast(inner_ptr, Ptr[IEcoUnknown])
 
-        return Int16(EcoErrorCode.SUCCESS)
+        return EcoErrorCode.SUCCESS
 
     def __eco_del__(self) -> Void:
         """Cleanup phase — release the cached `IEcoSystem1` pointer."""
         if bool(self.system):
             self.system.obj.Release()
-        self.system = None
 
     def QueryInterface(self, iid: Ptr[UGUID], out: Ptr[Ptr[Void]]) -> Int16:
         """Query for another interface on this component.
@@ -113,19 +114,23 @@ class EcoCalculatorOuter:
             0 on success, error code otherwise.
         """
         if not bool(iid) or not bool(out):
-            return Int16(EcoErrorCode.POINTER)
+            self.logger.debug("Null pointer")
+            return EcoErrorCode.POINTER
 
         target = iid.obj
         if target == IID_IEcoUnknown or target == IID_IEcoCalculatorY:
             out.obj.value = addressof(self) + offsetof(self, IEcoCalculatorY)
             self.AddRef()
-            return Int16(EcoErrorCode.SUCCESS)
+            self.logger.debug("IID = <%s> ---> OK", target)
+            return EcoErrorCode.SUCCESS
 
         if bool(self.inner):
+            self.logger.debug("IID = <%s> ---> Forwarding to inner", target)
             return self.inner.obj.QueryInterface(iid, out)
 
+        self.logger.debug("IID = <%s> ---> Interface not supported", target)
         out.obj.value = 0
-        return Int16(EcoErrorCode.NOINTERFACE)
+        return EcoErrorCode.NOINTERFACE
 
     def AddRef(self) -> UInt32:
         """Increment the reference count.
@@ -134,6 +139,7 @@ class EcoCalculatorOuter:
             The new reference count.
         """
         self.refs += 1
+        self.logger.debug("Refs = %d", self.refs)
         return self.refs
 
     def Release(self) -> UInt32:
@@ -149,10 +155,11 @@ class EcoCalculatorOuter:
             if bool(self.inner):
                 if self.inner.obj.Release() != 0:
                     self.refs = 1
-                else:
-                    self.inner = None
             if self.refs == 0:
                 self.__eco_del__()
+                self.logger.debug("Refs = 0 ---> Destroyed")
+                return self.refs
+        self.logger.debug("Refs = %d", self.refs)
         return self.refs
 
     @view

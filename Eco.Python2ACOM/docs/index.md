@@ -40,7 +40,7 @@ with EcoSystem(runtime_path="/path/to/rt", user_lib_dir="/path/to/components") a
 | Package | Description |
 |---|---|
 | `eco_python2acom.decorators` | `@model`, `@union`, `@stub`, `@interface`, `@view`, `@component`, `@factory` decorators |
-| `eco_python2acom.types` | Primitive types, `Ptr`, `Array`, `UGUID`, errors, utilities (`sizeof`, `cast`, `pointer`, `byref`, `addressof`, `offsetof`) |
+| `eco_python2acom.types` | Primitive types, `Ptr`, `Array`, `UGUID`, errors, utilities (`sizeof`, `cast`, `byref`, `addressof`, `offsetof`, `memmove`, `memset`) |
 | `eco_python2acom.guids` | IID, CID, GID constants |
 | `eco_python2acom.interfaces` | Built-in EcoOS interface definitions (`IEcoUnknown`, `IEcoInterfaceBus1`, `IEcoMemoryManager1`, `IEcoFileManager1`, etc.) |
 | `eco_python2acom.runtime` | `EcoSystem` bootstrap and library loader |

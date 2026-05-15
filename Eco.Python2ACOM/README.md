@@ -72,7 +72,7 @@ Topical entry points:
 | Topic | Page |
 |---|---|
 | Decorators (`@model`, `@interface`, `@view`, `@component`, `@factory`) | [`docs/decorators/`](docs/decorators/) |
-| Type primitives, `Ptr`, `Array`, `UGUID`, errors | [`docs/types/`](docs/types/) |
+| Type primitives, `Ptr`, `Array`, `UGUID`, errors, utils | [`docs/types/`](docs/types/) |
 | GUIDs (IID, CID, GID) | [`docs/guids/`](docs/guids/) |
 | Runtime (`EcoSystem`, `EcoLibLoader`, logging) | [`docs/runtime/`](docs/runtime/) |
 | Built-in EcoOS interfaces | [`docs/interfaces/`](docs/interfaces/) |

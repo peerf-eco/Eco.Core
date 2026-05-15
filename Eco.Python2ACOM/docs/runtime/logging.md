@@ -11,7 +11,7 @@ Where `<scope>` is the per-class logger automatically injected into every `@comp
 Example output:
 
 ```
-2026-05-13 10:23:12 [DEBUG] CEcoCalculator::Alloc() ---> At <0x7f8a3c1d4280> ---> OK
+2026-05-13 10:23:12 [DEBUG] CEcoCalculator::Alloc() ---> Instance at <0x7f8a3c1d4280> ---> OK
 2026-05-13 10:23:12 [DEBUG] CEcoCalculator::AddRef() ---> Refs = 2
 2026-05-13 10:23:12 [DEBUG] CEcoCalculator::Release() ---> Refs = 0 ---> Destroyed
 ```

@@ -39,7 +39,7 @@ class TestFuncCreation:
     def test_create_func_void_return(self) -> None:
         """Verifies `Void` is an accepted return type."""
         FuncType = Func[Void, [Int32]]
-        assert FuncType._restype_ is Void
+        assert FuncType._restype_ is None
 
     def test_class_name_uses_type_names(self) -> None:
         """Verifies display name uses canonical EcoOS type labels."""

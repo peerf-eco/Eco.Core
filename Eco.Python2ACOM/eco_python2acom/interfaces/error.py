@@ -39,7 +39,7 @@ class IEcoError1(IEcoUnknown):
         """Record the last error code on the current thread / component.
 
         Args:
-            errCode: Error code to store.
+            err_code: Error code to store.
         """
         ...
 

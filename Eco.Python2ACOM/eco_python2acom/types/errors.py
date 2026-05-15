@@ -24,7 +24,7 @@ class EcoErrorCode(IntEnum):
     Example:
         ```python
         result = bus.obj.RegisterComponent(byref(cid), factory)
-        if result.value != EcoErrorCode.SUCCESS:
+        if result != EcoErrorCode.SUCCESS:
             raise EcoError(result, "RegisterComponent failed")
         ```
 
@@ -97,7 +97,7 @@ class EcoError(Exception):
     Example:
         ```python
         result = factory.obj.Alloc(None, None, byref(iid), byref(ppv))
-        if result.value != 0:
+        if result != 0:
             raise EcoError(result, "Failed to create component instance")
         ```
 

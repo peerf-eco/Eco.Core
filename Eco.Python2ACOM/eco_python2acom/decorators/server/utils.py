@@ -5,24 +5,256 @@ server-side decorator.
 """
 
 from collections.abc import Callable
-from typing import Any
+from typing import Any, Optional
 
-from eco_python2acom.decorators.server.methods import (
-    DelegatingIEcoUnknownMethods,
-    IEcoComponentFactoryMethods,
-    IEcoUnknownMethods,
-)
-from eco_python2acom.decorators.server.ndu import NonDelegatingUnknownView
+from eco_python2acom.decorators.server.alive import ALIVE
 from eco_python2acom.decorators.server.view import view
 from eco_python2acom.decorators.utils import _build_namespace, _resolve_fields
 from eco_python2acom.guids.iid import IID_IEcoComponentFactory, IID_IEcoUnknown
 from eco_python2acom.interfaces.factory import IEcoComponentFactory
 from eco_python2acom.interfaces.unknown import IEcoUnknown
 from eco_python2acom.runtime.logging import eco_logger
-from eco_python2acom.types.core import CSimpleData, CStructure, UInt32, Void
+from eco_python2acom.types.core import CString, CStructure, Int16, UInt32, Void
+from eco_python2acom.types.errors import EcoErrorCode
 from eco_python2acom.types.guid import UGUID
-from eco_python2acom.types.pointer import Ptr
-from eco_python2acom.types.utils import cast, offsetof
+from eco_python2acom.types.pointer import Ptr, pointer
+from eco_python2acom.types.utils import addressof, cast, offsetof
+
+# -----------------------------------------------------------------------------
+# IEcoUnknown — non-delegating
+# -----------------------------------------------------------------------------
+
+
+class IEcoUnknownMethods:
+    """Non-delegating `IEcoUnknown` triple: `QueryInterface`, `AddRef`, `Release`."""
+
+    @staticmethod
+    def build(primary: UGUID, offsets: dict[UGUID, int]) -> dict[str, Callable[..., Any]]:
+        """Build the triple bound to the given primary IID and view-offset table."""
+
+        def QueryInterface(self, iid: Ptr[UGUID], out: Ptr[Ptr[Void]]) -> Int16:
+            """Query for another interface on this component.
+
+            Args:
+                iid: Pointer to the requested interface ID.
+                out: Output pointer to receive the interface.
+
+            Returns:
+                0 on success, error code otherwise.
+            """
+            if not bool(iid) or not bool(out):
+                self.logger.debug("Null pointer")
+                return EcoErrorCode.POINTER
+
+            target = iid.obj
+            offset = offsets.get(target)
+
+            if offset is None and target == IID_IEcoUnknown:
+                offset = offsets.get(primary)
+            if offset is None:
+                self.logger.debug("IID = <%s> ---> Interface not supported", target)
+                out.obj.value = 0
+                return EcoErrorCode.NOINTERFACE
+
+            out.obj.value = addressof(self) + offset
+            self.AddRef()
+            self.logger.debug("IID = <%s> ---> OK", target)
+            return EcoErrorCode.SUCCESS
+
+        def AddRef(self) -> UInt32:
+            """Increment the reference count.
+
+            Returns:
+                The new reference count.
+            """
+            self.refs += 1
+            self.logger.debug("Refs = %d", self.refs)
+            return self.refs
+
+        def Release(self) -> UInt32:
+            """Decrement the reference count.
+
+            When the count reaches zero, the component is freed.
+
+            Returns:
+                The new reference count.
+            """
+            self.refs -= 1
+            if self.refs == 0:
+                self.__eco_del__()
+                ALIVE.pop(addressof(self), None)
+                self.logger.debug("Refs = 0 ---> Destroyed")
+            else:
+                self.logger.debug("Refs = %d", self.refs)
+            return self.refs
+
+        return {"QueryInterface": QueryInterface, "AddRef": AddRef, "Release": Release}
+
+
+# -----------------------------------------------------------------------------
+# IEcoUnknown — delegating
+# -----------------------------------------------------------------------------
+
+
+class DelegatingIEcoUnknownMethods:
+    """Delegating `IEcoUnknown` triple that forwards every call to outer component."""
+
+    @staticmethod
+    def build() -> dict[str, Callable[..., Any]]:
+        """Build the triple — every call is forwarded to `self.outer`."""
+
+        def is_aggregated(self) -> bool:
+            """True if `self.outer` points at an external outer."""
+            return self.outer.value != pointer(self, IEcoUnknown, shift=True).value
+
+        def QueryInterface(self, iid: Ptr[UGUID], out: Ptr[Ptr[Void]]) -> Int16:
+            """Query for another interface on this component.
+
+            Args:
+                iid: Pointer to the requested interface ID.
+                out: Output pointer to receive the interface.
+
+            Returns:
+                0 on success, error code otherwise.
+            """
+            if is_aggregated(self):
+                self.logger.debug("Delegating to outer")
+            return self.outer.obj.QueryInterface(iid, out)
+
+        def AddRef(self) -> UInt32:
+            """Increment the reference count.
+
+            Returns:
+                The new reference count.
+            """
+            if is_aggregated(self):
+                self.logger.debug("Delegating to outer")
+            return self.outer.obj.AddRef()
+
+        def Release(self) -> UInt32:
+            """Decrement the reference count.
+
+            When the count reaches zero, the component is freed.
+
+            Returns:
+                The new reference count.
+            """
+            if is_aggregated(self):
+                self.logger.debug("Delegating to outer")
+            return self.outer.obj.Release()
+
+        return {"QueryInterface": QueryInterface, "AddRef": AddRef, "Release": Release}
+
+
+# -----------------------------------------------------------------------------
+# IEcoComponentFactory
+# -----------------------------------------------------------------------------
+
+
+class IEcoComponentFactoryMethods:
+    """Method bundle implementing `IEcoComponentFactory`."""
+
+    @staticmethod
+    def build(cls: type) -> dict[str, Callable[..., Any]]:
+        """Build the bundle that allocates instances of the given component class."""
+
+        def Alloc(
+            self,
+            system: Optional[Ptr[IEcoUnknown]],
+            outer: Optional[Ptr[IEcoUnknown]],
+            iid: Ptr[UGUID],
+            out: Ptr[Ptr[Void]],
+        ) -> Int16:
+            """Allocate a new component instance.
+
+            Args:
+                system: Pointer to system interface (can be NULL).
+                outer: Outer unknown for aggregation (can be NULL).
+                iid: Requested interface ID.
+                out: Output pointer for the interface.
+
+            Returns:
+                0 on success, error code otherwise.
+            """
+            if not bool(iid) or not bool(out) or not bool(system):
+                self.logger.debug("Null pointer")
+                return EcoErrorCode.POINTER
+
+            if bool(outer) and iid.obj != IID_IEcoUnknown:
+                self.logger.debug("Aggregation requires 'IID_IEcoUnknown'")
+                return EcoErrorCode.NOAGGREGATION
+
+            instance = cls()
+            result = instance.__eco_new__(system, outer)
+            if result != 0:
+                self.logger.debug("Instance creation failed | code = 0x%X", result)
+                return result
+
+            result = instance.__eco_init__(system)
+            if result != 0:
+                self.logger.debug("Instance init failed | code = 0x%X", result)
+                return result
+
+            ALIVE[addressof(instance)] = instance
+            self.logger.debug("Instance at <0x%x>", addressof(instance))
+
+            result = instance.QueryInterface(iid, out)
+            if result != 0:
+                self.logger.debug("Interface query failed | code = 0x%X", result)
+                return result
+
+            instance.Release()
+            return EcoErrorCode.SUCCESS
+
+        def Init(self, system: Optional[Ptr[IEcoUnknown]], context: Ptr[Void]) -> Int16:
+            """Initialize the factory with system context.
+
+            Args:
+                system: Pointer to system interface (can be NULL).
+                context: Additional context (e.g., bus pointer).
+
+            Returns:
+                0 on success, error code otherwise.
+            """
+            return EcoErrorCode.SUCCESS
+
+        def get_Name(self) -> CString:
+            """Get the component name.
+
+            Returns:
+                Pointer to null-terminated string.
+            """
+            return self.name
+
+        def get_Version(self) -> CString:
+            """Get the component version.
+
+            Returns:
+                Pointer to null-terminated string.
+            """
+            return self.version
+
+        def get_Manufacturer(self) -> CString:
+            """Get the component manufacturer.
+
+            Returns:
+                Pointer to null-terminated string.
+            """
+            return self.manufacturer
+
+        return {
+            "Alloc": Alloc,
+            "Init": Init,
+            "get_Name": get_Name,
+            "get_Version": get_Version,
+            "get_Manufacturer": get_Manufacturer,
+        }
+
+
+@view
+class NDU(IEcoUnknown):
+    """Non-delegating `IEcoUnknown` view — methods fall through to the parent."""
+
 
 # -----------------------------------------------------------------------------
 # View collection
@@ -58,7 +290,7 @@ def _collect_views(cls: type, aggregatable: bool = False) -> dict[UGUID, type]:
         raise TypeError(f"Component '{cls.__name__}' must declare at least one '@view'")
 
     if aggregatable:
-        out[IID_IEcoUnknown] = NonDelegatingUnknownView
+        out[IID_IEcoUnknown] = NDU
 
     return out
 
@@ -163,8 +395,6 @@ def _make_method_trampoline(
         if parent is None:
             return 0
         result = method(parent, *args)
-        if isinstance(result, CSimpleData):
-            return result.value
         return result
 
     trampoline.__name__ = getattr(method, "__name__", "trampoline")

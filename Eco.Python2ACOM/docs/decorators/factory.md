@@ -1,4 +1,4 @@
-# Factory Decorator
+# Factory
 
 Use this decorator to define ACOM factory classes.
 

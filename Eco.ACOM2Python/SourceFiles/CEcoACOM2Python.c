@@ -292,6 +292,7 @@ static int16_t LoadPythonFactoryInstance(const char_t* pathName, PyObject** ppMo
     PyObject* pLoader = NULL;
     PyObject* pExecResult = NULL;
     PyObject* pAddrLong = NULL;
+    PyObject* pFactoryPtr = NULL;
     PyObject* pFactoryCallable = NULL;
     const char_t* baseName = NULL;
     char_t modName[MAX_SIZE];
@@ -366,8 +367,12 @@ static int16_t LoadPythonFactoryInstance(const char_t* pathName, PyObject** ppMo
         goto Cleanup;
     }
 
-    /* `get_component_factory()` returns the raw native address of the singleton. */
-    pAddrLong = PyObject_CallObject(pFactoryCallable, NULL);
+    /* `get_component_factory()` returns a typed `Ptr[IEcoComponentFactory]`; */
+    /* the raw native address lives in its `.value` attribute. */
+    pFactoryPtr = PyObject_CallObject(pFactoryCallable, NULL);
+    if (pFactoryPtr == NULL) goto Cleanup;
+
+    pAddrLong = PyObject_GetAttrString(pFactoryPtr, "value");
     if (pAddrLong == NULL) goto Cleanup;
 
     *ppIUnk = (IEcoUnknownPtr_t) (uintptr_t)PyLong_AsUnsignedLongLong(pAddrLong);
@@ -383,6 +388,7 @@ static int16_t LoadPythonFactoryInstance(const char_t* pathName, PyObject** ppMo
 Cleanup:
     if (PyErr_Occurred()) PyErr_Clear();
     Py_DecRef(pAddrLong);
+    Py_DecRef(pFactoryPtr);
     Py_DecRef(pFactoryCallable);
     Py_DecRef(pExecResult);
     Py_DecRef(pLoader);

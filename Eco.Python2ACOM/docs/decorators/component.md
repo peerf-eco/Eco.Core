@@ -1,4 +1,4 @@
-# Component Decorator
+# Component
 
 Use this decorator to define ACOM component classes with a bound CID.
 

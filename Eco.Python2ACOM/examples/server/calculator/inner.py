@@ -10,9 +10,10 @@ Aggregation model ("inner"):
       hands the caller a pointer to NDU directly.
 """
 
-from typing import Optional
-
-from interfaces import IEcoCalculatorX
+try:
+    from interfaces import IEcoCalculatorX
+except ImportError:
+    from examples.server.calculator.interfaces import IEcoCalculatorX
 
 from eco_python2acom.decorators.server.component import component
 from eco_python2acom.decorators.server.factory import export, factory
@@ -34,31 +35,30 @@ CID_EcoCalculatorInner = UGUID("AE202E54-3CE5-4550-8996-03BD70C62565")
 class EcoCalculatorInner:
     """Aggregatable calculator implementing `IEcoCalculatorX`."""
 
-    system: Optional[Ptr[IEcoSystem1]]
+    system: Ptr[IEcoSystem1]
 
     def __eco_new__(self, system: Ptr[IEcoUnknown], outer: Ptr[IEcoUnknown]) -> Int16:
         """Allocation phase — pull `IEcoSystem1` out of the system unknown."""
-        self.system = None
+        self.system = Ptr[IEcoSystem1]()
         if not bool(system):
-            return Int16(EcoErrorCode.POINTER)
+            return EcoErrorCode.POINTER
 
         system_ptr = Ptr[Void]()
         result = system.obj.QueryInterface(byref(GID_IEcoSystem), byref(system_ptr))
-        if result.value != 0 or not system_ptr.value:
-            return Int16(EcoErrorCode.NOSYSTEM)
+        if result != 0 or not bool(system_ptr):
+            return EcoErrorCode.NOSYSTEM
         self.system = cast(system_ptr, Ptr[IEcoSystem1])
 
-        return Int16(EcoErrorCode.SUCCESS)
+        return EcoErrorCode.SUCCESS
 
     def __eco_init__(self, system: Ptr[IEcoUnknown]) -> Int16:
         """Initialisation phase — nothing to do for this component."""
-        return Int16(EcoErrorCode.SUCCESS)
+        return EcoErrorCode.SUCCESS
 
     def __eco_del__(self) -> Void:
         """Cleanup phase — release the cached `IEcoSystem1` pointer."""
         if bool(self.system):
             self.system.obj.Release()
-        self.system = None
 
     @view
     class X(IEcoCalculatorX):

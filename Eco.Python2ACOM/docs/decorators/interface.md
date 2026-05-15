@@ -1,4 +1,4 @@
-# Interface Decorator
+# Interface
 
 Use this decorator to define ACOM interface classes with a bound IID.
 

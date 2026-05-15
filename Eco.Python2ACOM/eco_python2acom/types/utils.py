@@ -3,38 +3,12 @@
 import ctypes
 from typing import Any, TypeVar
 
-from eco_python2acom.types.core import CPointer
-
 U = TypeVar("U")
 
 
 # -----------------------------------------------------------------------------
 # Function helpers
 # -----------------------------------------------------------------------------
-
-
-def pointer_type(base_type: type[U]) -> type[CPointer]:
-    """Create a pointer type for an EcoOS data type.
-
-    Args:
-        base_type: The EcoOS data type.
-
-    Returns:
-        A pointer type (class) for the given type.
-    """
-    return ctypes.POINTER(base_type)
-
-
-def pointer(obj: U) -> CPointer:
-    """Create a pointer to an EcoOS object.
-
-    Args:
-        obj: The EcoOS object.
-
-    Returns:
-        An EcoOS pointer to the object.
-    """
-    return ctypes.pointer(obj)
 
 
 def cast(obj: Any, target_type: type[U]) -> U:
@@ -102,4 +76,34 @@ def offsetof(obj_or_type: Any, iface: type) -> int:
     return getattr(cls, f"_vtbl_{iface.__name__}").offset
 
 
-__all__ = ["pointer_type", "pointer", "cast", "byref", "addressof", "sizeof", "offsetof"]
+def memmove(dst: Any, src: Any, size: int) -> None:
+    """Copy `size` bytes from `src` to `dst`.
+
+    Args:
+        dst: Destination address or destination object.
+        src: Source address or source object.
+        size: Number of bytes to copy.
+    """
+    ctypes.memmove(dst, src, size)
+
+
+def memset(dst: Any, byte: int, size: int) -> None:
+    """Fill `size` bytes at `dst` with `byte`.
+
+    Args:
+        dst: Destination address or destination object.
+        byte: Byte value to write (0–255).
+        size: Number of bytes to fill.
+    """
+    ctypes.memset(dst, byte, size)
+
+
+__all__ = [
+    "cast",
+    "byref",
+    "addressof",
+    "sizeof",
+    "offsetof",
+    "memmove",
+    "memset",
+]

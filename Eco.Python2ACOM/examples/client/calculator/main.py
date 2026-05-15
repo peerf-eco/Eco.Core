@@ -37,7 +37,7 @@ def main() -> int:
     """Run calculator example."""
     CID_EcoCalculator = UGUID("4828F655-2E45-40E7-8121-EBD220DC360E")
     console.header("Eco Calculator Example")
-    console.info(f"CID: {CID_EcoCalculator}")
+    console.info(f"CID:                 {CID_EcoCalculator}")
     console.info(f"IEcoCalculatorX IID: {IID_IEcoCalculatorX}")
     console.info(f"IEcoCalculatorY IID: {IID_IEcoCalculatorY}\n")
 
@@ -51,31 +51,31 @@ def main() -> int:
             result = eco.bus.obj.QueryComponent(
                 byref(CID_EcoCalculator), None, byref(IID_IEcoCalculatorX), byref(ppv_x)
             )
-            if result.value != 0 or not ppv_x.value:
-                console.error(f"Failed to query component (code = {result.value})\n")
+            if result != 0 or not bool(ppv_x):
+                console.error(f"Failed to query component (code = {result})\n")
                 return -2
             calc_x = cast(ppv_x, Ptr[IEcoCalculatorX])
             console.success(f"Got {calc_x}")
 
             result = calc_x.obj.Addition(a=10, b=20)
-            show("Addition", 10, "+", 20, result.value)
+            show("Addition", 10, "+", 20, result)
             result = calc_x.obj.Subtraction(a=50, b=30)
-            show("Subtraction", 50, "-", 30, result.value)
+            show("Subtraction", 50, "-", 30, result)
             console.print()
 
             ppv_y = Ptr[Void]()
             result = calc_x.obj.QueryInterface(byref(IID_IEcoCalculatorY), byref(ppv_y))
-            if result.value != 0 or not ppv_y.value:
-                console.error(f"Failed to query interface (code = {result.value})\n")
+            if result != 0 or not bool(ppv_y):
+                console.error(f"Failed to query interface (code = {result})\n")
                 calc_x.Release()
                 return -3
             calc_y = cast(ppv_y, Ptr[IEcoCalculatorY])
             console.success(f"Got {calc_y}")
 
             result = calc_y.obj.Multiplication(a=6, b=7)
-            show("Multiplication", 6, "*", 7, result.value)
+            show("Multiplication", 6, "*", 7, result)
             result = calc_y.obj.Division(a=100, b=10)
-            show("Division", 100, "/", 10, result.value)
+            show("Division", 100, "/", 10, result)
             console.print()
 
             calc_y.obj.Release()

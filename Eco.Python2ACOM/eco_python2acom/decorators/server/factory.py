@@ -10,7 +10,7 @@ from typing import Any, TypeVar
 
 from eco_python2acom.decorators.server.utils import _eco_server_class, _make_vtbls_installer
 from eco_python2acom.interfaces.factory import IEcoComponentFactory
-from eco_python2acom.types.utils import addressof
+from eco_python2acom.types.pointer import Ptr, pointer
 
 C = TypeVar("C", bound=type)
 
@@ -26,14 +26,14 @@ def _make_factory_init(
     """
 
     def __init__(self) -> None:
-        """Wire vtables, seed metadata, set refcount to zero."""
+        """Wire vtables, seed metadata, set refcount to one (singleton always-alive)."""
         vtbls_installer(self)
+        self.refs = 1
         for field_name, value in metadata.items():
             try:
                 setattr(self, field_name, value)
             except TypeError as err:
                 raise TypeError(f"Cannot assign default {value!r} to field '{field_name}'") from err
-        self.refs = 0
 
     return __init__
 
@@ -92,7 +92,7 @@ def factory(component: type) -> Callable[[C], C]:
     return decorator
 
 
-def export(cls: type) -> tuple[Any, Callable[[], int]]:
+def export(cls: type) -> tuple[Any, Callable[[], Ptr[IEcoComponentFactory]]]:
     """Build the module-level singleton and `get_component_factory` for a factory class.
 
     Args:
@@ -109,9 +109,9 @@ def export(cls: type) -> tuple[Any, Callable[[], int]]:
 
     instance = cls()
 
-    def get_component_factory() -> int:
-        """Return the native address of the module-level factory singleton."""
-        return addressof(instance)
+    def get_component_factory() -> Ptr[IEcoComponentFactory]:
+        """Return a typed pointer to the module-level factory singleton."""
+        return pointer(instance, IEcoComponentFactory, shift=True)
 
     return instance, get_component_factory
 

@@ -85,7 +85,7 @@ static void ReportRegister(const char* name, const UGUID* cid) {
 static void ReportQuery(const char* cid_name, const UGUID* cid, const char* iid_name, const UGUID* iid) {
     printf("  " TAG_OK " QueryComponent " COLOR_BOLD "%s" COLOR_RESET " ", cid_name);
     PrintGUID(cid);
-    printf(", " COLOR_BOLD "%s" COLOR_RESET " ", iid_name);
+    printf(",\n                      " COLOR_BOLD "%s" COLOR_RESET " ", iid_name);
     PrintGUID(iid);
     printf("\n");
 }
@@ -139,7 +139,7 @@ int16_t EcoMain(IEcoUnknown* pIUnk) {
     UGUID CID_EcoCalculatorInclusion = { 0x01, 0x10, {0x34, 0x8E, 0x44, 0x67, 0x7E, 0x82, 0x47, 0x5C, 0xB4, 0xA3, 0x71, 0x9E, 0xD8, 0x39, 0x7E, 0x61} };
     UGUID CID_EcoCalculatorOuter     = { 0x01, 0x10, {0x87, 0x2F, 0xEF, 0xD1, 0xE3, 0x31, 0x48, 0x87, 0xAD, 0x44, 0xD1, 0xE7, 0xC2, 0x32, 0xC2, 0xF0} };
 
-    printf("\n" COLOR_BOLD COLOR_MAGENTA "== Eco.ACOM2Python · variant: '%s' ==" COLOR_RESET "\n\n", ECO_VARIANT_NAME);
+    printf("\n" COLOR_BOLD COLOR_MAGENTA "  == Eco.ACOM2Python · variant: '%s' ==" COLOR_RESET "\n\n", ECO_VARIANT_NAME);
 
     /* System interface */
     result = pIUnk->pVTbl->QueryInterface(pIUnk, &GID_IEcoSystem, (void **)&pISys);
@@ -156,6 +156,21 @@ int16_t EcoMain(IEcoUnknown* pIUnk) {
         goto Release;
     }
     ReportOk("QueryInterface [IID_IEcoInterfaceBus1]");
+
+#ifdef ECO_LIB
+    result = pIBus->pVTbl->RegisterComponent(pIBus, &CID_EcoACOM2Python, (IEcoUnknown*)GetIEcoComponentFactoryPtr_219EDB626EF14B42BE16F93A566F1CC3);
+    if (result != 0) {
+	    ReportFail("RegisterComponent [CID_EcoACOM2Python]", result); 
+        goto Release;
+    }
+    ReportRegister("EcoACOM2Python", &CID_EcoACOM2Python);
+    result = pIBus->pVTbl->RegisterComponent(pIBus, &CID_EcoList1, (IEcoUnknown*)GetIEcoComponentFactoryPtr_53884AFC93C448ECAA929C8D3A562281);
+    if (result != 0) {
+	    ReportFail("RegisterComponent [CID_EcoList1]", result); 
+        goto Release;
+    }
+    ReportRegister("EcoList1", &CID_EcoList1);
+#endif
 
     /* Python bridge — through the interface bus */
     result = pIBus->pVTbl->QueryInterface(pIBus, &IID_IEcoACOM2Python, (void**)&pIEcoACOM2Python);
@@ -208,8 +223,8 @@ int16_t EcoMain(IEcoUnknown* pIUnk) {
     ReportQuery(ECO_VARIANT_CID_NAME, &ECO_VARIANT_CID, "IID_IEcoCalculatorX", &IID_IEcoCalculatorX);
 
     printf("\n" COLOR_BOLD "  IEcoCalculatorX" COLOR_RESET "\n");
-    printf(">    10 + 10 = " COLOR_YELLOW "%d" COLOR_RESET "\n", pIX->pVTbl->Addition(pIX, 10, 10));
-    printf(">    30 - 45 = " COLOR_YELLOW "%d" COLOR_RESET "\n", pIX->pVTbl->Subtraction(pIX, 30, 45));
+    printf("  >    10 + 10 = " COLOR_YELLOW "%d" COLOR_RESET "\n", pIX->pVTbl->Addition(pIX, 10, 10));
+    printf("  >    30 - 45 = " COLOR_YELLOW "%d" COLOR_RESET "\n\n", pIX->pVTbl->Subtraction(pIX, 30, 45));
 
 #if ECO_TEST_VARIANT != 2
     /* Variants 1 / 3 / 4 also expose Y interface */
@@ -221,8 +236,8 @@ int16_t EcoMain(IEcoUnknown* pIUnk) {
     ReportOk("QueryInterface [IID_IEcoCalculatorY]");
 
     printf("\n" COLOR_BOLD "  IEcoCalculatorY" COLOR_RESET "\n");
-    printf(">     5 *  8 = " COLOR_YELLOW "%d" COLOR_RESET "\n", pIY->pVTbl->Multiplication(pIY, 5, 8));
-    printf(">    42 /  7 = " COLOR_YELLOW "%d" COLOR_RESET "\n", pIY->pVTbl->Division(pIY, 42, 7));
+    printf("  >     5 *  8 = " COLOR_YELLOW "%d" COLOR_RESET "\n", pIY->pVTbl->Multiplication(pIY, 5, 8));
+    printf("  >    42 /  7 = " COLOR_YELLOW "%d" COLOR_RESET "\n", pIY->pVTbl->Division(pIY, 42, 7));
 #endif
 
 Release:

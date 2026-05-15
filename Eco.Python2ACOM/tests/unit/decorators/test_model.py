@@ -532,7 +532,7 @@ class TestModelBodyValidation:
                 return int(self.value) ** 2
 
         instance = Model()
-        instance.value = Int32(10)
+        instance.value = 10
         assert instance.doubled() == 20
         assert Model.zero().value == 0
         assert Model.identity(5) == 5
