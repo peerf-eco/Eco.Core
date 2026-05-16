@@ -37,13 +37,12 @@ def eco_system() -> Generator[EcoSystem, None, None]:
     Skips the entire session if runtime is unavailable or initialization fails.
     """
     try:
-        eco = EcoSystem(user_lib_dir=DATA_DIR)
-        eco.init()
+        eco = EcoSystem(lib_dir=DATA_DIR)
     except Exception:
         pytest.skip("`EcoSystem` runtime unavailable or failed to initialize")
 
-    yield eco
-    eco.release()
+    with eco:
+        yield eco
 
 
 @pytest.fixture(scope="session")
