@@ -9,6 +9,8 @@
 /* Begin PBXBuildFile section */
 		012D83B926A1898200F6A93C /* EcoDemoDialogIOS.m in Sources */ = {isa = PBXBuildFile; fileRef = 012D83B526A1898200F6A93C /* EcoDemoDialogIOS.m */; };
 		012D83BA26A1898200F6A93C /* EcoTypeLib1.c in Sources */ = {isa = PBXBuildFile; fileRef = 012D83B626A1898200F6A93C /* EcoTypeLib1.c */; };
+		EC0F111000010B00F6A93C /* EcoTypeLib1Common.c in Sources */ = {isa = PBXBuildFile; fileRef = EC0F111000010C00F6A93C /* EcoTypeLib1Common.c */; };
+		EC0F111000020B00F6A93C /* EcoTypeLib1Calculator.c in Sources */ = {isa = PBXBuildFile; fileRef = EC0F111000020C00F6A93C /* EcoTypeLib1Calculator.c */; };
 		012D83BB26A1898200F6A93C /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 012D83B726A1898200F6A93C /* AppDelegate.m */; };
 		012D83C026A189DF00F6A93C /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 012D83BE26A189DF00F6A93C /* Main.storyboard */; };
 		012D83C626A18A1B00F6A93C /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 012D83C526A18A1B00F6A93C /* Assets.xcassets */; };
@@ -29,6 +31,8 @@
 		012D83B426A1896600F6A93C /* GameViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GameViewController.h; path = ../../../UnitTestFiles/HeaderFiles/GameViewController.h; sourceTree = "<group>"; };
 		012D83B526A1898200F6A93C /* EcoDemoDialogIOS.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = EcoDemoDialogIOS.m; path = ../../../UnitTestFiles/SourceFiles/EcoDemoDialogIOS.m; sourceTree = "<group>"; };
 		012D83B626A1898200F6A93C /* EcoTypeLib1.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = EcoTypeLib1.c; path = ../../../UnitTestFiles/SourceFiles/EcoTypeLib1.c; sourceTree = "<group>"; };
+		EC0F111000010C00F6A93C /* EcoTypeLib1Common.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = EcoTypeLib1Common.c; path = ../../../UnitTestFiles/SourceFiles/EcoTypeLib1Common.c; sourceTree = "<group>"; };
+		EC0F111000020C00F6A93C /* EcoTypeLib1Calculator.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = EcoTypeLib1Calculator.c; path = ../../../UnitTestFiles/SourceFiles/EcoTypeLib1Calculator.c; sourceTree = "<group>"; };
 		012D83B726A1898200F6A93C /* AppDelegate.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = AppDelegate.m; path = ../../../UnitTestFiles/SourceFiles/AppDelegate.m; sourceTree = "<group>"; };
 		012D83BF26A189DF00F6A93C /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Eco.TypeLib1UnitTest/Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		012D83C526A18A1B00F6A93C /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Assets.xcassets; path = Eco.TypeLib1UnitTest/Assets.xcassets; sourceTree = "<group>"; };
@@ -72,6 +76,8 @@
 				012D83BE26A189DF00F6A93C /* Main.storyboard */,
 				012D83B726A1898200F6A93C /* AppDelegate.m */,
 				012D83B626A1898200F6A93C /* EcoTypeLib1.c */,
+				EC0F111000010C00F6A93C /* EcoTypeLib1Common.c */,
+				EC0F111000020C00F6A93C /* EcoTypeLib1Calculator.c */,
 				012D83B526A1898200F6A93C /* EcoDemoDialogIOS.m */,
 			);
 			name = "Source Files";
@@ -202,6 +208,8 @@
 				012D83D926A18C7200F6A93C /* GameViewController.m in Sources */,
 				012D83B926A1898200F6A93C /* EcoDemoDialogIOS.m in Sources */,
 				012D83BA26A1898200F6A93C /* EcoTypeLib1.c in Sources */,
+				EC0F111000010B00F6A93C /* EcoTypeLib1Common.c in Sources */,
+				EC0F111000020B00F6A93C /* EcoTypeLib1Calculator.c in Sources */,
 				012D83BB26A1898200F6A93C /* AppDelegate.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

@@ -1,13 +1,10 @@
-"""Calculator interface definitions for `Eco.Calculator` component.
+"""Calculator interface definitions for calculator components.
 
 This module defines the ACOM interfaces used by the calculator examples.
 
 Interfaces:
     `IEcoCalculatorX`: Addition and Subtraction.
     `IEcoCalculatorY`: Multiplication and Division.
-
-Constants:
-    `CID_EcoCalculator`: Component ID for the calculator component.
 """
 
 from eco_python2acom.decorators.interface import interface
@@ -17,18 +14,6 @@ from eco_python2acom.types.guid import UGUID
 
 IID_IEcoCalculatorX = UGUID("93221116-2248-4742-AE06-82819447843D")
 IID_IEcoCalculatorY = UGUID("BD6414C2-9096-423E-A90C-04D77AFD1CAD")
-
-# --- Calculator B ---
-# CID_EcoCalculator = UGUID("AE202E54-3CE5-4550-8996-03BD70C62565")
-
-# --- Calculator C ---
-# CID_EcoCalculator = UGUID("4828F655-2E45-40E7-8121-EBD220DC360E")
-
-# --- Calculator D ---
-# CID_EcoCalculator = UGUID("3A8E4467-7E82-475C-B4A3-719ED8397E61")
-
-# --- Calculator E ---
-CID_EcoCalculator = UGUID("872FEF1D-E331-4B87-AD44-D1E7C232C2F0")
 
 
 @interface(iid=IID_IEcoCalculatorX)

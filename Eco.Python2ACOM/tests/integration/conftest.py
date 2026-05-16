@@ -37,13 +37,12 @@ def eco_system() -> Generator[EcoSystem, None, None]:
     Skips the entire session if runtime is unavailable or initialization fails.
     """
     try:
-        eco = EcoSystem(user_lib_dir=DATA_DIR)
-        eco.init()
+        eco = EcoSystem(lib_dir=DATA_DIR)
     except Exception:
         pytest.skip("`EcoSystem` runtime unavailable or failed to initialize")
 
-    yield eco
-    eco.release()
+    with eco:
+        yield eco
 
 
 @pytest.fixture(scope="session")
@@ -62,8 +61,8 @@ def eco_test(
         byref(IID_IEcoTest),
         byref(ppv),
     )
-    if result.value != 0 or not ppv.value:
-        pytest.skip(f"Failed to create 'Eco.Test' component (error = {result.value})")
+    if result != 0 or not bool(ppv):
+        pytest.skip(f"Failed to create 'Eco.Test' component (error = {result})")
 
     test_iface = cast(ppv, Ptr[IEcoTest])
     yield test_iface

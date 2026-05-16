@@ -91,8 +91,8 @@ class UGUID:
             TypeError: If `data` is not `str` or `bytes`.
             ValueError: If the string format is invalid or raw bytes are not 16 bytes long.
         """
-        self.preamble = UInt8(preamble)
-        self.length = UInt8(self.GUID_LENGTH)
+        self.preamble = preamble
+        self.length = self.GUID_LENGTH
 
         if isinstance(data, str):
             self._from_string(data)

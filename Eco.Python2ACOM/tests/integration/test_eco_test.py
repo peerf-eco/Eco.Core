@@ -86,7 +86,7 @@ class TestEcoTestArithmetic:
     def test_add(self, eco_test: Ptr[IEcoTest], left: int, right: int, expected: int) -> None:
         """Verifies `Addition` across typical int32 inputs."""
         result = eco_test.obj.Addition(left, right)
-        assert result.value == expected
+        assert result == expected
 
     @pytest.mark.parametrize(
         ["left", "right", "expected"],
@@ -106,7 +106,7 @@ class TestEcoTestArithmetic:
     ) -> None:
         """Verifies int32 two's-complement wraparound on overflow."""
         result = eco_test.obj.Addition(left, right)
-        assert result.value == expected
+        assert result == expected
 
     @pytest.mark.parametrize(
         ["value", "expected"],
@@ -132,7 +132,7 @@ class TestEcoTestArithmetic:
     def test_negate(self, eco_test: Ptr[IEcoTest], value: int, expected: int) -> None:
         """Verifies `Negation` across typical int32 inputs."""
         result = eco_test.obj.Negation(value)
-        assert result.value == expected
+        assert result == expected
 
 
 @pytest.mark.integration
@@ -171,17 +171,17 @@ class TestEcoTestFloatingPoint:
     ) -> None:
         """Verifies `Multiplication` of two doubles."""
         result = eco_test.obj.Multiplication(left, right)
-        assert math.isclose(result.value, expected, abs_tol=1e-9)
+        assert math.isclose(result, expected, abs_tol=1e-9)
 
     def test_scalar_mul_large_values(self, eco_test: Ptr[IEcoTest]) -> None:
         """Verifies multiplication of large double values."""
         result = eco_test.obj.Multiplication(1e150, 1e150)
-        assert math.isclose(result.value, 1e300, rel_tol=1e-9)
+        assert math.isclose(result, 1e300, rel_tol=1e-9)
 
     def test_scalar_mul_infinity(self, eco_test: Ptr[IEcoTest]) -> None:
         """Verifies multiplication producing infinity via overflow."""
         result = eco_test.obj.Multiplication(1e200, 1e200)
-        assert math.isinf(result.value)
+        assert math.isinf(result)
 
 
 @pytest.mark.integration
@@ -216,14 +216,14 @@ class TestEcoTestArrays:
         n = len(values)
         arr = Array[Int32, n](*values)
         result = eco_test.obj.SumArray(arr, n)
-        assert result.value == expected
+        assert result == expected
 
     def test_sum_array_large(self, eco_test: Ptr[IEcoTest]) -> None:
         """Verifies summation of a large array (1..1000)."""
         n = 1000
         arr = Array[Int32, n](*range(1, n + 1))
         result = eco_test.obj.SumArray(arr, n)
-        assert result.value == n * (n + 1) // 2
+        assert result == n * (n + 1) // 2
 
     @pytest.mark.parametrize(
         ["size", "fill_value"],
@@ -248,7 +248,7 @@ class TestEcoTestArrays:
         """Verifies filling an array with a constant value."""
         arr = Array[Int32, size](*([0] * size))
         result = eco_test.obj.FillArray(arr, size, fill_value)
-        assert result.value == EcoErrorCode.SUCCESS
+        assert result == EcoErrorCode.SUCCESS
         assert list(arr) == [fill_value] * size
 
     def test_fill_then_sum(self, eco_test: Ptr[IEcoTest]) -> None:
@@ -256,7 +256,7 @@ class TestEcoTestArrays:
         arr = Array[Int32, 5](0, 0, 0, 0, 0)
         eco_test.obj.FillArray(arr, 5, 10)
         result = eco_test.obj.SumArray(arr, 5)
-        assert result.value == 50
+        assert result == 50
 
     def test_fill_overwrites_existing(self, eco_test: Ptr[IEcoTest]) -> None:
         """Verifies `FillArray` overwrites any prior content."""
@@ -268,7 +268,7 @@ class TestEcoTestArrays:
         """Verifies `SumArray` respects the size parameter (sums a prefix)."""
         arr = Array[Int32, 5](1, 2, 3, 4, 5)
         result = eco_test.obj.SumArray(arr, 3)
-        assert result.value == 6  # 1 + 2 + 3
+        assert result == 6  # 1 + 2 + 3
 
 
 @pytest.mark.integration
@@ -297,7 +297,7 @@ class TestEcoTestBubbleSort:
         n = len(values)
         arr = Array[Int32, n](*values)
         result = eco_test.obj.SortArray(arr, n)
-        assert result.value == EcoErrorCode.SUCCESS
+        assert result == EcoErrorCode.SUCCESS
         assert list(arr) == expected
 
     def test_sort_large_reversed(self, eco_test: Ptr[IEcoTest]) -> None:
@@ -328,13 +328,13 @@ class TestEcoTestStrings:
 
     def test_get_name_value(self, eco_test: Ptr[IEcoTest]) -> None:
         """Verifies `GetName` returns 'EcoTest'."""
-        name = eco_test.obj.GetName().value
+        name = eco_test.obj.GetName()
         assert name == b"EcoTest"
 
     def test_get_name_stable_across_calls(self, eco_test: Ptr[IEcoTest]) -> None:
         """Verifies `GetName` returns the same value on repeated calls."""
-        first = eco_test.obj.GetName().value
-        second = eco_test.obj.GetName().value
+        first = eco_test.obj.GetName()
+        second = eco_test.obj.GetName()
         assert first == second == b"EcoTest"
 
 
@@ -346,7 +346,7 @@ class TestEcoTestStructures:
         """Verifies `MakePoint` writes the given coordinates into the out-param."""
         point = EcoPoint()
         result = eco_test.obj.MakePoint(3, 4, byref(point))
-        assert result.value == EcoErrorCode.SUCCESS
+        assert result == EcoErrorCode.SUCCESS
         assert (point.x, point.y) == (3, 4)
 
     @pytest.mark.parametrize(
@@ -395,7 +395,7 @@ class TestEcoTestStructures:
         pa = EcoPoint(*point_a)
         pb = EcoPoint(*point_b)
         result = eco_test.obj.CalculateDistance(byref(pa), byref(pb))
-        assert result.value == expected
+        assert result == expected
 
     def test_calculate_distance_symmetric(self, eco_test: Ptr[IEcoTest]) -> None:
         """Verifies distance(a, b) == distance(b, a)."""
@@ -403,7 +403,7 @@ class TestEcoTestStructures:
         point_b = EcoPoint(7, 1)
         dist_a_to_b = eco_test.obj.CalculateDistance(byref(point_a), byref(point_b))
         dist_b_to_a = eco_test.obj.CalculateDistance(byref(point_b), byref(point_a))
-        assert dist_a_to_b.value == dist_b_to_a.value
+        assert dist_a_to_b == dist_b_to_a
 
     def test_calculate_distance_does_not_mutate_inputs(self, eco_test: Ptr[IEcoTest]) -> None:
         """Verifies `CalculateDistance` leaves its input points untouched."""
@@ -434,7 +434,7 @@ class TestEcoTestStructures:
         point = EcoPoint(*start)
         dx, dy = delta
         result = eco_test.obj.Translate(byref(point), dx, dy)
-        assert result.value == EcoErrorCode.SUCCESS
+        assert result == EcoErrorCode.SUCCESS
         assert (point.x, point.y) == expected
 
     def test_translate_chained(self, eco_test: Ptr[IEcoTest]) -> None:
@@ -459,7 +459,7 @@ class TestEcoTestStructures:
         eco_test.obj.MakePoint(0, 0, byref(point_a))
         eco_test.obj.MakePoint(6, 8, byref(point_b))
         result = eco_test.obj.CalculateDistance(byref(point_a), byref(point_b))
-        assert result.value == 100
+        assert result == 100
 
     def test_struct_equality(self, eco_test: Ptr[IEcoTest]) -> None:
         """Verifies model `__eq__` works on structures produced by `MakePoint`."""
@@ -483,8 +483,8 @@ class TestEcoTestUnions:
         """`PackInt` + `UnpackInt` roundtrip preserves the int view."""
         out = EcoValue()
         result = eco_test.obj.PackInt(value, byref(out))
-        assert result.value == EcoErrorCode.SUCCESS
-        assert eco_test.obj.UnpackInt(out).value == value
+        assert result == EcoErrorCode.SUCCESS
+        assert eco_test.obj.UnpackInt(out) == value
 
     @pytest.mark.parametrize(
         "value",
@@ -495,14 +495,14 @@ class TestEcoTestUnions:
         """`PackDouble` + `UnpackDouble` roundtrip preserves the double view."""
         out = EcoValue()
         result = eco_test.obj.PackDouble(value, byref(out))
-        assert result.value == EcoErrorCode.SUCCESS
-        assert math.isclose(eco_test.obj.UnpackDouble(out).value, value, rel_tol=0, abs_tol=0)
+        assert result == EcoErrorCode.SUCCESS
+        assert math.isclose(eco_test.obj.UnpackDouble(out), value, rel_tol=0, abs_tol=0)
 
     def test_union_by_value_param(self, eco_test: Ptr[IEcoTest]) -> None:
         """Union passed by value is read correctly on the C side."""
         value = EcoValue()
         value.as_int = Int32(777)
-        assert eco_test.obj.UnpackInt(value).value == 777
+        assert eco_test.obj.UnpackInt(value) == 777
 
     def test_reinterpret_int_halves(self, eco_test: Ptr[IEcoTest]) -> None:
         """`ReinterpretAsInt` returns XOR of both int halves of the union."""
@@ -510,17 +510,17 @@ class TestEcoTestUnions:
         value.as_bytes[0] = Int32(0xA5A5A5A5 - 0x100000000)  # signed int32 pattern
         value.as_bytes[1] = Int32(0x5A5A5A5A)
         expected = value.as_bytes[0] ^ value.as_bytes[1]
-        assert eco_test.obj.ReinterpretAsInt(value).value == expected
+        assert eco_test.obj.ReinterpretAsInt(value) == expected
 
     def test_int_and_double_views_share_storage(self, eco_test: Ptr[IEcoTest]) -> None:
         """Writing via `PackDouble` changes the int view (shared storage)."""
         out = EcoValue()
         eco_test.obj.PackInt(0, byref(out))
-        assert eco_test.obj.UnpackInt(out).value == 0
+        assert eco_test.obj.UnpackInt(out) == 0
 
         eco_test.obj.PackDouble(1.1, byref(out))
         # 1.1 as IEEE-754 double has non-zero bits in both int halves
-        assert eco_test.obj.UnpackInt(out).value != 0
+        assert eco_test.obj.UnpackInt(out) != 0
 
 
 @pytest.mark.integration
@@ -533,7 +533,7 @@ class TestEcoTestNestedStructures:
         top_left = EcoPoint(1, 2)
         bottom_right = EcoPoint(10, 20)
         result = eco_test.obj.MakeRect(top_left, bottom_right, byref(rect))
-        assert result.value == EcoErrorCode.SUCCESS
+        assert result == EcoErrorCode.SUCCESS
         assert rect.top_left == EcoPoint(1, 2)
         assert rect.bottom_right == EcoPoint(10, 20)
 
@@ -558,7 +558,7 @@ class TestEcoTestNestedStructures:
         """`RectArea` returns |dx| * |dy|."""
         rect = EcoRect()
         eco_test.obj.MakeRect(EcoPoint(*top_left), EcoPoint(*bottom_right), byref(rect))
-        assert eco_test.obj.RectArea(byref(rect)).value == expected
+        assert eco_test.obj.RectArea(byref(rect)) == expected
 
     def test_rect_nested_field_access(self, eco_test: Ptr[IEcoTest]) -> None:
         """Nested `EcoPoint` fields on `EcoRect` are accessed through dotted path."""
@@ -577,7 +577,7 @@ class TestEcoTestArrayOfStructures:
         points = Array[EcoPoint, 1](EcoPoint(5, 7))
         out = EcoPoint()
         result = eco_test.obj.SumPoints(points, 1, byref(out))
-        assert result.value == EcoErrorCode.SUCCESS
+        assert result == EcoErrorCode.SUCCESS
         assert out == EcoPoint(5, 7)
 
     def test_sum_points_multiple(self, eco_test: Ptr[IEcoTest]) -> None:
@@ -610,7 +610,7 @@ class TestEcoTestVariant:
         value.as_int = Int32(42)
         variant = EcoVariant()
         result = eco_test.obj.MakeVariant(ECO_VALUE_INT, value, byref(variant))
-        assert result.value == EcoErrorCode.SUCCESS
+        assert result == EcoErrorCode.SUCCESS
         assert variant.tag == ECO_VALUE_INT
         assert variant.value.as_int == 42
 
@@ -626,10 +626,10 @@ class TestEcoTestVariant:
     def test_get_variant_tag(self, eco_test: Ptr[IEcoTest]) -> None:
         """`GetVariantTag` returns the stored tag."""
         value = EcoValue()
-        value.as_int = Int32(0)
+        value.as_int = Int32()
         variant = EcoVariant()
         eco_test.obj.MakeVariant(ECO_VALUE_INT, value, byref(variant))
-        assert eco_test.obj.GetVariantTag(byref(variant)).value == ECO_VALUE_INT
+        assert eco_test.obj.GetVariantTag(byref(variant)) == ECO_VALUE_INT
 
     def test_get_variant_value_roundtrip(self, eco_test: Ptr[IEcoTest]) -> None:
         """`GetVariantValue` copies the union half into an out-parameter."""
@@ -640,7 +640,7 @@ class TestEcoTestVariant:
 
         out = EcoValue()
         result = eco_test.obj.GetVariantValue(byref(variant), byref(out))
-        assert result.value == EcoErrorCode.SUCCESS
+        assert result == EcoErrorCode.SUCCESS
         assert out.as_int == 999
 
 
@@ -652,7 +652,7 @@ class TestEcoTestRefCounting:
         """Verifies `AddRef` increments the reference count."""
         ref1 = eco_test.obj.AddRef()
         ref2 = eco_test.obj.AddRef()
-        assert ref2.value == ref1.value + 1
+        assert ref2 == ref1 + 1
 
         # Balance the extra refs
         eco_test.obj.Release()
@@ -663,7 +663,7 @@ class TestEcoTestRefCounting:
         eco_test.obj.AddRef()
         ref_before = eco_test.obj.AddRef()
         ref_after = eco_test.obj.Release()
-        assert ref_after.value == ref_before.value - 1
+        assert ref_after == ref_before - 1
 
         # Balance the extra ref
         eco_test.obj.Release()
@@ -671,7 +671,7 @@ class TestEcoTestRefCounting:
     @pytest.mark.parametrize("n", [1, 3, 5, 10])
     def test_addref_release_balanced(self, eco_test: Ptr[IEcoTest], n: int) -> None:
         """Verifies N `AddRef` calls balanced by N `Release` calls return to baseline."""
-        baseline = eco_test.obj.AddRef().value
+        baseline = eco_test.obj.AddRef()
         eco_test.obj.Release()
 
         for _ in range(n):
@@ -681,7 +681,7 @@ class TestEcoTestRefCounting:
             last = eco_test.obj.Release()
 
         assert last is not None
-        assert last.value == baseline - 1
+        assert last == baseline - 1
 
 
 @pytest.mark.integration
@@ -692,12 +692,12 @@ class TestEcoTestQueryInterface:
         """`QueryInterface(IID_IEcoTest)` returns a usable `IEcoTest` pointer."""
         out = Ptr[Void]()
         result = eco_test.obj.QueryInterface(byref(IID_IEcoTest), byref(out))
-        assert result.value == EcoErrorCode.SUCCESS
+        assert result == EcoErrorCode.SUCCESS
         assert out.value
 
         queried = cast(out, Ptr[IEcoTest])
         # The queried pointer must be usable as an `IEcoTest`.
-        assert queried.obj.Addition(2, 3).value == 5
+        assert queried.obj.Addition(2, 3) == 5
 
         # Balance the refcount bump from QueryInterface
         queried.obj.Release()
@@ -706,7 +706,7 @@ class TestEcoTestQueryInterface:
         """`QueryInterface(IID_IEcoUnknown)` returns a usable `IEcoUnknown` pointer."""
         out = Ptr[Void]()
         result = eco_test.obj.QueryInterface(byref(IID_IEcoUnknown), byref(out))
-        assert result.value == EcoErrorCode.SUCCESS
+        assert result == EcoErrorCode.SUCCESS
         assert out.value
 
         unknown = cast(out, Ptr[IEcoUnknown])
@@ -718,18 +718,18 @@ class TestEcoTestQueryInterface:
         bogus_iid = UGUID("DEADBEEF-DEAD-BEEF-DEAD-BEEFDEADBEEF")
         out = Ptr[Void]()
         result = eco_test.obj.QueryInterface(byref(bogus_iid), byref(out))
-        assert result.value & 0xFFFF == EcoErrorCode.NOINTERFACE
+        assert result & 0xFFFF == EcoErrorCode.NOINTERFACE
         assert not out.value
 
     def test_query_interface_increments_refcount(self, eco_test: Ptr[IEcoTest]) -> None:
         """A successful `QueryInterface` bumps the reference count."""
-        before = eco_test.obj.AddRef().value
+        before = eco_test.obj.AddRef()
         eco_test.obj.Release()
 
         out = Ptr[Void]()
         eco_test.obj.QueryInterface(byref(IID_IEcoTest), byref(out))
 
-        after = eco_test.obj.AddRef().value
+        after = eco_test.obj.AddRef()
         eco_test.obj.Release()
 
         assert after == before + 1
@@ -751,7 +751,7 @@ class TestEcoTestCallback:
         cmp = EcoCompareFunc(ascending)
         arr = Array[Int32, 5](5, 3, 1, 4, 2)
         result = eco_test.obj.SortArrayWith(arr, 5, cmp)
-        assert result.value == EcoErrorCode.SUCCESS
+        assert result == EcoErrorCode.SUCCESS
         assert list(arr) == [1, 2, 3, 4, 5]
 
     def test_sort_descending_via_callback(self, eco_test: Ptr[IEcoTest]) -> None:
@@ -799,4 +799,4 @@ class TestEcoTestStringParam:
     def test_string_length(self, eco_test: Ptr[IEcoTest], string: bytes, expected: int) -> None:
         """`StringLength` returns the number of bytes before the NULL terminator."""
         result = eco_test.obj.StringLength(string)
-        assert result.value == expected
+        assert result == expected

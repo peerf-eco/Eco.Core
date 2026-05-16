@@ -94,7 +94,7 @@ class TestArrayElementAccess:
     def test_set_slice(self) -> None:
         """Verifies slice assignment updates multiple elements."""
         arr = Array[UInt8, 4](0, 0, 0, 0)
-        arr[0:2] = [UInt8(10), UInt8(20)]
+        arr[0:2] = [10, 20]
         assert arr[0] == 10
         assert arr[1] == 20
 

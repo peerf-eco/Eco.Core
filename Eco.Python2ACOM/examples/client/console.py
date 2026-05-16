@@ -1,4 +1,4 @@
-"""Console output helpers for examples."""
+"""Console output helpers for client examples."""
 
 from typing import Optional
 
@@ -8,13 +8,13 @@ from rich.text import Text
 
 
 class EcoConsole:
-    """Styled console output for EcoOS examples."""
+    """Styled console output for EcoOS client examples."""
 
     def __init__(self) -> None:
         self._console = Console()
 
     def print(self, *args, **kwargs) -> None:
-        """Pass-through to the underlying Rich console."""
+        """Pass-through to the underlying `Rich` console."""
         self._console.print(*args, **kwargs)
 
     def header(self, title: str, subtitle: Optional[str] = None) -> None:

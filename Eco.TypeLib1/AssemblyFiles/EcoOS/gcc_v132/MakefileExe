@@ -123,6 +123,7 @@ endif
 # --- Compilation Flags ---
 # Includes
 INC =  \
+-I ..$(SLASH)..$(SLASH)..$(SLASH)UnitTestFiles$(SLASH)HeaderFiles \
 -I ..$(SLASH)..$(SLASH)..$(SLASH)SharedFiles$(SLASH) \
 -I ..$(SLASH)..$(SLASH)..$(SLASH)HeaderFiles$(SLASH) \
 -I ..$(SLASH)..$(SLASH)..$(SLASH)HeaderFiles$(SLASH)$(ARCH) \
@@ -142,7 +143,9 @@ LIB_DIR = \
 
 # Source files.
 SRC = \
-..$(SLASH)..$(SLASH)..$(SLASH)UnitTestFiles$(SLASH)SourceFiles$(SLASH)EcoTypeLib1.c
+..$(SLASH)..$(SLASH)..$(SLASH)UnitTestFiles$(SLASH)SourceFiles$(SLASH)EcoTypeLib1.c \
+..$(SLASH)..$(SLASH)..$(SLASH)UnitTestFiles$(SLASH)SourceFiles$(SLASH)EcoTypeLib1Common.c \
+..$(SLASH)..$(SLASH)..$(SLASH)UnitTestFiles$(SLASH)SourceFiles$(SLASH)EcoTypeLib1Calculator.c
 
 # Libraries
 LIBS = 

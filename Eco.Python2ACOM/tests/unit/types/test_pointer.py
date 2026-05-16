@@ -76,10 +76,22 @@ class TestPtrTyped:
         with pytest.raises(ValueError, match="pointer access"):
             _ = Ptr[Int32]().obj
 
-    def test_no_value_attribute(self) -> None:
-        """Verifies typed pointer has no `.value`."""
+    def test_value_returns_raw_address(self) -> None:
+        """Verifies typed pointer exposes `.value` as the raw address."""
         ptr = Ptr[Int32](42)
-        assert not hasattr(ptr, "value")
+        assert ptr.value is not None
+        assert isinstance(ptr.value, int)
+
+    def test_value_is_none_for_null(self) -> None:
+        """Verifies typed NULL pointer reports `.value == None`."""
+        ptr = Ptr[Int32]()
+        assert ptr.value is None
+
+    def test_value_setter_reaims_pointer(self) -> None:
+        """Verifies `.value =` writes the raw address into the pointer's storage."""
+        ptr = Ptr[Int32]()
+        ptr.value = 0xDEADBEEF
+        assert ptr.value == 0xDEADBEEF
 
     def test_bool_null_is_false(self) -> None:
         """Verifies NULL `Ptr[Int32]` is false."""
@@ -102,11 +114,25 @@ class TestPtrTyped:
         ptr = Ptr[Int32](42)
         assert ptr.obj.value == 42
 
-    def test_modify_obj(self) -> None:
-        """Verifies `.obj` value can be modified."""
+    def test_modify_obj_with_wrapper(self) -> None:
+        """Verifies `.obj = wrapper` writes the wrapped value through the pointer."""
         ptr = Ptr[Int32](10)
         ptr.obj = Int32(99)
         assert ptr.obj.value == 99
+
+    def test_modify_obj_with_plain_python_value(self) -> None:
+        """Verifies `.obj = plain` writes via the inner scalar's `.value` setter."""
+        ptr = Ptr[Int32](10)
+        ptr.obj = 77
+        assert ptr.obj.value == 77
+
+    def test_modify_obj_is_independent_copy(self) -> None:
+        """Verifies `.obj =` copies bytes by value."""
+        src = Int32(50)
+        ptr = Ptr[Int32](10)
+        ptr.obj = src
+        src.value = 999
+        assert ptr.obj.value == 50
 
     def test_invalid_value_raises(self) -> None:
         """Verifies unconvertible value raises `ValueError`."""

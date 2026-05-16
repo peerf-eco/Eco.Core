@@ -23,6 +23,544 @@
 #include "CEcoACOM2Java.h"
 #include "IdEcoList1.h"
 
+
+EcoTypeMap ECO_TYPE_MAP[] = {
+    { 0, "",                       ""                     }, /* ECO_TYPE_UNDEFINED */
+    { 1, "B",                      "java/lang/Byte"       }, /* ECO_TYPE_INT8 */
+    { 1, "S",                      "java/lang/Short"      }, /* ECO_TYPE_INT16 */
+    { 1, "I",                      "java/lang/Integer"    }, /* ECO_TYPE_INT32 */
+    { 1, "J",                      "java/lang/Long"       }, /* ECO_TYPE_INT64 */
+    { 1, "B",                      "java/lang/Byte"       }, /* ECO_TYPE_UINT8 */
+    { 1, "S",                      "java/lang/Short"      }, /* ECO_TYPE_UINT16 */
+    { 1, "I",                      "java/lang/Integer"    }, /* ECO_TYPE_UINT32 */
+    { 1, "J",                      "java/lang/Long"       }, /* ECO_TYPE_UINT64 */
+    { 1, "F",                      "java/lang/Float"      }, /* ECO_TYPE_FLOAT */
+    { 1, "D",                      "java/lang/Double"     }, /* ECO_TYPE_DOUBLE */
+    { 1, "Z",                      "java/lang/Boolean"    }, /* ECO_TYPE_BOOLEAN */
+    { 1, "C",                      "java/lang/Character"  }, /* ECO_TYPE_CHAR */
+    { 1, "C",                      "java/lang/Character"  }, /* ECO_TYPE_WCHAR */
+    { 0, "Ljava/lang/String;",     "java/lang/String"     }, /* ECO_TYPE_ASTRING */
+    { 0, "Ljava/lang/String;",     "java/lang/String"     }, /* ECO_TYPE_WSTRING */
+    { 0, "LEco/Core/IEcoUnknown;", "Eco/Core/IEcoUnknown" }, /* ECO_TYPE_INTERFACE */
+    { 0, "LEco/Core/UGUID;",       "Eco/Core/UGUID"       }, /* ECO_TYPE_UGUID */
+    { 0, "Ljava/lang/Object;",     "java/lang/Object"     }, /* ECO_TYPE_VOIDPTR */
+    { 1, "V",                      "" },                     /* ECO_TYPE_VOID */
+};
+
+ffi_type* ECO_FFI_TYPES[20];
+
+ffi_type* GetFfiType(uint16_t typeTag) {
+    if (ECO_FFI_TYPES[0] == 0) {
+        ECO_FFI_TYPES[ECO_TYPE_UNDEFINED] = 1;
+        ECO_FFI_TYPES[ECO_TYPE_INT8]      = &ffi_type_sint8;
+        ECO_FFI_TYPES[ECO_TYPE_INT16]     = &ffi_type_sint16;
+        ECO_FFI_TYPES[ECO_TYPE_INT32]     = &ffi_type_sint32;
+        ECO_FFI_TYPES[ECO_TYPE_INT64]     = &ffi_type_sint64;
+        ECO_FFI_TYPES[ECO_TYPE_UINT8]     = &ffi_type_uint8;
+        ECO_FFI_TYPES[ECO_TYPE_UINT16]    = &ffi_type_uint16;
+        ECO_FFI_TYPES[ECO_TYPE_UINT32]    = &ffi_type_uint32;
+        ECO_FFI_TYPES[ECO_TYPE_UINT64]    = &ffi_type_uint64;
+        ECO_FFI_TYPES[ECO_TYPE_FLOAT]     = &ffi_type_float;
+        ECO_FFI_TYPES[ECO_TYPE_DOUBLE]    = &ffi_type_double;
+        ECO_FFI_TYPES[ECO_TYPE_BOOLEAN]   = &ffi_type_uint8;
+        ECO_FFI_TYPES[ECO_TYPE_CHAR]      = &ffi_type_sint8;
+        ECO_FFI_TYPES[ECO_TYPE_WCHAR]     = &ffi_type_uint16;
+        ECO_FFI_TYPES[ECO_TYPE_ASTRING]   = &ffi_type_pointer;
+        ECO_FFI_TYPES[ECO_TYPE_WSTRING]   = &ffi_type_pointer;
+        ECO_FFI_TYPES[ECO_TYPE_INTERFACE] = &ffi_type_pointer;
+        ECO_FFI_TYPES[ECO_TYPE_UGUID]     = &ffi_type_pointer;
+        ECO_FFI_TYPES[ECO_TYPE_VOIDPTR]   = &ffi_type_pointer;
+    }
+    return ECO_FFI_TYPES[typeTag];
+}
+
+
+EcoJavaProxy* CreateEcoJavaProxy(JNIEnv*, jobject, IEcoInterfaceDescriptor1*, IEcoMemoryAllocator1*, IEcoTypeLib1*);
+
+jobject UGUIDPtrToJavaObject(JNIEnv* env, const UGUID* uguid) {
+    jclass clazz;
+    jmethodID method;
+    jbyteArray dataArr;
+    jobject result;
+
+    dataArr = (*env)->NewByteArray(env, uguid->Length);
+    (*env)->SetByteArrayRegion(env, dataArr, 0, uguid->Length, uguid->Data);
+
+    clazz = (*env)->FindClass(env, "Eco/Core/UGUID");
+    method = (*env)->GetMethodID(env, clazz, "<init>", "(BB[B)V");
+    result = (*env)->NewObject(env, clazz, method, (jbyte)uguid->Preamble, (jbyte)uguid->Length, dataArr);
+
+    return result;
+}
+
+char_t* UGUIDPtrToTypeLibFileName(const UGUID* uguid) {
+    char_t result[256] = "";
+    byte_t i;
+    for (i = 0; i < uguid->Length; i++) {
+        byte_t b = uguid->Data[i] >> 4;
+        if (b < 10) {
+            result[i * 2] = b + '0';
+        } else {
+            result[i * 2] = (b - 10) + 'A';
+        }
+        b = uguid->Data[i] & 0xF;
+        if (b < 10) {
+            result[i * 2 + 1] = b + '0';
+        } else {
+            result[i * 2 + 1] = (b - 10) + 'A';
+        }
+    }
+    strcat(result, ".etl");
+    return _strdup(result);
+}
+
+UGUID JavaObjectToUGUIDPtr(JNIEnv* env, jobject obj) {
+    jclass clazz = (*env)->GetObjectClass(env, obj);
+    jfieldID field;
+    jobject objBytes;
+    jbyte* bytes;
+    byte_t i;
+    UGUID result = {0};
+
+    field = (*env)->GetFieldID(env, clazz, "Preamble", "B");
+    result.Preamble = (*env)->GetByteField(env, obj, field);
+
+    field = (*env)->GetFieldID(env, clazz, "Length", "B");
+    result.Length = (*env)->GetByteField(env, obj, field);
+
+    field = (*env)->GetFieldID(env, clazz, "Data", "[B");
+    objBytes = (*env)->GetObjectField(env, obj, field);
+    bytes = (*env)->GetByteArrayElements(env, objBytes, 0);
+    for (i = 0; i < result.Length; i++) {
+        result.Data[i] = bytes[i];
+    }
+    (*env)->ReleaseByteArrayElements(env, objBytes, bytes, JNI_ABORT);
+
+    return result;
+}
+
+void AddClassPath(JNIEnv* env, char_t* classpath) {
+    jclass clazz;
+    jmethodID method;
+    jobject fileObj;
+    jobject loaderObj;
+
+    clazz = (*env)->FindClass(env, "java/io/File");
+    method = (*env)->GetMethodID(env, clazz, "<init>", "(Ljava/lang/String;)V");
+    fileObj = (*env)->NewObject(env, clazz, method, (*env)->NewStringUTF(env, classpath));
+
+    method = (*env)->GetMethodID(env, clazz, "toURI", "()Ljava/net/URI;");
+    fileObj = (*env)->CallObjectMethod(env, fileObj, method);
+
+    clazz = (*env)->GetObjectClass(env, fileObj);
+    method = (*env)->GetMethodID(env, clazz, "toURL", "()Ljava/net/URL;");
+    fileObj = (*env)->CallObjectMethod(env, fileObj, method);
+
+    clazz = (*env)->FindClass(env, "java/lang/ClassLoader");
+    method = (*env)->GetStaticMethodID(env, clazz, "getSystemClassLoader", "()Ljava/lang/ClassLoader;");
+    loaderObj = (*env)->CallStaticObjectMethod(env, clazz, method);
+
+    clazz = (*env)->FindClass(env, "java/net/URLClassLoader");
+    method = (*env)->GetMethodID(env, clazz, "addURL", "(Ljava/net/URL;)V");
+    (*env)->CallVoidMethod(env, loaderObj, method, fileObj);
+}
+
+char_t* GenerateJniSignature(IEcoMethodDescriptor1* pIMethod) {
+    char_t sig[256] = "(";
+    uint8_t count = pIMethod->pVTbl->get_ParamCount(pIMethod);
+    IEcoParamDescriptor1* pIParam = 0;
+    uint16_t typeTag = 0;
+    uint8_t index = 0;
+    uint8_t flags = 0;
+    int16_t result = 0;
+
+    result = pIMethod->pVTbl->GetParamAtIndex(pIMethod, index, &pIParam);
+    for (index = 0; index < count; index++) {
+        result = pIParam->pVTbl->get_Type(pIParam, &typeTag);
+        flags = pIParam->pVTbl->get_Flags(pIParam);
+        if (flags & ECO_PARAM_OUT) {
+            sprintf(sig + strlen(sig), "L%s;", ECO_TYPE_MAP[typeTag].jniClassName);
+        } else if (flags & ECO_PARAM_IN) {
+            strcat(sig, ECO_TYPE_MAP[typeTag].jniSignature);
+        }
+    }
+    strcat(sig, ")");
+
+    result = pIMethod->pVTbl->get_Result(pIMethod, &pIParam);
+    result = pIParam->pVTbl->get_Type(pIParam, &typeTag);
+    strcat(sig, ECO_TYPE_MAP[typeTag].jniSignature);
+
+    return _strdup(sig);
+}
+
+IEcoInterfaceDescriptor1* GetInterfaceDescriptorByUGUID(IEcoTypeLib1* pITypeLib, const UGUID* riid) {
+    IEcoInterfaceDirectory1* pIDirectory = 0;
+    IEcoInterfaceDirectoryEntry1* pIEntry = 0;
+    IEcoInterfaceDescriptor1* pIDesc = 0;
+    char_t* fileName = 0;
+    int16_t result = 0;
+
+    fileName = UGUIDPtrToTypeLibFileName(riid);
+    result = pITypeLib->pVTbl->LoadFile(pITypeLib, fileName, &pIDirectory);
+    result = pIDirectory->pVTbl->GetEntryByIID(pIDirectory, riid, &pIEntry);
+    result = pIEntry->pVTbl->get_Descriptor(pIEntry, &pIDesc);
+
+    return pIDesc;
+}
+
+void ParamToJavaValue(JNIEnv* env, void* arg, uint16_t typeTag, uint8_t flags, jvalue* jarg) {
+    EcoTypeMap* ecoType = &ECO_TYPE_MAP[typeTag];
+    if (ecoType->isPrimitive) {
+        if (flags & ECO_PARAM_OUT) {
+            jclass clazz;
+            jmethodID method;
+            char_t jniSig[5];
+            sprintf(jniSig, "(%s)V", ecoType->jniSignature);
+            clazz = (*env)->FindClass(env, ecoType->jniClassName);
+            method = (*env)->GetMethodID(env, clazz, "<init>", jniSig);
+            if (flags & ECO_PARAM_IN) {
+                if (typeTag == ECO_TYPE_INT8 || typeTag == ECO_TYPE_UINT8) {
+                    jarg->l = (*env)->NewObject(env, clazz, method, **(jbyte**)arg);
+                } else if (typeTag == ECO_TYPE_INT16 || typeTag == ECO_TYPE_UINT16) {
+                    jarg->l = (*env)->NewObject(env, clazz, method, **(jshort**)arg);
+                } else if (typeTag == ECO_TYPE_INT32 || typeTag == ECO_TYPE_UINT32) {
+                    jarg->l = (*env)->NewObject(env, clazz, method, **(jint**)arg);
+                } else if (typeTag == ECO_TYPE_INT64 || typeTag == ECO_TYPE_UINT64) {
+                    jarg->l = (*env)->NewObject(env, clazz, method, **(jlong**)arg);
+                } else if (typeTag == ECO_TYPE_FLOAT) {
+                    jarg->l = (*env)->NewObject(env, clazz, method, **(jfloat**)arg);
+                } else if (typeTag == ECO_TYPE_DOUBLE) {
+                    jarg->l = (*env)->NewObject(env, clazz, method, **(jdouble**)arg);
+                } else if (typeTag == ECO_TYPE_BOOLEAN) {
+                    jarg->l = (*env)->NewObject(env, clazz, method, **(jboolean**)arg);
+                } else if (typeTag == ECO_TYPE_CHAR) {
+                    jarg->l = (*env)->NewObject(env, clazz, method, **(char_t**)arg);
+                } else if (typeTag == ECO_TYPE_WCHAR) {
+                    jarg->l = (*env)->NewObject(env, clazz, method, **(wchar_t**)arg);
+                }
+            } else {
+                jarg->l = (*env)->NewObject(env, clazz, method, 0LL);
+            }
+        } else if (flags & ECO_PARAM_IN) {
+            if (typeTag == ECO_TYPE_INT8 || typeTag == ECO_TYPE_UINT8) {
+                jarg->b = *(jbyte*)arg;
+            } else if (typeTag == ECO_TYPE_INT16 || typeTag == ECO_TYPE_UINT16) {
+                jarg->s = *(jshort*)arg;
+            } else if (typeTag == ECO_TYPE_INT32 || typeTag == ECO_TYPE_UINT32) {
+                jarg->i = *(jint*)arg;
+            } else if (typeTag == ECO_TYPE_INT64 || typeTag == ECO_TYPE_UINT64) {
+                jarg->j = *(jlong*)arg;
+            } else if (typeTag == ECO_TYPE_FLOAT) {
+                jarg->f = *(jfloat*)arg;
+            } else if (typeTag == ECO_TYPE_DOUBLE) {
+                jarg->d = *(jdouble*)arg;
+            } else if (typeTag == ECO_TYPE_BOOLEAN) {
+                jarg->z = *(jboolean*)arg;
+            } else if (typeTag == ECO_TYPE_CHAR) {
+                jarg->c = *(char_t*)arg;
+            } else if (typeTag == ECO_TYPE_WCHAR) {
+                jarg->c = *(wchar_t*)arg;
+            }
+        }
+    } else if (typeTag == ECO_TYPE_ASTRING) {
+        if (flags & ECO_PARAM_IN) {
+            if (flags & ECO_PARAM_OUT) {
+                (*env)->NewStringUTF(env, **(char_t***)arg);
+            } else {
+                (*env)->NewStringUTF(env, *(char_t**)arg);
+            }
+        } else {
+            (*env)->NewStringUTF(env, "");
+        }
+    } else if (typeTag == ECO_TYPE_WSTRING) {
+        if (flags & ECO_PARAM_IN) {
+            if (flags & ECO_PARAM_OUT) {
+                (*env)->NewString(env, **(wchar_t***)arg, strlen(**(wchar_t***)arg));
+            } else {
+                (*env)->NewString(env, *(wchar_t**)arg, strlen(*(wchar_t**)arg));
+            }
+        } else {
+            (*env)->NewString(env, "", 0);
+        }
+    } else if (typeTag == ECO_TYPE_INTERFACE) {
+        if (flags & ECO_PARAM_OUT) {
+            jclass clazz = (*env)->FindClass(env, "Eco/Core/IEcoUnknownPtr");
+            if (flags & ECO_PARAM_IN) {
+                jmethodID method = (*env)->GetMethodID(env, clazz, "<init>", "(LEco/Core/IEcoUnknown;)V");
+                jarg->l = (*env)->NewObject(env, clazz, method, (*(EcoJavaProxy**)arg)->m_obj);
+            } else {
+                jmethodID method = (*env)->GetMethodID(env, clazz, "<init>", "()V");
+                jarg->l = (*env)->NewObject(env, clazz, method);
+            }
+        } else if (flags & ECO_PARAM_IN) {
+            jarg->l = (*(EcoJavaProxy**)arg)->m_obj;
+        }
+    } else if (typeTag == ECO_TYPE_UGUID) {
+        if (flags & ECO_PARAM_IN) {
+            jarg->l = UGUIDPtrToJavaObject(env, *(UGUID**)arg);
+        } else if (flags & ECO_PARAM_OUT) {
+            jclass clazz = (*env)->FindClass(env, "Eco/Core/UGUID");
+            jmethodID method = (*env)->GetMethodID(env, clazz, "<init>", "()V");
+            jarg->l = (*env)->NewObject(env, clazz, method);
+        }
+    } else if (typeTag == ECO_TYPE_VOIDPTR) {
+        if (flags & ECO_PARAM_IN) {
+            jclass clazz = (*env)->FindClass(env, "java/lang/Integer");
+            jmethodID method = (*env)->GetMethodID(env, clazz, "<init>", "(I)V");
+            jarg->l = (*env)->NewObject(env, clazz, method, *(uint32_t*)arg);
+        } else if (flags & ECO_PARAM_OUT) {
+            jclass clazz = (*env)->FindClass(env, "java/lang/Object");
+            jmethodID method = (*env)->GetMethodID(env, clazz, "<init>", "()V");
+            jarg->l = (*env)->NewObject(env, clazz, method);
+        }
+    }
+}
+
+void JavaValueToParam(EcoJavaProxy* proxy, jvalue jarg, uint16_t typeTag, void** arg) {
+    JNIEnv* env = proxy->m_env;
+    if (typeTag == ECO_TYPE_INT8 || typeTag == ECO_TYPE_UINT8) {
+        **(jbyte**)arg = jarg.b;
+    } else if (typeTag == ECO_TYPE_INT16 || typeTag == ECO_TYPE_UINT16) {
+        **(jshort**)arg = jarg.s;
+    } else if (typeTag == ECO_TYPE_INT32 || typeTag == ECO_TYPE_UINT32) {
+        **(jint**)arg = jarg.i;
+    } else if (typeTag == ECO_TYPE_INT64 || typeTag == ECO_TYPE_UINT64) {
+        **(jlong**)arg = jarg.j;
+    } else if (typeTag == ECO_TYPE_FLOAT) {
+        **(jfloat**)arg = jarg.f;
+    } else if (typeTag == ECO_TYPE_DOUBLE) {
+        **(jdouble**)arg = jarg.d;
+    } else if (typeTag == ECO_TYPE_BOOLEAN) {
+        **(jboolean**)arg = jarg.b;
+    } else if (typeTag == ECO_TYPE_CHAR) {
+        **(char_t**)arg = jarg.c;
+    } else if (typeTag == ECO_TYPE_WCHAR) {
+        **(wchar_t**)arg = jarg.c;
+    } else if (typeTag == ECO_TYPE_ASTRING) {
+        **(char_t***)arg = (*env)->GetStringUTFChars(env, jarg.l, 0);
+    } else if (typeTag == ECO_TYPE_WSTRING) {
+        **(wchar_t***)arg = (*env)->GetStringChars(env, jarg.l, 0);
+    } else if (typeTag == ECO_TYPE_INTERFACE) {
+        jclass clazz = (*env)->FindClass(env, "Eco/Core/IEcoUnknownPtr");
+        jfieldID field = (*env)->GetFieldID(env, clazz, "iUnk", "LEco/Core/IEcoUnknown;");
+        jobject obj = (*env)->GetObjectField(env, jarg.l, field);
+        CreateEcoJavaProxy(env, obj, 0, proxy->m_pIMem, proxy->m_pITypeLib); // pIDesc = ?
+    } else if (typeTag == ECO_TYPE_UGUID) {
+        **(UGUID**)arg = JavaObjectToUGUIDPtr(env, jarg.l);
+    } else if (typeTag == ECO_TYPE_VOIDPTR) {
+        **(jobject**)arg = jarg.l;
+    }
+}
+
+void CallJavaMethod(EcoJavaProxy* proxy, jobject obj, jmethodID method, jvalue* jArgs, uint16_t typeTag, void* ret) {
+    JNIEnv* env = proxy->m_env;
+    if (typeTag == ECO_TYPE_INT8 || typeTag == ECO_TYPE_UINT8) {
+        *(jbyte*)ret = (*env)->CallByteMethodA(env, obj, method, jArgs);
+    } else if (typeTag == ECO_TYPE_INT16 || typeTag == ECO_TYPE_UINT16) {
+        *(jshort*)ret = (*env)->CallShortMethodA(env, obj, method, jArgs);
+    } else if (typeTag == ECO_TYPE_INT32 || typeTag == ECO_TYPE_UINT32) {
+        *(jint*)ret = (*env)->CallIntMethodA(env, obj, method, jArgs);
+    } else if (typeTag == ECO_TYPE_INT64 || typeTag == ECO_TYPE_UINT64) {
+        *(jlong*)ret = (*env)->CallLongMethodA(env, obj, method, jArgs);
+    } else if (typeTag == ECO_TYPE_FLOAT) {
+        *(jfloat*)ret = (*env)->CallFloatMethodA(env, obj, method, jArgs);
+    } else if (typeTag == ECO_TYPE_DOUBLE) {
+        *(jdouble*)ret = (*env)->CallDoubleMethodA(env, obj, method, jArgs);
+    } else if (typeTag == ECO_TYPE_BOOLEAN) {
+        *(jboolean*)ret = (*env)->CallBooleanMethodA(env, obj, method, jArgs);
+    } else if (typeTag == ECO_TYPE_CHAR) {
+        *(char_t*)ret = (*env)->CallCharMethodA(env, obj, method, jArgs);
+    } else if (typeTag == ECO_TYPE_WCHAR) {
+        *(wchar_t*)ret = (*env)->CallCharMethodA(env, obj, method, jArgs);
+    } else {
+        jobject retObj = (*env)->CallObjectMethodA(env, obj, method, jArgs);
+        if (typeTag == ECO_TYPE_ASTRING) {
+            *(char_t**)ret = (*env)->GetStringUTFChars(env, retObj, 0);
+        } else if (typeTag == ECO_TYPE_WSTRING) {
+            *(wchar_t**)ret = (*env)->GetStringChars(env, retObj, 0);
+        } else if (typeTag == ECO_TYPE_INTERFACE) {
+            CreateEcoJavaProxy(env, retObj, 0, proxy->m_pIMem, proxy->m_pITypeLib); // pIDesc = ?
+        } else if (typeTag == ECO_TYPE_UGUID) {
+            *(UGUID*)ret = JavaObjectToUGUIDPtr(env, retObj);
+        } else if (typeTag == ECO_TYPE_VOIDPTR) {
+            *(jobject*)ret = retObj;
+        }
+    }
+}
+
+
+static int16_t ECOCALLMETHOD EcoJavaProxy_IEcoUnknown_QueryInterface(IEcoUnknownPtr_t me, const UGUID* riid, voidptr_t* ppv) {
+    EcoJavaProxy* proxy = (EcoJavaProxy*)me;
+    IEcoInterfaceDescriptor1* pIDesc = 0;
+    JNIEnv* env = proxy->m_env;
+    jclass pIUnkClazz;
+    jclass clazz;
+    jmethodID method;
+    jfieldID field;
+    jobject obj;
+    int16_t result = 0;
+
+    pIUnkClazz = (*env)->FindClass(env, "Eco/Core/IEcoUnknownPtr");
+    method = (*env)->GetMethodID(env, pIUnkClazz, "<init>", "()V");
+    obj = (*env)->NewObject(env, pIUnkClazz, method);
+
+    clazz = (*env)->GetObjectClass(env, proxy->m_obj);
+    method = (*env)->GetMethodID(env, clazz, "QueryInterface", "(LEco/Core/UGUID;LEco/Core/IEcoUnknownPtr;)S");
+
+    result = (*env)->CallShortMethod(env, proxy->m_obj, method, UGUIDPtrToJavaObject(env, riid), obj);
+    if (result != 0) {
+        return result;
+    }
+
+    field = (*env)->GetFieldID(env, pIUnkClazz, "iUnk", "LEco/Core/IEcoUnknown;");
+    obj = (*env)->GetObjectField(env, obj, field);
+
+    pIDesc = GetInterfaceDescriptorByUGUID(proxy->m_pITypeLib, riid);
+    *(EcoJavaProxy**)ppv = CreateEcoJavaProxy(env, obj, pIDesc, proxy->m_pIMem, proxy->m_pITypeLib);
+
+    return ERR_ECO_SUCCESES;
+}
+
+static uint32_t ECOCALLMETHOD EcoJavaProxy_IEcoUnknown_AddRef(IEcoUnknownPtr_t me) {
+    EcoJavaProxy* proxy = (EcoJavaProxy*)me;
+    JNIEnv* env = proxy->m_env;
+    jclass clazz = (*env)->GetObjectClass(env, proxy->m_obj);
+    jmethodID method = (*env)->GetMethodID(env, clazz, "AddRef", "()I");
+    uint32_t result = (uint32_t) (*env)->CallIntMethod(env, proxy->m_obj, method);
+    if (result != 0) {
+        return result;
+    }
+
+    ++proxy->m_cRef;
+    return result;
+}
+
+static uint32_t ECOCALLMETHOD EcoJavaProxy_IEcoUnknown_Release(IEcoUnknownPtr_t me) {
+    EcoJavaProxy* proxy = (EcoJavaProxy*)me;
+    JNIEnv* env = proxy->m_env;
+    jclass clazz = (*env)->GetObjectClass(env, proxy->m_obj);
+    jmethodID method = (*env)->GetMethodID(env, clazz, "Release", "()I");
+    uint32_t result = (uint32_t) (*env)->CallIntMethod(env, proxy->m_obj, method);
+    if (result != 0) {
+        return result;
+    }
+
+    if (--proxy->m_cRef == 0) {
+        uint16_t count = proxy->m_pIDesc->pVTbl->get_MethodCount(proxy->m_pIDesc);
+        uint16_t index = 0;
+        for (; index < count; index++) {
+            ffi_closure_free(proxy->m_methods[index].closure);
+        }
+        (*env)->DeleteGlobalRef(env, proxy->m_obj);
+        proxy->m_pIMem->pVTbl->Free(proxy->m_pIMem, proxy);
+    }
+    return result;
+}
+
+void EcoJavaProxy_GlobalDispatcher(ffi_cif* cif, void* ret, void** args, void* userData) {
+    MethodContext* ctx = (MethodContext*) userData;
+    EcoJavaProxy* proxy = ctx->proxy;
+    JNIEnv* env = proxy->m_env;
+    IEcoMethodDescriptor1* pIMethod = ctx->methodDesc;
+    uint8_t count = pIMethod->pVTbl->get_ParamCount(pIMethod);
+    jvalue* jArgs = (jvalue*) proxy->m_pIMem->pVTbl->Alloc(proxy->m_pIMem, sizeof(jvalue) * count);
+    IEcoParamDescriptor1* pIParam = 0;
+    uint16_t typeTag = 0;
+    uint8_t flags = 0;
+    uint8_t index = 0;
+
+    if (ctx->methodId == 0) {
+        jclass clazz = (*env)->GetObjectClass(env, proxy->m_obj);
+        ctx->methodId = (*env)->GetMethodID(env, clazz, ctx->jniName, ctx->jniSig);
+    }
+
+    for (index = 0; index < count; index++) {
+        pIMethod->pVTbl->GetParamAtIndex(pIMethod, index, &pIParam);
+        pIParam->pVTbl->get_Type(pIParam, &typeTag);
+        flags = pIParam->pVTbl->get_Flags(pIParam);
+        ParamToJavaValue(env, args[index + 1], typeTag, flags, &jArgs[index]);
+    }
+
+    pIMethod->pVTbl->get_Result(pIMethod, &pIParam);
+    pIParam->pVTbl->get_Type(pIParam, &typeTag);
+    CallJavaMethod(proxy, proxy->m_obj, ctx->methodId, jArgs, typeTag, ret);
+
+    for (index = 0; index < count; index++) {
+        pIMethod->pVTbl->GetParamAtIndex(pIMethod, index, &pIParam);
+        flags = pIParam->pVTbl->get_Flags(pIParam);
+        if (flags & ECO_PARAM_OUT) {
+            pIParam->pVTbl->get_Type(pIParam, &typeTag);
+            JavaValueToParam(proxy, jArgs[index], typeTag, &args[index + 1]);
+        }
+    }
+}
+
+void ECOCDECLMETHOD EcoJavaProxy_GlobalDispatcher_cdecl(ffi_cif* cif, void* ret, void** args, void* userData) {
+    EcoJavaProxy_GlobalDispatcher(cif, ret, args, userData);
+}
+
+EcoJavaProxy* CreateEcoJavaProxy(JNIEnv* env, jobject obj, IEcoInterfaceDescriptor1* pIDesc, IEcoMemoryAllocator1* pIMem, IEcoTypeLib1* pITypeLib) {
+    uint16_t mCount = pIDesc->pVTbl->get_MethodCount(pIDesc);
+    EcoJavaProxy* proxy = (EcoJavaProxy*) pIMem->pVTbl->Alloc(pIMem, sizeof(EcoJavaProxy));
+    uint16_t mIndex = 0;
+    int16_t result = 0;
+    proxy->m_pVTbl = (void**) pIMem->pVTbl->Alloc(pIMem, sizeof(void*) * (mCount + 3));
+    proxy->m_cRef = 1;
+    proxy->m_pIMem = pIMem;
+    proxy->m_pITypeLib = pITypeLib;
+    proxy->m_pIDesc = pIDesc;
+    proxy->m_env = env;
+    proxy->m_obj = (*env)->NewGlobalRef(env, obj);
+    proxy->m_methods = (MethodContext*) pIMem->pVTbl->Alloc(pIMem, sizeof(MethodContext) * mCount);
+
+    proxy->m_pVTbl[0] = EcoJavaProxy_IEcoUnknown_QueryInterface;
+    proxy->m_pVTbl[1] = EcoJavaProxy_IEcoUnknown_AddRef;
+    proxy->m_pVTbl[2] = EcoJavaProxy_IEcoUnknown_Release;
+
+    for (mIndex = 0; mIndex < mCount; mIndex++) {
+        MethodContext* ctx = &proxy->m_methods[mIndex];
+        IEcoMethodDescriptor1* pIMethod = 0;
+        IEcoParamDescriptor1* pIParam = 0;
+        uint16_t typeTag = 0;
+        uint8_t flags = 0;
+        uint8_t pCount = 0;
+        uint8_t pIndex = 0;
+        ffi_type** argTypes = 0;
+        ffi_type* retType = 0;
+
+        result = pIDesc->pVTbl->get_MethodAtIndex(pIDesc, mIndex, &pIMethod);
+        ctx->proxy = proxy;
+        ctx->methodIndex = mIndex;
+        ctx->methodDesc = pIMethod;
+        pCount = pIMethod->pVTbl->get_ParamCount(pIMethod);
+        argTypes = (ffi_type**) pIMem->pVTbl->Alloc(pIMem, sizeof(ffi_type*) * (pCount + 1));
+        argTypes[0] = &ffi_type_pointer;
+        for (pIndex = 0; pIndex < pCount; pIndex++) {
+            result = pIMethod->pVTbl->GetParamAtIndex(pIMethod, pIndex, &pIParam);
+            result = pIParam->pVTbl->get_Type(pIParam, &typeTag);
+            flags = pIParam->pVTbl->get_Flags(pIParam);
+            if (flags & ECO_PARAM_OUT) {
+                argTypes[pIndex + 1] = &ffi_type_pointer;
+            } else if (flags & ECO_PARAM_IN) {
+                argTypes[pIndex + 1] = GetFfiType(typeTag);
+            }
+        }
+        result = pIMethod->pVTbl->get_Result(pIMethod, &pIParam);
+        result = pIParam->pVTbl->get_Type(pIParam, &typeTag);
+        retType = GetFfiType(typeTag);
+
+        ctx->closure = ffi_closure_alloc(sizeof(ffi_closure), &proxy->m_pVTbl[mIndex + 3]);
+        ffi_prep_cif(&ctx->cif, FFI_STDCALL, pCount + 1, retType, argTypes);
+        ffi_prep_closure_loc(ctx->closure, &ctx->cif, EcoJavaProxy_GlobalDispatcher, ctx, proxy->m_pVTbl[mIndex + 3]);
+
+        result = pIMethod->pVTbl->get_Name(pIMethod, &ctx->jniName);
+        ctx->jniSig = GenerateJniSignature(pIMethod);
+    }
+
+    return proxy;
+}
+
+
 /*
  *
  * <summary>
@@ -111,222 +649,6 @@ static uint32_t ECOCALLMETHOD CEcoACOM2Java_3F41E2AA_Release(/* in */ IEcoACOM2J
     return pCMe->m_cRef;
 }
 
-static void addClassPath(JNIEnv* env, char_t* classpath) {
-    jclass clazz;
-    jmethodID method;
-    jobject fileObj;
-    jobject loaderObj;
-
-    clazz = (*env)->FindClass(env, "java/io/File");
-    method = (*env)->GetMethodID(env, clazz, "<init>", "(Ljava/lang/String;)V");
-    fileObj = (*env)->NewObject(env, clazz, method, (*env)->NewStringUTF(env, classpath));
-
-    method = (*env)->GetMethodID(env, clazz, "toURI", "()Ljava/net/URI;");
-    fileObj = (*env)->CallObjectMethod(env, fileObj, method);
-
-    clazz = (*env)->GetObjectClass(env, fileObj);
-    method = (*env)->GetMethodID(env, clazz, "toURL", "()Ljava/net/URL;");
-    fileObj = (*env)->CallObjectMethod(env, fileObj, method);
-
-    clazz = (*env)->FindClass(env, "java/lang/ClassLoader");
-    method = (*env)->GetStaticMethodID(env, clazz, "getSystemClassLoader", "()Ljava/lang/ClassLoader;");
-    loaderObj = (*env)->CallStaticObjectMethod(env, clazz, method);
-
-    clazz = (*env)->FindClass(env, "java/net/URLClassLoader");
-    method = (*env)->GetMethodID(env, clazz, "addURL", "(Ljava/net/URL;)V");
-    (*env)->CallVoidMethod(env, loaderObj, method, fileObj);
-}
-
-
-
-static int16_t ECOCALLMETHOD EcoJavaProxy_IEcoUnknown_QueryInterface(IEcoUnknownPtr_t me, const UGUID* riid, voidptr_t* ppv) {
-    EcoJavaProxy* proxy = (EcoJavaProxy*)me;
-    JNIEnv* env;
-    jclass clazz;
-    jclass pIUnkClazz;
-    jmethodID method;
-    jfieldID field;
-    jobject obj;
-    int16_t result = 0;
-
-    env = proxy->m_env;
-
-    pIUnkClazz = (*env)->FindClass(env, "Eco/Core/IEcoUnknownPtr");
-    method = (*env)->GetMethodID(env, pIUnkClazz, "<init>", "()V");
-    obj = (*env)->NewObject(env, pIUnkClazz, method);
-
-    clazz = (*env)->GetObjectClass(env, proxy->m_obj);
-    method = (*env)->GetMethodID(env, clazz, "QueryInterface", "(LEco/Core/UGUID;LEco/Core/IEcoUnknownPtr;)I");
-
-    result = (int16_t) (*env)->CallIntMethod(env, proxy->m_obj, method, getUGUIDObj(env, riid), obj);
-    if (result != 0) {
-        return result;
-    }
-
-    field = (*env)->GetFieldID(env, pIUnkClazz, "iUnk", "LEco/Core/IEcoUnknown;");
-    obj = (*env)->GetObjectField(env, obj, field);
-
-    return createProxyForInterface(env, riid, obj, proxy->m_pIMem, ppv);
-}
-
-static uint32_t ECOCALLMETHOD EcoJavaProxy_IEcoUnknown_AddRef(IEcoUnknownPtr_t me) {
-    EcoJavaProxy* proxy = (EcoJavaProxy*)me;
-    JNIEnv* env = proxy->m_env;
-    jclass clazz = (*env)->GetObjectClass(env, proxy->m_obj);
-    jmethodID method = (*env)->GetMethodID(env, clazz, "AddRef", "()I");
-    uint32_t result = (uint32_t) (*env)->CallIntMethod(env, proxy->m_obj, method);
-    if (result != 0) {
-        return result;
-    }
-
-    ++proxy->m_cRef;
-    return result;
-}
-
-static uint32_t ECOCALLMETHOD EcoJavaProxy_IEcoUnknown_Release(IEcoUnknownPtr_t me) {
-    EcoJavaProxy* proxy = (EcoJavaProxy*)me;
-    JNIEnv* env = proxy->m_env;
-    jclass clazz = (*env)->GetObjectClass(env, proxy->m_obj);
-    jmethodID method = (*env)->GetMethodID(env, clazz, "Release", "()I");
-    uint32_t result = (uint32_t) (*env)->CallIntMethod(env, proxy->m_obj, method);
-    if (result != 0) {
-        return result;
-    }
-
-    if (--proxy->m_cRef == 0) {
-        (*env)->DeleteGlobalRef(env, proxy->m_obj);
-        proxy->m_pIMem->pVTbl->Free(proxy->m_pIMem, proxy);
-    }
-    return result;
-}
-
-
-static int16_t ECOCALLMETHOD EcoJavaProxy_IEcoCalculatorX_QueryInterface(IEcoCalculatorXPtr_t me, const UGUID* riid, voidptr_t* ppv) {
-    return EcoJavaProxy_IEcoUnknown_QueryInterface((IEcoUnknownPtr_t)me, riid, ppv);
-}
-
-static uint32_t ECOCALLMETHOD EcoJavaProxy_IEcoCalculatorX_AddRef(IEcoCalculatorXPtr_t me) {
-    return EcoJavaProxy_IEcoUnknown_AddRef((IEcoUnknownPtr_t)me);
-}
-
-static uint32_t ECOCALLMETHOD EcoJavaProxy_IEcoCalculatorX_Release(IEcoCalculatorXPtr_t me) {
-    return EcoJavaProxy_IEcoUnknown_Release((IEcoUnknownPtr_t)me);
-}
-
-static int32_t ECOCALLMETHOD EcoJavaProxy_IEcoCalculatorX_Addition(IEcoCalculatorXPtr_t me, int16_t a, int16_t b) {
-    EcoJavaProxy* proxy = (EcoJavaProxy*)me;
-    JNIEnv* env = proxy->m_env;
-    jclass clazz = (*env)->GetObjectClass(env, proxy->m_obj);
-    jmethodID method = (*env)->GetMethodID(env, clazz, "Addition", "(II)I");
-    return (int32_t) (*env)->CallIntMethod(env, proxy->m_obj, method, a, b);
-}
-
-static int16_t ECOCALLMETHOD EcoJavaProxy_IEcoCalculatorX_Subtraction(IEcoCalculatorXPtr_t me, int16_t a, int16_t b) {
-    EcoJavaProxy* proxy = (EcoJavaProxy*)me;
-    JNIEnv* env = proxy->m_env;
-    jclass clazz = (*env)->GetObjectClass(env, proxy->m_obj);
-    jmethodID method = (*env)->GetMethodID(env, clazz, "Subtraction", "(II)I");
-    return (int16_t) (*env)->CallIntMethod(env, proxy->m_obj, method, a, b);
-}
-
-
-static int16_t ECOCALLMETHOD EcoJavaProxy_IEcoCalculatorY_QueryInterface(IEcoCalculatorYPtr_t me, const UGUID* riid, voidptr_t* ppv) {
-    return EcoJavaProxy_IEcoUnknown_QueryInterface((IEcoUnknownPtr_t)me, riid, ppv);
-}
-
-static uint32_t ECOCALLMETHOD EcoJavaProxy_IEcoCalculatorY_AddRef(IEcoCalculatorYPtr_t me) {
-    return EcoJavaProxy_IEcoUnknown_AddRef((IEcoUnknownPtr_t)me);
-}
-
-static uint32_t ECOCALLMETHOD EcoJavaProxy_IEcoCalculatorY_Release(IEcoCalculatorYPtr_t me) {
-    return EcoJavaProxy_IEcoUnknown_Release((IEcoUnknownPtr_t)me);
-}
-
-static int32_t ECOCALLMETHOD EcoJavaProxy_IEcoCalculatorY_Multiplication(IEcoCalculatorYPtr_t me, int16_t a, int16_t b) {
-    EcoJavaProxy* proxy = (EcoJavaProxy*)me;
-    JNIEnv* env = proxy->m_env;
-    jclass clazz = (*env)->GetObjectClass(env, proxy->m_obj);
-    jmethodID method = (*env)->GetMethodID(env, clazz, "Multiplication", "(II)I");
-    return (int32_t) (*env)->CallIntMethod(env, proxy->m_obj, method, a, b);
-}
-
-static int16_t ECOCALLMETHOD EcoJavaProxy_IEcoCalculatorY_Division(IEcoCalculatorYPtr_t me, int16_t a, int16_t b) {
-    EcoJavaProxy* proxy = (EcoJavaProxy*)me;
-    JNIEnv* env = proxy->m_env;
-    jclass clazz = (*env)->GetObjectClass(env, proxy->m_obj);
-    jmethodID method = (*env)->GetMethodID(env, clazz, "Division", "(II)I");
-    return (int16_t) (*env)->CallIntMethod(env, proxy->m_obj, method, a, b);
-}
-
-
-static IEcoUnknownVTbl g_EcoJavaProxy_IEcoUnknown = {
-    EcoJavaProxy_IEcoUnknown_QueryInterface,
-    EcoJavaProxy_IEcoUnknown_AddRef,
-    EcoJavaProxy_IEcoUnknown_Release
-};
-
-static IEcoCalculatorXVTbl g_EcoJavaProxy_IEcoCalculatorX = {
-    EcoJavaProxy_IEcoCalculatorX_QueryInterface,
-    EcoJavaProxy_IEcoCalculatorX_AddRef,
-    EcoJavaProxy_IEcoCalculatorX_Release,
-    EcoJavaProxy_IEcoCalculatorX_Addition,
-    EcoJavaProxy_IEcoCalculatorX_Subtraction
-};
-
-static IEcoCalculatorXVTbl g_EcoJavaProxy_IEcoCalculatorY = {
-    EcoJavaProxy_IEcoCalculatorY_QueryInterface,
-    EcoJavaProxy_IEcoCalculatorY_AddRef,
-    EcoJavaProxy_IEcoCalculatorY_Release,
-    EcoJavaProxy_IEcoCalculatorY_Multiplication,
-    EcoJavaProxy_IEcoCalculatorY_Division
-};
-
-
-
-static jobject getUGUIDObj(JNIEnv* env, const UGUID* uguid) {
-    jclass clazz;
-    jmethodID method;
-    jbyteArray dataArr;
-    jobject result;
-
-    dataArr = (*env)->NewByteArray(env, uguid->Length);
-    (*env)->SetByteArrayRegion(env, dataArr, 0, uguid->Length, uguid->Data);
-
-    clazz = (*env)->FindClass(env, "Eco/Core/UGUID");
-    method = (*env)->GetMethodID(env, clazz, "<init>", "(BB[B)V");
-    result = (*env)->NewObject(env, clazz, method, (jbyte)uguid->Preamble, (jbyte)uguid->Length, dataArr);
-
-    return result;
-}
-
-static int16_t createProxyForInterface(JNIEnv* env, const UGUID* riid, jobject obj, IEcoMemoryAllocator1* pIMem, voidptr_t* ppv) {
-    EcoJavaProxy* proxy = 0;
-    if (IsEqualUGUID(riid, &IID_IEcoUnknown)) {
-        proxy = (EcoJavaProxy*) pIMem->pVTbl->Alloc(pIMem, sizeof(EcoJavaProxy));
-        if (proxy == 0) return ERR_ECO_OUTOFMEMORY;
-        proxy->pVTbl = (void*) &g_EcoJavaProxy_IEcoUnknown;
-    } else if (IsEqualUGUID(riid, &IID_IEcoCalculatorX)) {
-        proxy = (EcoJavaProxy*) pIMem->pVTbl->Alloc(pIMem, sizeof(EcoJavaProxy));
-        if (proxy == 0) return ERR_ECO_OUTOFMEMORY;
-        proxy->pVTbl = (void*) &g_EcoJavaProxy_IEcoCalculatorX;
-    } else if (IsEqualUGUID(riid, &IID_IEcoCalculatorY)) {
-        proxy = (EcoJavaProxy*) pIMem->pVTbl->Alloc(pIMem, sizeof(EcoJavaProxy));
-        if (proxy == 0) return ERR_ECO_OUTOFMEMORY;
-        proxy->pVTbl = (void*) &g_EcoJavaProxy_IEcoCalculatorY;
-    } else {
-        *ppv = 0;
-        return ERR_ECO_NOINTERFACE;
-    }
-    proxy->m_cRef = 1;
-    proxy->m_pIMem = pIMem;
-    proxy->m_env = env;
-    proxy->m_obj = (*env)->NewGlobalRef(env, obj);
-    *ppv = proxy;
-    return ERR_ECO_SUCCESES;
-}
-
-
-
 /*
  *
  * <summary>
@@ -348,7 +670,7 @@ static int16_t ECOCALLMETHOD CEcoACOM2Java_3F41E2AA_RegisterComponent(/*in*/ IEc
     }
 
     env = pCMe->m_env;
-    addClassPath(env, classpath);
+    AddClassPath(env, classpath);
 
     clazz = (jclass*) malloc(sizeof(jclass));
     *clazz = (*env)->FindClass(env, classname);
@@ -411,6 +733,7 @@ static int16_t ECOCALLMETHOD CEcoACOM2Java_3F41E2AA_UnRegisterComponent(/*in*/ I
  */
 static int16_t ECOCALLMETHOD CEcoACOM2Java_3F41E2AA_QueryComponent(/*in*/ IEcoACOM2JavaPtr_t me, /*in*/ const UGUID* rcid, /*in*/ IEcoUnknownPtr_t pIUnkOuter, /*in*/ const UGUID* riid, /*out*/ voidptr_t* ppv) {
     CEcoACOM2Java_3F41E2AA* pCMe = (CEcoACOM2Java_3F41E2AA*)me;
+    IEcoInterfaceDescriptor1* pIDesc;
     JNIEnv* env;
     jclass clazz;
     jmethodID method;
@@ -440,8 +763,8 @@ static int16_t ECOCALLMETHOD CEcoACOM2Java_3F41E2AA_QueryComponent(/*in*/ IEcoAC
     pIUnkObj = (*env)->NewObject(env, clazz, method);
 
     clazz = (*env)->GetObjectClass(env, componentObj);
-    method = (*env)->GetMethodID(env, clazz, "create", "(LEco/Core/IEcoUnknownPtr;)I");
-    result = (int16_t) (*env)->CallIntMethod(env, componentObj, method, pIUnkObj);
+    method = (*env)->GetMethodID(env, clazz, "create", "(LEco/Core/IEcoUnknownPtr;)S");
+    result = (*env)->CallShortMethod(env, componentObj, method, pIUnkObj);
     if (result != 0) {
         return result;
     }
@@ -451,8 +774,8 @@ static int16_t ECOCALLMETHOD CEcoACOM2Java_3F41E2AA_QueryComponent(/*in*/ IEcoAC
     iUnkObj = (*env)->GetObjectField(env, pIUnkObj, field);
 
     clazz = (*env)->GetObjectClass(env, iUnkObj);
-    method = (*env)->GetMethodID(env, clazz, "QueryInterface", "(LEco/Core/UGUID;LEco/Core/IEcoUnknownPtr;)I");
-    result = (int16_t) (*env)->CallIntMethod(env, iUnkObj, method, getUGUIDObj(env, riid), pIUnkObj);
+    method = (*env)->GetMethodID(env, clazz, "QueryInterface", "(LEco/Core/UGUID;LEco/Core/IEcoUnknownPtr;)S");
+    result = (*env)->CallShortMethod(env, iUnkObj, method, UGUIDPtrToJavaObject(env, riid), pIUnkObj);
     if (result != 0) {
         return result;
     }
@@ -461,7 +784,10 @@ static int16_t ECOCALLMETHOD CEcoACOM2Java_3F41E2AA_QueryComponent(/*in*/ IEcoAC
     field = (*env)->GetFieldID(env, clazz, "iUnk", "LEco/Core/IEcoUnknown;");
     iUnkObj = (*env)->GetObjectField(env, pIUnkObj, field);
 
-    return createProxyForInterface(env, riid, iUnkObj, pCMe->m_pIMem, ppv);
+    pIDesc = GetInterfaceDescriptorByUGUID(pCMe->m_pITypeLib, riid);
+    *(EcoJavaProxy**)ppv = CreateEcoJavaProxy(env, iUnkObj, pIDesc, pCMe->m_pIMem, pCMe->m_pITypeLib);
+    
+    return ERR_ECO_SUCCESES;
 }
 
 
@@ -517,15 +843,22 @@ static int16_t ECOCALLMETHOD initCEcoACOM2Java_3F41E2AA(/*in*/ CEcoACOM2Java_3F4
         return ERR_ECO_POINTER;
     }
 
+    result = pIBus->pVTbl->QueryComponent(pIBus, &CID_EcoTypeLib1, 0, &IID_IEcoTypeLib1, (void**) &pCMe->m_pITypeLib);
+    if (result != 0 || pCMe->m_pITypeLib == 0) {
+        return result;
+    }
+
     result = pIBus->pVTbl->QueryComponent(pIBus, &CID_EcoList1, 0, &IID_IEcoList1, (void**) &pCMe->m_components);
     if (result != 0 || pCMe->m_components == 0) {
         return result;
     }
 
     vm_args.version = JNI_VERSION_1_8;
-    vm_args.nOptions = 1;
-    vm_args.options = (JavaVMOption*) malloc(sizeof(JavaVMOption));
+    vm_args.nOptions = 3;
+    vm_args.options = (JavaVMOption*) malloc(sizeof(JavaVMOption) * vm_args.nOptions);
     vm_args.options[0].optionString = "-Djava.class.path=C:\\Programming\\Eco.Core\\Eco.Java2ACOM\\BuildFiles\\artifacts\\Eco_Java2ACOM_jar\\Eco.Java2ACOM.jar";
+    vm_args.options[1].optionString = "-Xms8m"; 
+    vm_args.options[2].optionString = "-Xmx16m";
     vm_args.ignoreUnrecognized = 0;
     result = (int16_t)JNI_CreateJavaVM(&pCMe->m_jvm, (void**) &pCMe->m_env, &vm_args);
     free(vm_args.options);
@@ -614,6 +947,7 @@ CEcoACOM2Java_3F41E2AA g_xCEcoACOM2Java_3F41E2AA = {
     1, /* m_cRef */
     0, /* m_pISys */
     0, /* m_pISys */
+    0,  /* m_pITypeLib */
     0,  /* m_jvm */
     0,  /* m_env */
     0  /* m_components */

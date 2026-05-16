@@ -223,4 +223,15 @@
  */
 #define ERR_ECO_OUTINTERFACE_NOCONNECTION   0xFFE0
 
+/*
+ * <код ошибки>
+ *   ERR_ECO_NOPYTHONBRIDGE
+ * </код ошибки>
+ *
+ * <описание>
+ *  Мост Python не поддерживается.
+ * </описание>
+ */
+#define ERR_ECO_NOPYTHONBRIDGE              0xFFDF
+
 #endif /* __ERR_ECO_CODES_H__ */

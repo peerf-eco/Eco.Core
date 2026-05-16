@@ -91,3 +91,36 @@ IID_IEcoEnumConnectionPoints = UGUID("00000004-0000-0000-C000-000000000046")
 
 # IEcoConnectionPointContainer IID = {00000005-0000-0000-C000-000000000046}
 IID_IEcoConnectionPointContainer = UGUID("00000005-0000-0000-C000-000000000046")
+
+
+# =============================================================================
+# Collections
+# =============================================================================
+
+# IEcoList1 IID = {5AADBCB4-846C-4576-827B-287B5E67A152}
+IID_IEcoList1 = UGUID("5AADBCB4-846C-4576-827B-287B5E67A152")
+
+
+# =============================================================================
+# System support Interfaces
+# =============================================================================
+
+# IEcoError1 IID = {00000000-0000-0000-0000-00000000FFFE}
+IID_IEcoError1 = UGUID("00000000-0000-0000-0000-00000000FFFE")
+
+# IEcoCommandArguments1 IID = {00000000-0000-0000-0000-000000000110}
+IID_IEcoCommandArguments1 = UGUID("00000000-0000-0000-0000-000000000110")
+
+# IEcoSystemInformation1 IID = {00000000-0000-0000-0000-0000000001FF}
+IID_IEcoSystemInformation1 = UGUID("00000000-0000-0000-0000-0000000001FF")
+
+
+# =============================================================================
+# Language bridges
+# =============================================================================
+
+# IEcoACOM2Python IID = {107F4B5C-1FEF-47CC-A7E6-3167ABB9E0A7}
+IID_IEcoACOM2Python = UGUID("107F4B5C-1FEF-47CC-A7E6-3167ABB9E0A7")
+
+# IEcoACOM2Java IID = {ED2D1283-E263-48DC-B9A8-89E10C8C3657}
+IID_IEcoACOM2Java = UGUID("ED2D1283-E263-48DC-B9A8-89E10C8C3657")

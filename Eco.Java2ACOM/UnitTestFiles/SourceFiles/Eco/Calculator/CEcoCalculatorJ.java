@@ -10,7 +10,7 @@ public class CEcoCalculatorJ {
     private IEcoCalculatorY m_iCalcY = null;
     private int m_cRef = 0;
 
-    public int create(IEcoUnknownPtr pICalcX) {
+    public short create(IEcoUnknownPtr pICalcX) {
         m_iCalcX = new CEcoCalculatorJ_IEcoCalculatorX();
         m_iCalcY = new CEcoCalculatorJ_IEcoCalculatorY();
         m_cRef = 1;
@@ -18,7 +18,7 @@ public class CEcoCalculatorJ {
         return ErrEcoCodes.ERR_ECO_OK;
     }
 
-    private int QueryInterface(UGUID riid, IEcoUnknownPtr pIUnk) {
+    private short QueryInterface(UGUID riid, IEcoUnknownPtr pIUnk) {
         if (riid.equals(IEcoCalculatorX.IID)) {
             pIUnk.iUnk = m_iCalcX;
             m_iCalcX.AddRef();
@@ -50,7 +50,7 @@ public class CEcoCalculatorJ {
 
     private class CEcoCalculatorJ_IEcoCalculatorX implements IEcoCalculatorX {
         @Override
-        public int QueryInterface(UGUID riid, IEcoUnknownPtr pIUnk) {
+        public short QueryInterface(UGUID riid, IEcoUnknownPtr pIUnk) {
             return CEcoCalculatorJ.this.QueryInterface(riid, pIUnk);
         }
 
@@ -65,19 +65,19 @@ public class CEcoCalculatorJ {
         }
 
         @Override
-        public int Addition(int a, int b) {
+        public int Addition(short a, short b) {
             return a + b;
         }
 
         @Override
-        public int Subtraction(int a, int b) {
-            return a - b;
+        public short Subtraction(short a, short b) {
+            return (short) (a - b);
         }
     }
 
     private class CEcoCalculatorJ_IEcoCalculatorY implements IEcoCalculatorY {
         @Override
-        public int QueryInterface(UGUID riid, IEcoUnknownPtr pIUnk) {
+        public short QueryInterface(UGUID riid, IEcoUnknownPtr pIUnk) {
             return CEcoCalculatorJ.this.QueryInterface(riid, pIUnk);
         }
 
@@ -92,13 +92,13 @@ public class CEcoCalculatorJ {
         }
 
         @Override
-        public int Multiplication(int a, int b) {
+        public int Multiplication(short a, short b) {
             return a * b;
         }
 
         @Override
-        public int Division(int a, int b) {
-            return a / b;
+        public short Division(short a, short b) {
+            return (short) (a / b);
         }
     }
 }

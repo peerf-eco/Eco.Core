@@ -72,7 +72,7 @@ static uint32_t ECOCALLMETHOD CEcoTypeLib1Annotation_01434A0B_AddRef(/* in */ IE
     CEcoTypeLib1Annotation_01434A0B* pCMe = (CEcoTypeLib1Annotation_01434A0B*)me;
 
     /* Проверка указателя */
-    if (me == 0 ) {
+    if ( me == 0 ) {
         return -1; /* ERR_ECO_POINTER */
     }
 
@@ -94,7 +94,7 @@ static uint32_t ECOCALLMETHOD CEcoTypeLib1Annotation_01434A0B_Release(/* in */ I
     CEcoTypeLib1Annotation_01434A0B* pCMe = (CEcoTypeLib1Annotation_01434A0B*)me;
 
     /* Проверка указателя */
-    if (me == 0 ) {
+    if ( me == 0 ) {
         return -1; /* ERR_ECO_POINTER */
     }
 
@@ -215,7 +215,7 @@ static int16_t ECOCALLMETHOD initCEcoTypeLib1Annotation_01434A0B(/*in*/ CEcoType
     UGUID* rcid = (UGUID*)&CID_EcoMemoryManager1;	
 
     /* Проверка указателей */
-    if (me == 0 ) {
+    if ( me == 0 ) {
         return result;
     }
 
@@ -281,7 +281,7 @@ static int16_t ECOCALLMETHOD createCEcoTypeLib1Annotation_01434A0B(/* in */ CEco
 static void ECOCALLMETHOD deleteCEcoTypeLib1Annotation_01434A0B(/* in */ CEcoTypeLib1Annotation_01434A0BPtr_t pCMe) {
     IEcoMemoryAllocator1* pIMem = 0;
 
-    if (pCMe != 0 ) {
+    if ( pCMe != 0 ) {
         pIMem = pCMe->m_pIMem;
         /* Освобождение */
         if ( pCMe->m_pISys != 0 ) {

@@ -1,22 +1,13 @@
-"""EcoOS runtime initialization and component management.
+"""EcoOS runtime package.
 
-This package provides the core runtime functionality for the
-Python2ACOM bridge, including:
+This package provides the core runtime machinery for the Python2ACOM bridge:
+bootstrapping the ACOM environment, loading C component libraries, querying
+platform facilities, and routing log output.
 
 Modules:
     loader: Load EcoOS component libraries and extract factories.
-    system: EcoSystem - main entry point for ACOM interaction.
-    utils: Helper functions for library filename handling and GUID parsing.
+    logging: Logger and helpers for the package-wide log stream.
+    platform: Platform-specific helpers.
+    system: `EcoSystem` — root ACOM component that boots the runtime.
+    utils: Helpers for library filename and GUID parsing.
 """
-
-from eco_python2acom.runtime.loader import EcoLibLoader
-from eco_python2acom.runtime.system import EcoSystem
-from eco_python2acom.runtime.utils import guid_to_lib_filename, is_eco_lib, lib_filename_to_guid
-
-__all__ = [
-    "EcoSystem",
-    "EcoLibLoader",
-    "guid_to_lib_filename",
-    "is_eco_lib",
-    "lib_filename_to_guid",
-]

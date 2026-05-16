@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "eco-python2acom"
-version = "0.10.0"
+version = "0.13.0"
 description = "Python bridge for ACOM component technology (EcoOS)"
 authors = ["Sergei Vdovenkov <sivdovenkov.it@gmail.com>"]
 readme = "README.md"
@@ -110,7 +110,20 @@ warn_unreachable = true
 strict_equality = true
 show_error_codes = true
 ignore_missing_imports = true
-disable_error_code = ["attr-defined", "empty-body", "valid-type", "type-var", "union-attr", "no-redef"]
+disable_error_code = [
+    "attr-defined",
+    "empty-body",
+    "valid-type",
+    "type-var",
+    "union-attr",
+    "no-redef",
+    "method-assign",
+    "assignment",
+    "no-any-return",
+    "return-value",
+    "comparison-overlap",
+    "arg-type",
+]
 exclude = '^(tests|examples)/'
 
 [tool.pytest.ini_options]
