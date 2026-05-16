@@ -7,7 +7,8 @@ This module provides the `Func[R, [A, B, ...]]` generic type for type-safe
 from ctypes import WINFUNCTYPE
 from typing import TYPE_CHECKING, Generic, Optional, ParamSpec, TypeVar
 
-from eco_python2acom.types.core import TYPE_NAMES, Void
+from eco_python2acom.types.core import TYPE_NAMES, CPointer, Void
+from eco_python2acom.types.pointer import Ptr
 from eco_python2acom.types.utils import addressof
 
 R = TypeVar("R")
@@ -104,9 +105,16 @@ else:
             argtypes_name = ", ".join(_type_label(arg) for arg in argtypes)
             display_name = f"Func[{restype_name}, [{argtypes_name}]]"
 
-            # Translate our `Void` (= NoneType) marker to `None`
+            # Restype substitution for Python callbacks:
+            #   - `Void` => `None`;
+            #   - `Ptr[T]` => `Ptr[Void]`;
+            if restype is Void:
+                restype = None
+            elif issubclass(restype, CPointer):
+                restype = Ptr[Void]
+
             try:
-                func_type = WINFUNCTYPE(None if restype is Void else restype, *argtypes)
+                func_type = WINFUNCTYPE(restype, *argtypes)
             except TypeError as err:
                 raise TypeError(f"Cannot create '{display_name}': {err}") from err
 

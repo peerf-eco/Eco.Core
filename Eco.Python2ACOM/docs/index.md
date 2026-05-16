@@ -8,7 +8,7 @@ Provides declarative decorators for defining and consuming `EcoOS` interfaces fr
 
 ## What is ACOM?
 
-`ACOM` (Advanced Component Object Model) is a component architecture used in `EcoOS` — a research unikernel operating system. It follows a COM-like model: components expose typed interfaces identified by GUIDs, communicate through vtable pointers, and manage lifetime via reference counting (`AddRef` / `Release`).
+`ACOM` (Adapted Component Object Model) is a component architecture used in `EcoOS` — a research unikernel operating system. It follows a COM-like model: components expose typed interfaces identified by GUIDs, communicate through vtable pointers, and manage lifetime via reference counting (`AddRef` / `Release`).
 
 ## What does this library do?
 
@@ -21,18 +21,21 @@ Provides declarative decorators for defining and consuming `EcoOS` interfaces fr
 
 ## Quick start
 
+The runtime path is read from the `ECO_FRAMEWORK_RT` environment variable;
+`lib_dir` points to a directory with user component libraries.
+
 ```python
 from eco_python2acom.runtime.system import EcoSystem
 from eco_python2acom.types.pointer import Ptr
 from eco_python2acom.types.core import Void
 from eco_python2acom.types.utils import byref, cast
 
-with EcoSystem(runtime_path="/path/to/rt", user_lib_dir="/path/to/components") as eco:
+with EcoSystem(lib_dir="/path/to/components") as eco:
     ppv = Ptr[Void]()
     eco.bus.obj.QueryComponent(byref(cid), None, byref(iid), byref(ppv))
     calc = cast(ppv, Ptr[IEcoCalculatorX])
     result = calc.obj.Addition(10, 20)
-    calc.Release()
+    calc.obj.Release()
 ```
 
 ## Package structure

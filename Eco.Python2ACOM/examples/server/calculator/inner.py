@@ -4,9 +4,9 @@ Implements only `IEcoCalculatorX`. Designed to be aggregated by an outer
 component.
 
 Aggregation model ("inner"):
-    - `outer == NULL` → standalone mode, `self.outer` loops back to the
+    - `outer == NULL` => standalone mode, `self.outer` loops back to the
       component's own non-delegating `IEcoUnknown` (NDU);
-    - `outer != NULL` → aggregated mode, `self.outer = outer`, and the factory
+    - `outer != NULL` => aggregated mode, `self.outer = outer`, and the factory
       hands the caller a pointer to NDU directly.
 """
 

@@ -44,7 +44,7 @@ def main() -> int:
     try:
         console.info("Initializing EcoSystem...")
 
-        with EcoSystem(user_lib_dir="data") as eco:
+        with EcoSystem(lib_dir="data") as eco:
             console.success("EcoSystem initialized\n")
 
             ppv_x = Ptr[Void]()

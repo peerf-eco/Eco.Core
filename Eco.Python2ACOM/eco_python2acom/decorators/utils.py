@@ -8,9 +8,10 @@ from collections.abc import Callable
 from types import FrameType, NoneType, UnionType
 from typing import Any, ClassVar, Optional, Union, get_args, get_origin, get_type_hints
 
-from eco_python2acom.types.core import CData, CLayout, CStructure
+from eco_python2acom.types.core import CData, CLayout, CPointer, CStructure
 from eco_python2acom.types.function import Func
 from eco_python2acom.types.pointer import Ptr, pointer
+from eco_python2acom.types.utils import cast
 
 # -----------------------------------------------------------------------------
 # Type validation and normalization
@@ -217,10 +218,12 @@ def _install_dispatchers(cls: type, methods: list[tuple[str, type]]) -> None:
         methods: List of tuples with method names and EcoOS types.
     """
     method_params = getattr(cls, "_eco_method_params_", {})
+    method_returns = getattr(cls, "_eco_method_returns_", {})
 
     for field_name, _ in methods:
         method_name = field_name.removeprefix("_func_")
         param_names = method_params.get(field_name, [])
+        return_type = method_returns.get(field_name, NoneType)
         original = cls.__dict__.get(method_name)
         docstring = getattr(original, "__doc__", None) if callable(original) else None
 
@@ -228,6 +231,7 @@ def _install_dispatchers(cls: type, methods: list[tuple[str, type]]) -> None:
             field_name: str,
             method_name: str,
             param_names: list[str],
+            return_type: type,
             docstring: Optional[str] = None,
         ) -> Callable[..., Any]:
             """Create a dispatcher closure for a specific method."""
@@ -250,13 +254,17 @@ def _install_dispatchers(cls: type, methods: list[tuple[str, type]]) -> None:
                 else:
                     result = func_ptr(self_ptr, *args)
 
+                # Python callbacks return typed pointers via `Ptr[Void]` substitution
+                # Re-wrap the `Ptr[Void]` into the declared `Ptr[T]` here so callers see the typed pointer
+                if issubclass(return_type, CPointer):
+                    return cast(result, return_type)
                 return result
 
             dispatch.__name__ = method_name
             dispatch.__doc__ = docstring
             return dispatch
 
-        dispatcher = make_dispatch(field_name, method_name, param_names, docstring)
+        dispatcher = make_dispatch(field_name, method_name, param_names, return_type, docstring)
         setattr(cls, method_name, dispatcher)
 
 

@@ -59,6 +59,9 @@ plugins:
             filters:
               - "!^_"
               - "^__init__$"
+              - "^__eco_new__$"
+              - "^__eco_init__$"
+              - "^__eco_del__$"
             show_signature_annotations: true
             separate_signature: true
             line_length: 90
@@ -103,6 +106,7 @@ nav:
     - EcoSystem: runtime/system.md
     - Loader: runtime/loader.md
     - Logging: runtime/logging.md
+    - Platform: runtime/platform.md
   - Interfaces:
     - Unknown: interfaces/unknown.md
     - Factory: interfaces/factory.md

@@ -121,14 +121,14 @@ class EcoCalculatorOuter:
         if target == IID_IEcoUnknown or target == IID_IEcoCalculatorY:
             out.obj.value = addressof(self) + offsetof(self, IEcoCalculatorY)
             self.AddRef()
-            self.logger.debug("IID = <%s> ---> OK", target)
+            self.logger.debug(f"IID = <{target}> ---> OK")
             return EcoErrorCode.SUCCESS
 
         if bool(self.inner):
-            self.logger.debug("IID = <%s> ---> Forwarding to inner", target)
+            self.logger.debug(f"IID = <{target}> ---> Forwarding to inner")
             return self.inner.obj.QueryInterface(iid, out)
 
-        self.logger.debug("IID = <%s> ---> Interface not supported", target)
+        self.logger.debug(f"IID = <{target}> ---> Interface not supported")
         out.obj.value = 0
         return EcoErrorCode.NOINTERFACE
 
@@ -139,7 +139,7 @@ class EcoCalculatorOuter:
             The new reference count.
         """
         self.refs += 1
-        self.logger.debug("Refs = %d", self.refs)
+        self.logger.debug(f"Refs = {self.refs}")
         return self.refs
 
     def Release(self) -> UInt32:
@@ -159,7 +159,7 @@ class EcoCalculatorOuter:
                 self.__eco_del__()
                 self.logger.debug("Refs = 0 ---> Destroyed")
                 return self.refs
-        self.logger.debug("Refs = %d", self.refs)
+        self.logger.debug(f"Refs = {self.refs}")
         return self.refs
 
     @view

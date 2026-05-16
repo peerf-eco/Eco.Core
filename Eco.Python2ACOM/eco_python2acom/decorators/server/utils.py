@@ -14,7 +14,15 @@ from eco_python2acom.guids.iid import IID_IEcoComponentFactory, IID_IEcoUnknown
 from eco_python2acom.interfaces.factory import IEcoComponentFactory
 from eco_python2acom.interfaces.unknown import IEcoUnknown
 from eco_python2acom.runtime.logging import eco_logger
-from eco_python2acom.types.core import CString, CStructure, Int16, UInt32, Void
+from eco_python2acom.types.core import (
+    CPointer,
+    CSimpleData,
+    CString,
+    CStructure,
+    Int16,
+    UInt32,
+    Void,
+)
 from eco_python2acom.types.errors import EcoErrorCode
 from eco_python2acom.types.guid import UGUID
 from eco_python2acom.types.pointer import Ptr, pointer
@@ -52,13 +60,13 @@ class IEcoUnknownMethods:
             if offset is None and target == IID_IEcoUnknown:
                 offset = offsets.get(primary)
             if offset is None:
-                self.logger.debug("IID = <%s> ---> Interface not supported", target)
+                self.logger.debug(f"IID = <{target}> ---> Interface not supported")
                 out.obj.value = 0
                 return EcoErrorCode.NOINTERFACE
 
             out.obj.value = addressof(self) + offset
             self.AddRef()
-            self.logger.debug("IID = <%s> ---> OK", target)
+            self.logger.debug(f"IID = <{target}> ---> OK")
             return EcoErrorCode.SUCCESS
 
         def AddRef(self) -> UInt32:
@@ -68,7 +76,7 @@ class IEcoUnknownMethods:
                 The new reference count.
             """
             self.refs += 1
-            self.logger.debug("Refs = %d", self.refs)
+            self.logger.debug(f"Refs = {self.refs}")
             return self.refs
 
         def Release(self) -> UInt32:
@@ -85,7 +93,7 @@ class IEcoUnknownMethods:
                 ALIVE.pop(addressof(self), None)
                 self.logger.debug("Refs = 0 ---> Destroyed")
             else:
-                self.logger.debug("Refs = %d", self.refs)
+                self.logger.debug(f"Refs = {self.refs}")
             return self.refs
 
         return {"QueryInterface": QueryInterface, "AddRef": AddRef, "Release": Release}
@@ -187,20 +195,20 @@ class IEcoComponentFactoryMethods:
             instance = cls()
             result = instance.__eco_new__(system, outer)
             if result != 0:
-                self.logger.debug("Instance creation failed | code = 0x%X", result)
+                self.logger.debug(f"Instance creation failed | code = {result}")
                 return result
 
             result = instance.__eco_init__(system)
             if result != 0:
-                self.logger.debug("Instance init failed | code = 0x%X", result)
+                self.logger.debug(f"Instance init failed | code = {result}")
                 return result
 
             ALIVE[addressof(instance)] = instance
-            self.logger.debug("Instance at <0x%x>", addressof(instance))
+            self.logger.debug(f"Instance at <0x{addressof(instance):X}>")
 
             result = instance.QueryInterface(iid, out)
             if result != 0:
-                self.logger.debug("Interface query failed | code = 0x%X", result)
+                self.logger.debug(f"Interface query failed | code = {result}")
                 return result
 
             instance.Release()
@@ -395,6 +403,10 @@ def _make_method_trampoline(
         if parent is None:
             return 0
         result = method(parent, *args)
+
+        # Unwrap EcoOS instances: callback restype marshalling only accepts raw values
+        if isinstance(result, CPointer | CSimpleData):
+            return result.value
         return result
 
     trampoline.__name__ = getattr(method, "__name__", "trampoline")
