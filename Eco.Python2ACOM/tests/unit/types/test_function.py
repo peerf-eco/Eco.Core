@@ -1,10 +1,12 @@
 """Unit tests for `eco_python2acom.types.function` module.
 
 This module tests the generic `Func[R, [A, B, ...]]` type including metaclass
-subscript syntax, instance creation, representation, and error handling.
+subscript syntax, restype substitution rules, instance creation, representation,
+and error handling.
 
 Test Classes:
     TestFuncCreation: Tests for `Func[R, [A, ...]]` type creation and attributes.
+    TestFuncRestypeSubstitution: Tests for restype substitution rules.
     TestFuncInstantiation: Tests for wrapping Python callables into callbacks.
     TestFuncRepr: Tests for `__repr__` of function pointer instances.
     TestFuncValidation: Tests for subscript parameter validation.
@@ -15,6 +17,7 @@ import pytest
 
 from eco_python2acom.types.core import Double, Int16, Int32, UInt8, Void
 from eco_python2acom.types.function import Func
+from eco_python2acom.types.pointer import Ptr
 
 
 @pytest.mark.unit
@@ -50,6 +53,36 @@ class TestFuncCreation:
         """Verifies display name renders empty argtypes cleanly."""
         FuncType = Func[Int16, []]
         assert FuncType.__name__ == "Func[Int16, []]"
+
+
+@pytest.mark.unit
+class TestFuncRestypeSubstitution:
+    """Tests for the restype substitution rules applied when building the signature.
+
+    Notes:
+        - `Void` becomes `None`.
+        - Any typed `Ptr[T]` becomes `Ptr[Void]`.
+    """
+
+    def test_void_restype_is_translated_to_none(self) -> None:
+        """`Func[Void, [...]]._restype_` is `None`."""
+        FuncType = Func[Void, [Int32]]
+        assert FuncType._restype_ is None
+
+    def test_typed_pointer_restype_is_substituted_with_void_pointer(self) -> None:
+        """`Func[Ptr[Int32], [...]]._restype_` is `Ptr[Void]`."""
+        FuncType = Func[Ptr[Int32], [Int32]]
+        assert FuncType._restype_ is Ptr[Void]
+
+    def test_void_pointer_restype_is_unchanged(self) -> None:
+        """`Func[Ptr[Void], [...]]._restype_` stays `Ptr[Void]`."""
+        FuncType = Func[Ptr[Void], [Int32]]
+        assert FuncType._restype_ is Ptr[Void]
+
+    def test_scalar_restype_is_unchanged(self) -> None:
+        """`Func[Int32, [...]]._restype_` stays as the declared scalar."""
+        FuncType = Func[Int32, [Int32]]
+        assert FuncType._restype_ is Int32
 
 
 @pytest.mark.unit
@@ -130,7 +163,7 @@ class TestFuncValidation:
             "non_type_argtype_middle",
             "void_single_argtype",
             "void_among_argtypes",
-            "non_ctypes_argtype",
+            "non_valid_argtype",
         ],
     )
     def test_invalid_subscript_params(

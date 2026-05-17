@@ -1,10 +1,18 @@
-"""Integration tests for the `Eco.Test` component via Python2ACOM bridge.
+"""Integration tests for the `Eco.Test` component contract.
 
-This module verifies end-to-end interaction with a real ACOM component
-through the EcoSystem runtime: integer arithmetic, floating-point math,
-pointer-based array operations, in-place sorting, and string retrieval.
+Every test in this module runs twice: once against the native
+`Eco.Test.dll` and once against `EcoTest` — the pure-Python implementation
+hosted by the `Eco.ACOM2Python` bridge. Both back-ends expose the same
+`IEcoTest` interface and must produce identical results; the parameter id
+(`[c]` / `[py]`) tells which one a given run targets.
 
-Tests are automatically skipped if the runtime or library is unavailable.
+Coverage spans the full surface: arithmetic and floating-point math,
+pointer-based array operations, in-place sorting, string return, plain and
+nested structures, unions and tagged variants, the user-supplied comparator
+callback, reference counting, and `QueryInterface` dispatch.
+
+The entire session is skipped if the runtime or `Eco.Test` library is
+unavailable; the `[py]` variants are skipped if the bridge is not loaded.
 
 Test Classes:
     TestEcoTestArithmetic: Tests for `Addition`, `Negation` (int32 operations).
@@ -13,8 +21,8 @@ Test Classes:
     TestEcoTestBubbleSort: Tests for `SortArray` (in-place mutation).
     TestEcoTestStrings: Tests for `GetName` (C string return).
     TestEcoTestStructures: Tests for `EcoPoint` interop (make, distance, translate).
-    TestEcoTestUnions: Tests for `EcoValue` union (pack / unpack by value and pointer).
-    TestEcoTestNestedStructures: Tests for `EcoRect` (nested struct, model-by-value).
+    TestEcoTestUnions: Tests for `EcoValue` union (pack / unpack by pointer).
+    TestEcoTestNestedStructures: Tests for `EcoRect` (nested struct, points by pointer).
     TestEcoTestArrayOfStructures: Tests for `SumPoints` (array of `EcoPoint`).
     TestEcoTestVariant: Tests for `EcoVariant` (model containing a union by value).
     TestEcoTestRefCounting: Tests for `AddRef`/`Release` lifecycle.
@@ -484,7 +492,7 @@ class TestEcoTestUnions:
         out = EcoValue()
         result = eco_test.obj.PackInt(value, byref(out))
         assert result == EcoErrorCode.SUCCESS
-        assert eco_test.obj.UnpackInt(out) == value
+        assert eco_test.obj.UnpackInt(byref(out)) == value
 
     @pytest.mark.parametrize(
         "value",
@@ -496,13 +504,13 @@ class TestEcoTestUnions:
         out = EcoValue()
         result = eco_test.obj.PackDouble(value, byref(out))
         assert result == EcoErrorCode.SUCCESS
-        assert math.isclose(eco_test.obj.UnpackDouble(out), value, rel_tol=0, abs_tol=0)
+        assert math.isclose(eco_test.obj.UnpackDouble(byref(out)), value, rel_tol=0, abs_tol=0)
 
-    def test_union_by_value_param(self, eco_test: Ptr[IEcoTest]) -> None:
-        """Union passed by value is read correctly on the C side."""
+    def test_union_by_pointer_param(self, eco_test: Ptr[IEcoTest]) -> None:
+        """Union passed by pointer is read correctly on the C side."""
         value = EcoValue()
         value.as_int = Int32(777)
-        assert eco_test.obj.UnpackInt(value) == 777
+        assert eco_test.obj.UnpackInt(byref(value)) == 777
 
     def test_reinterpret_int_halves(self, eco_test: Ptr[IEcoTest]) -> None:
         """`ReinterpretAsInt` returns XOR of both int halves of the union."""
@@ -510,29 +518,29 @@ class TestEcoTestUnions:
         value.as_bytes[0] = Int32(0xA5A5A5A5 - 0x100000000)  # signed int32 pattern
         value.as_bytes[1] = Int32(0x5A5A5A5A)
         expected = value.as_bytes[0] ^ value.as_bytes[1]
-        assert eco_test.obj.ReinterpretAsInt(value) == expected
+        assert eco_test.obj.ReinterpretAsInt(byref(value)) == expected
 
     def test_int_and_double_views_share_storage(self, eco_test: Ptr[IEcoTest]) -> None:
         """Writing via `PackDouble` changes the int view (shared storage)."""
         out = EcoValue()
         eco_test.obj.PackInt(0, byref(out))
-        assert eco_test.obj.UnpackInt(out) == 0
+        assert eco_test.obj.UnpackInt(byref(out)) == 0
 
         eco_test.obj.PackDouble(1.1, byref(out))
         # 1.1 as IEEE-754 double has non-zero bits in both int halves
-        assert eco_test.obj.UnpackInt(out) != 0
+        assert eco_test.obj.UnpackInt(byref(out)) != 0
 
 
 @pytest.mark.integration
 class TestEcoTestNestedStructures:
     """Tests for `EcoRect` — a model containing two nested `EcoPoint`s."""
 
-    def test_make_rect_from_points_by_value(self, eco_test: Ptr[IEcoTest]) -> None:
-        """`MakeRect` accepts two `EcoPoint`s by value and writes into out-param."""
+    def test_make_rect_from_points_by_pointer(self, eco_test: Ptr[IEcoTest]) -> None:
+        """`MakeRect` accepts two `EcoPoint`s by pointer and writes into out-param."""
         rect = EcoRect()
         top_left = EcoPoint(1, 2)
         bottom_right = EcoPoint(10, 20)
-        result = eco_test.obj.MakeRect(top_left, bottom_right, byref(rect))
+        result = eco_test.obj.MakeRect(byref(top_left), byref(bottom_right), byref(rect))
         assert result == EcoErrorCode.SUCCESS
         assert rect.top_left == EcoPoint(1, 2)
         assert rect.bottom_right == EcoPoint(10, 20)
@@ -609,7 +617,7 @@ class TestEcoTestVariant:
         value = EcoValue()
         value.as_int = Int32(42)
         variant = EcoVariant()
-        result = eco_test.obj.MakeVariant(ECO_VALUE_INT, value, byref(variant))
+        result = eco_test.obj.MakeVariant(ECO_VALUE_INT, byref(value), byref(variant))
         assert result == EcoErrorCode.SUCCESS
         assert variant.tag == ECO_VALUE_INT
         assert variant.value.as_int == 42
@@ -619,7 +627,7 @@ class TestEcoTestVariant:
         value = EcoValue()
         value.as_double = Double(3.14)
         variant = EcoVariant()
-        eco_test.obj.MakeVariant(ECO_VALUE_DOUBLE, value, byref(variant))
+        eco_test.obj.MakeVariant(ECO_VALUE_DOUBLE, byref(value), byref(variant))
         assert variant.tag == ECO_VALUE_DOUBLE
         assert math.isclose(variant.value.as_double, 3.14, abs_tol=1e-9)
 
@@ -628,7 +636,7 @@ class TestEcoTestVariant:
         value = EcoValue()
         value.as_int = Int32()
         variant = EcoVariant()
-        eco_test.obj.MakeVariant(ECO_VALUE_INT, value, byref(variant))
+        eco_test.obj.MakeVariant(ECO_VALUE_INT, byref(value), byref(variant))
         assert eco_test.obj.GetVariantTag(byref(variant)) == ECO_VALUE_INT
 
     def test_get_variant_value_roundtrip(self, eco_test: Ptr[IEcoTest]) -> None:
@@ -636,7 +644,7 @@ class TestEcoTestVariant:
         value = EcoValue()
         value.as_int = Int32(999)
         variant = EcoVariant()
-        eco_test.obj.MakeVariant(Int32(ECO_VALUE_INT), value, byref(variant))
+        eco_test.obj.MakeVariant(ECO_VALUE_INT, byref(value), byref(variant))
 
         out = EcoValue()
         result = eco_test.obj.GetVariantValue(byref(variant), byref(out))

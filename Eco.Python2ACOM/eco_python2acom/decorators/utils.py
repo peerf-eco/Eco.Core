@@ -238,7 +238,7 @@ def _install_dispatchers(cls: type, methods: list[tuple[str, type]]) -> None:
 
             def dispatch(self, *args: Any, **kwargs: Any) -> Any:
                 func_ptr = getattr(self.vtbl.obj, field_name)
-                self_ptr = pointer(self)
+                self_ptr: Ptr[Any] = pointer(self)
                 if kwargs:
                     full_args = list(args)
                     for idx, param_name in enumerate(param_names):
@@ -363,7 +363,7 @@ def _build_namespace(cls: type, extra: Optional[dict[str, Any]] = None) -> dict[
         extra: Additional attributes to add to namespace.
 
     Returns:
-        Namespace dict ready for the native ctypes metaclass.
+        Namespace dict ready for the native metaclass.
     """
     namespace: dict[str, Any] = {
         "__module__": cls.__module__,

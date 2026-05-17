@@ -387,18 +387,18 @@ static int16_t ECOCALLMETHOD CEcoTest_PackDouble(/* in */ IEcoTestPtr_t me, /* i
  * </сводка>
  *
  * <описание>
- *   Чтение целого значения из EcoValue (union по значению)
+ *   Чтение целого значения из EcoValue
  * </описание>
  */
-static int32_t ECOCALLMETHOD CEcoTest_UnpackInt(/* in */ IEcoTestPtr_t me, /* in */ EcoValue value) {
+static int32_t ECOCALLMETHOD CEcoTest_UnpackInt(/* in */ IEcoTestPtr_t me, /* in */ EcoValue* value) {
     CEcoTest* pCMe = (CEcoTest*)me;
 
-    /* Проверка указателя */
-    if (me == 0) {
+    /* Проверка указателей */
+    if (me == 0 || value == 0) {
         return ERR_ECO_POINTER;
     }
 
-    return value.asInt;
+    return value->asInt;
 }
 
 /*
@@ -407,18 +407,18 @@ static int32_t ECOCALLMETHOD CEcoTest_UnpackInt(/* in */ IEcoTestPtr_t me, /* in
  * </сводка>
  *
  * <описание>
- *   Чтение вещественного значения из EcoValue (union по значению)
+ *   Чтение вещественного значения из EcoValue
  * </описание>
  */
-static double_t ECOCALLMETHOD CEcoTest_UnpackDouble(/* in */ IEcoTestPtr_t me, /* in */ EcoValue value) {
+static double_t ECOCALLMETHOD CEcoTest_UnpackDouble(/* in */ IEcoTestPtr_t me, /* in */ EcoValue* value) {
     CEcoTest* pCMe = (CEcoTest*)me;
 
-    /* Проверка указателя */
-    if (me == 0) {
+    /* Проверка указателей */
+    if (me == 0 || value == 0) {
         return ERR_ECO_POINTER;
     }
 
-    return value.asDouble;
+    return value->asDouble;
 }
 
 /*
@@ -430,15 +430,15 @@ static double_t ECOCALLMETHOD CEcoTest_UnpackDouble(/* in */ IEcoTestPtr_t me, /
  *   XOR битовых половин union — проверяет, что все байты дошли корректно
  * </описание>
  */
-static int32_t ECOCALLMETHOD CEcoTest_ReinterpretAsInt(/* in */ IEcoTestPtr_t me, /* in */ EcoValue value) {
+static int32_t ECOCALLMETHOD CEcoTest_ReinterpretAsInt(/* in */ IEcoTestPtr_t me, /* in */ EcoValue* value) {
     CEcoTest* pCMe = (CEcoTest*)me;
 
-    /* Проверка указателя */
-    if (me == 0) {
+    /* Проверка указателей */
+    if (me == 0 || value == 0) {
         return ERR_ECO_POINTER;
     }
 
-    return value.asBytes[0] ^ value.asBytes[1];
+    return value->asBytes[0] ^ value->asBytes[1];
 }
 
 /*
@@ -447,19 +447,19 @@ static int32_t ECOCALLMETHOD CEcoTest_ReinterpretAsInt(/* in */ IEcoTestPtr_t me
  * </сводка>
  *
  * <описание>
- *   Построение прямоугольника из двух точек (передаваемых по значению)
+ *   Построение прямоугольника из двух точек
  * </описание>
  */
-static int16_t ECOCALLMETHOD CEcoTest_MakeRect(/* in */ IEcoTestPtr_t me, /* in */ EcoPoint topLeft, /* in */ EcoPoint bottomRight, /* out */ EcoRect* outRect) {
+static int16_t ECOCALLMETHOD CEcoTest_MakeRect(/* in */ IEcoTestPtr_t me, /* in */ EcoPoint* topLeft, /* in */ EcoPoint* bottomRight, /* out */ EcoRect* outRect) {
     CEcoTest* pCMe = (CEcoTest*)me;
 
-    /* Проверка указателя */
-    if (me == 0 || outRect == 0) {
+    /* Проверка указателей */
+    if (me == 0 || topLeft == 0 || bottomRight == 0 || outRect == 0) {
         return ERR_ECO_POINTER;
     }
 
-    outRect->topLeft = topLeft;
-    outRect->bottomRight = bottomRight;
+    outRect->topLeft = *topLeft;
+    outRect->bottomRight = *bottomRight;
     return ERR_ECO_SUCCESES;
 }
 
@@ -522,19 +522,19 @@ static int16_t ECOCALLMETHOD CEcoTest_SumPoints(/* in */ IEcoTestPtr_t me, /* in
  * </сводка>
  *
  * <описание>
- *   Создание tagged-варианта (модель с union по значению)
+ *   Создание tagged-варианта
  * </описание>
  */
-static int16_t ECOCALLMETHOD CEcoTest_MakeVariant(/* in */ IEcoTestPtr_t me, /* in */ int32_t tag, /* in */ EcoValue value, /* out */ EcoVariant* outVariant) {
+static int16_t ECOCALLMETHOD CEcoTest_MakeVariant(/* in */ IEcoTestPtr_t me, /* in */ int32_t tag, /* in */ EcoValue* value, /* out */ EcoVariant* outVariant) {
     CEcoTest* pCMe = (CEcoTest*)me;
 
-    /* Проверка указателя */
-    if (me == 0 || outVariant == 0) {
+    /* Проверка указателей */
+    if (me == 0 || value == 0 || outVariant == 0) {
         return ERR_ECO_POINTER;
     }
 
     outVariant->tag = tag;
-    outVariant->value = value;
+    outVariant->value = *value;
     return ERR_ECO_SUCCESES;
 }
 

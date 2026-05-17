@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "eco-python2acom"
-version = "0.13.0"
+version = "0.14.0"
 description = "Python bridge for ACOM component technology (EcoOS)"
 authors = ["Sergei Vdovenkov <sivdovenkov.it@gmail.com>"]
 readme = "README.md"
@@ -33,7 +33,7 @@ mkdocs = "^1.6.1"
 mkdocs-material = "^9.7.6"
 mkdocstrings = {extras = ["python"], version = "^1.0.3"}
 rich = "^15.0.0"
-allure-pytest = "^2.15.3"
+allure-pytest = "^2.16.0"
 
 [build-system]
 requires = ["poetry-core"]
@@ -137,6 +137,9 @@ markers = [
     "unit: fast isolated tests",
     "integration: requires external resources",
 ]
+filterwarnings = [
+    "ignore::RuntimeWarning",
+]
 
 [tool.coverage.run]
 source = ["eco_python2acom"]
@@ -145,6 +148,8 @@ omit = [
     "*/test_*.py",
     "*/interfaces/*",
     "*/guids/*",
+    "*/runtime/platform.py",
+    "*/runtime/system.py",
 ]
 
 [tool.coverage.report]

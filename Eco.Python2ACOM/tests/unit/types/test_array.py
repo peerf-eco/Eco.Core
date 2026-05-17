@@ -16,6 +16,7 @@ import pytest
 
 from eco_python2acom.types.array import Array
 from eco_python2acom.types.core import Int32, UInt8, UInt16, Void
+from eco_python2acom.types.utils import addressof
 
 
 @pytest.mark.unit
@@ -57,6 +58,11 @@ class TestArrayCreation:
         """Verifies `Array[T, N]` can be created with various sizes."""
         arr = Array[UInt8, size]()
         assert len(arr) == size
+
+    def test_first_element_address(self) -> None:
+        """Verifies `Array.value` equals the address of the array's first element."""
+        arr = Array[Int32, 4](1, 2, 3, 4)
+        assert arr.value == addressof(arr)
 
 
 @pytest.mark.unit
