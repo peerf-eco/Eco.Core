@@ -2,38 +2,64 @@
 
 This module provides the UGUID class for working with EcoOS component
 and interface identifiers. UGUID is an 18-byte structure consisting of:
-- Preamble (1 byte): Version/format indicator
-- Length (1 byte): Length of the data portion
-- Data (16 bytes): The actual GUID data
+- `Preamble` (1 byte): Version/format indicator
+- `Length` (1 byte): Length of the data portion
+- `Data` (16 bytes): The actual GUID data
 
 Note:
-    The UGUID structure is defined in 'IEcoBase1.h'.
+    The UGUID structure is defined in `IEcoBase1.h`.
     Standard format: {XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX}
 """
 
-from __future__ import annotations
-
 import re
-from typing import ClassVar, Optional
+from typing import ClassVar, Union
 
-from eco_python2acom.decorators.model import model
+from eco_python2acom.decorators.layout import model
 from eco_python2acom.types.array import Array
 from eco_python2acom.types.core import UInt8
-
-__all__ = ["UGUID"]
 
 
 @model
 class UGUID:
-    """ACOM Universal GUID structure.
+    """ACOM Universal GUID structure (18 bytes).
 
-    An 18-byte structure used for component and interface identification
-    in the EcoOS/ACOM system.
+    Used for component (`CID`), interface (`IID`), and generation (`GID`)
+    identification in EcoOS. Consists of a 1-byte preamble, 1-byte length,
+    and 16 bytes of GUID data.
+
+    Attributes:
+        preamble: Version/format indicator (default `0x01`).
+        length: Length of the data portion (`0x10`).
+        data: 16-byte GUID payload as `Array[UInt8, 16]`.
+
+    Example:
+        ```python
+        from eco_python2acom.types.guid import UGUID
+
+        # From a standard GUID string
+        iid = UGUID("93221116-2248-4742-AE06-82819447843D")
+        print(iid)   # 93221116-2248-4742-AE06-82819447843D
+
+        # From raw bytes (as in C headers)
+        cid = UGUID(
+            data=bytes([0x93, 0x22, 0x11, 0x16, 0x22, 0x48, 0x47, 0x42,
+                0xAE, 0x06, 0x82, 0x81, 0x94, 0x47, 0x84, 0x3D]),
+            preamble=0x01,
+        )
+
+        # Pass to ACOM methods via `byref`
+        from eco_python2acom.types.utils import byref
+        bus.obj.QueryComponent(byref(cid), None, byref(iid), byref(ppv))
+        ```
+
+    Note:
+        UGUID is intended as an immutable value object. Mutating fields
+        after construction will break hash consistency.
     """
 
-    Preamble: UInt8
-    Length: UInt8
-    Data: Array[UInt8, 0x10]
+    preamble: UInt8
+    length: UInt8
+    data: Array[UInt8, 0x10]
 
     # Regex pattern for GUID string validation
     GUID_PATTERN: ClassVar[re.Pattern[str]] = re.compile(
@@ -46,35 +72,34 @@ class UGUID:
         r"[})]?$"
     )
 
+    # Size of the GUID payload in bytes
+    GUID_LENGTH: ClassVar[int] = 0x10
+
     def __init__(
         self,
-        guid_string: Optional[str] = None,
-        data: Optional[bytes] = None,
+        data: Union[str, bytes],
         preamble: int = 0x01,
-        length: int = 0x10,
     ) -> None:
-        """Initialize UGUID from a string or raw bytes.
+        """Initialize UGUID from a GUID string or raw 16 bytes.
 
         Args:
-            guid_string: Optional GUID string in format "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX".
-            data: Optional 16-byte raw data for the GUID.
-            preamble: Preamble byte (default 0x01).
-            length: Length byte (default 0x10).
+            data: Either a GUID string (`"XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"`)
+                or 16 raw bytes.
+            preamble: Preamble byte (default `0x01`).
 
         Raises:
-            ValueError: If both guid_string and data are provided, or if the
-                provided data is not 16 bytes long.
+            TypeError: If `data` is not `str` or `bytes`.
+            ValueError: If the string format is invalid or raw bytes are not 16 bytes long.
         """
-        self.Preamble = UInt8(preamble)
-        self.Length = UInt8(length)
+        self.preamble = preamble
+        self.length = self.GUID_LENGTH
 
-        if guid_string is not None and data is not None:
-            raise ValueError("Provide either 'guid_string' or 'data', not both.")
-
-        if guid_string is not None:
-            self._from_string(guid_string)
-        elif data is not None:
+        if isinstance(data, str):
+            self._from_string(data)
+        elif isinstance(data, bytes):
             self._from_bytes(data)
+        else:
+            raise TypeError(f"UGUID data must be 'str' or 'bytes', got '{type(data).__name__}'")
 
     def _from_string(self, guid_string: str) -> None:
         """Parse a GUID string into the Data field.
@@ -87,13 +112,10 @@ class UGUID:
         """
         match = self.GUID_PATTERN.match(guid_string)
         if not match:
-            raise ValueError(
-                f"Invalid GUID format: {guid_string!r}. "
-                "Expected format: XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
-            )
+            raise ValueError(f"Invalid GUID format: {guid_string!r}")
 
         hex_str = "".join(match.groups())
-        self.Data[:] = [UInt8(b) for b in bytes.fromhex(hex_str)]
+        self.data[:] = [UInt8(byte) for byte in bytes.fromhex(hex_str)]
 
     def _from_bytes(self, data: bytes) -> None:
         """Initialize from raw bytes.
@@ -102,20 +124,20 @@ class UGUID:
             data: 16-byte GUID data.
 
         Raises:
-            ValueError: If data length is not 0x10 (16 bytes).
+            ValueError: If data length is not `0x10` (16 bytes).
         """
-        if len(data) != 0x10:
+        if len(data) != self.GUID_LENGTH:
             raise ValueError(f"GUID data must be 16 bytes, got {len(data)}")
 
-        self.Data[:] = [UInt8(b) for b in data]
+        self.data[:] = [UInt8(byte) for byte in data]
 
     def to_bytes(self) -> bytes:
-        """Convert the 'Data' field to bytes.
+        """Convert the `data` field to bytes.
 
         Returns:
-            The 16-byte GUID data.
+            The 16-byte GUID payload (without `preamble`/`length`).
         """
-        return bytes(self.Data)
+        return bytes(self.data)
 
     def to_string(self, with_hyphens: bool = True) -> str:
         """Convert to standard GUID string format.
@@ -124,8 +146,7 @@ class UGUID:
             with_hyphens: If True, add hyphens between the parts of the GUID.
 
         Returns:
-            GUID string in format "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
-            or "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" if with_hyphens is False.
+            GUID in format "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX" or without dashes.
         """
         data = self.to_bytes()
         if with_hyphens:
@@ -141,58 +162,20 @@ class UGUID:
     def __eq__(self, other: object) -> bool:
         """Compare two UGUIDs for equality.
 
-        Comparison is done on all 18 bytes (preamble, length, data).
+        Comparison is done on all 18 bytes of the ABI layout
+        (`preamble`, `length`, `data`).
         """
         if not isinstance(other, UGUID):
             return NotImplemented
-        return (
-            self.Preamble == other.Preamble
-            and self.Length == other.Length
-            and self.to_bytes() == other.to_bytes()
-        )
+        return bytes(self) == bytes(other)  # type: ignore
 
     def __hash__(self) -> int:
         """Return hash of the UGUID."""
-        return hash((self.Preamble, self.Length, self.to_bytes()))
+        return hash(bytes(self))  # type: ignore
 
     def __str__(self) -> str:
         """Return string representation."""
-        return f"UGUID({self.to_string()})"
+        return self.to_string()
 
-    def __repr__(self) -> str:
-        """Return detailed representation."""
-        return (
-            f"UGUID(preamble=0x{self.Preamble:02X}, "
-            f"length=0x{self.Length:02X}, "
-            f"data={self.to_string()!r})"
-        )
 
-    @classmethod
-    def from_raw(cls, preamble: int, length: int, data: list[int]) -> UGUID:
-        """Create UGUID from raw components (as defined in C headers).
-
-        This method matches the C-style initialization:
-        ``{ 0x01, 0x10, {0x93, 0x22, ...} }``
-
-        Args:
-            preamble: Preamble byte.
-            length: Length byte.
-            data: List of 16 bytes.
-
-        Returns:
-            A new UGUID instance.
-        """
-        return cls(data=bytes(data), preamble=preamble, length=length)
-
-    @classmethod
-    def from_string(cls, guid_string: str) -> UGUID:
-        """Create UGUID from a GUID string.
-
-        Args:
-            guid_string: GUID in format "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
-                or without dashes.
-
-        Returns:
-            A new UGUID instance.
-        """
-        return cls(guid_string=guid_string)
+__all__ = ["UGUID"]

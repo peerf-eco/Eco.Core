@@ -10,6 +10,8 @@
 		01C7120227F20DF800AE9906 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 01C7120127F20DF800AE9906 /* Cocoa.framework */; };
 		01C7120427F20E0F00AE9906 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 01C7120327F20E0F00AE9906 /* Foundation.framework */; };
 		01C7120F27F20FD800AE9906 /* EcoTypeLib1.c in Sources */ = {isa = PBXBuildFile; fileRef = 01C7120D27F20FD800AE9906 /* EcoTypeLib1.c */; };
+		EC0F111000010B00AE9906 /* EcoTypeLib1Common.c in Sources */ = {isa = PBXBuildFile; fileRef = EC0F111000010C00AE9906 /* EcoTypeLib1Common.c */; };
+		EC0F111000020B00AE9906 /* EcoTypeLib1Calculator.c in Sources */ = {isa = PBXBuildFile; fileRef = EC0F111000020C00AE9906 /* EcoTypeLib1Calculator.c */; };
 		01C7121E27F2119C00AE9906 /* lib00000000000000000000000000000100.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 01C7121D27F2119C00AE9906 /* lib00000000000000000000000000000100.a */; };
 		01C7122127F211C900AE9906 /* lib00000000000000000000000046534D31.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 01C7122027F211C900AE9906 /* lib00000000000000000000000046534D31.a */; };
 		01C7122327F211DC00AE9906 /* lib00000000000000000000000042757331.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 01C7122227F211DC00AE9906 /* lib00000000000000000000000042757331.a */; };
@@ -34,6 +36,8 @@
 		01C7120127F20DF800AE9906 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
 		01C7120327F20E0F00AE9906 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		01C7120D27F20FD800AE9906 /* EcoTypeLib1.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = EcoTypeLib1.c; path = ../../../UnitTestFiles/SourceFiles/EcoTypeLib1.c; sourceTree = "<group>"; };
+		EC0F111000010C00AE9906 /* EcoTypeLib1Common.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = EcoTypeLib1Common.c; path = ../../../UnitTestFiles/SourceFiles/EcoTypeLib1Common.c; sourceTree = "<group>"; };
+		EC0F111000020C00AE9906 /* EcoTypeLib1Calculator.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = EcoTypeLib1Calculator.c; path = ../../../UnitTestFiles/SourceFiles/EcoTypeLib1Calculator.c; sourceTree = "<group>"; };
 		01C7121927F2117100AE9906 /* BuildFiles */ = {isa = PBXFileReference; lastKnownFileType = folder; name = BuildFiles; path = ../../../../Eco.System1/BuildFiles; sourceTree = "<group>"; };
 		01C7121D27F2119C00AE9906 /* lib00000000000000000000000000000100.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = lib00000000000000000000000000000100.a; path = "../../../../Eco.System1/BuildFiles/Mac/arm64 x86_64/Debug/lib00000000000000000000000000000100.a"; sourceTree = "<group>"; };
 		01C7122027F211C900AE9906 /* lib00000000000000000000000046534D31.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = lib00000000000000000000000046534D31.a; path = "../../../../Eco.FileSystemManagement1/BuildFiles/Mac/arm64 x86_64/Debug/lib00000000000000000000000046534D31.a"; sourceTree = "<group>"; };
@@ -98,6 +102,8 @@
 			isa = PBXGroup;
 			children = (
 				01C7120D27F20FD800AE9906 /* EcoTypeLib1.c */,
+				EC0F111000010C00AE9906 /* EcoTypeLib1Common.c */,
+				EC0F111000020C00AE9906 /* EcoTypeLib1Calculator.c */,
 			);
 			name = "Source Files";
 			sourceTree = "<group>";
@@ -173,6 +179,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				01C7120F27F20FD800AE9906 /* EcoTypeLib1.c in Sources */,
+				EC0F111000010B00AE9906 /* EcoTypeLib1Common.c in Sources */,
+				EC0F111000020B00AE9906 /* EcoTypeLib1Calculator.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

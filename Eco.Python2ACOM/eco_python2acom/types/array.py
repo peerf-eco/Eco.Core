@@ -1,18 +1,13 @@
 """Generic fixed-size array implementation for EcoOS/ACOM.
 
-This module provides the Array[T, N] generic type for type-safe fixed-size
-array operations with ctypes.
+This module provides the `Array[T, N]` generic type for type-safe fixed-size array operations.
 """
-
-from __future__ import annotations
 
 from collections.abc import Iterable, Iterator
 from typing import TYPE_CHECKING, Generic, TypeVar, overload
 
-from eco_python2acom.types.core import TYPE_NAMES, CStructure
+from eco_python2acom.types.core import TYPE_NAMES, Void
 from eco_python2acom.types.utils import addressof
-
-__all__ = ["Array"]
 
 T = TypeVar("T")
 N = TypeVar("N", bound=int)
@@ -100,6 +95,15 @@ if TYPE_CHECKING:
             """
             ...
 
+        @property
+        def value(self) -> int:
+            """Read raw array address (`(T*)arr`).
+
+            Returns:
+                Address of the array's first element.
+            """
+            ...
+
         def __bytes__(self) -> bytes:
             """Convert array to bytes.
 
@@ -121,10 +125,6 @@ else:
     class _ArrayMeta(type):
         """Metaclass that enables Array[T, N] subscript syntax.
 
-        This metaclass intercepts __getitem__ calls on the Array class to
-        dynamically create typed array classes. It maintains a cache to avoid
-        recreating the same array type multiple times.
-
         The subscript must be a tuple of (type, size), where size is a
         non-negative integer.
 
@@ -144,92 +144,62 @@ else:
 
             Returns:
                 An array class for the specified type and size.
-
-            Raises:
-                TypeError: If params is not a 2-tuple or size is invalid.
-
-            Examples:
-                >>> IntArray5 = Array[Int32, 5]
-                >>> arr = IntArray5(1, 2, 3, 4, 5)
             """
             # Validate parameters
             if not isinstance(params, tuple) or len(params) != 2:
-                raise TypeError(f"Array requires 2 parameters: Array[Type, Size], got {params}")
+                raise ValueError(f"Array requires 2 parameters: Array[Type, Size], got '{params}'")
 
             element_type, size = params
 
-            if not isinstance(size, int) or size < 0:
-                raise TypeError(f"Array size must be a non-negative integer, got {size}")
+            if not isinstance(size, int) or size <= 0:
+                raise ValueError(f"Array size must be a positive integer, got '{size}'")
 
             if not isinstance(element_type, type):
-                raise TypeError(f"Array element type must be a type, got {element_type}")
+                raise TypeError(
+                    f"Array element type must be a type, got '{type(element_type).__name__}'"
+                )
 
-            if issubclass(element_type, CStructure) and element_type != CStructure:
-                from eco_python2acom.decorators.utils import finalize
-
-                finalize(element_type)
+            if element_type is Void:
+                raise ValueError("Cannot create array of 'Void': element type has no size")
 
             # Check cache
             key = (element_type, size)
             if key in cls._cache:
                 return cls._cache[key]
 
-            # Create ctypes array type
-            try:
-                ctypes_array = element_type * size
-            except TypeError as err:
-                raise TypeError(f"Cannot create array of {element_type}: {err}") from err
-
             # Get display name
             type_name = TYPE_NAMES.get(
                 element_type, getattr(element_type, "__name__", str(element_type))
             )
 
-            # Create smart array wrapper class
-            class SmartArray(ctypes_array):
-                """Runtime array implementation.
+            # Create array type
+            try:
+                array_type = element_type * size
+            except TypeError as err:
+                raise ValueError(f"Cannot create array of '{type_name}': {err}") from err
 
-                This class inherits from the ctypes array type and adds
-                custom __repr__ for better debugging output.
-                """
+            # Create smart array wrapper class
+            class SmartArray(array_type):
+                """Runtime array implementation."""
 
                 _element_type_ = element_type
                 _size_ = size
 
+                @property
+                def value(self) -> int:
+                    """Read raw array address (`(T*)arr`)."""
+                    return addressof(self)
+
                 def __repr__(self) -> str:
                     """String representation with type and address."""
-                    try:
-                        addr = addressof(self)
-                        return f"<Array[{type_name}, {size}] 0x{addr:X}>"
-                    except Exception:
-                        return f"<Array[{type_name}, {size}]>"
-
-                def __eq__(self, other: object) -> bool:
-                    """Compare two arrays for equality.
-
-                    Comparison is done on the size and contents of the arrays.
-                    """
-                    if not isinstance(other, SmartArray):
-                        return NotImplemented
-                    if self._size_ != other._size_:
-                        return False
-                    for i in range(self._size_):
-                        if self[i] != other[i]:
-                            return False
-                    return True
+                    if not bool(self):
+                        return f"<Array[{type_name}, {self._size_}] NULL>"
+                    return f"<Array[{type_name}, {self._size_}] 0x{self.value:X}>"
 
                 def __iter__(self):
                     """Iterate over array elements."""
                     for i in range(self._size_):
                         yield self[i]
-
-                def __bytes__(self) -> bytes:
-                    """Convert array to bytes."""
-                    return bytes(int(self[i]) for i in range(self._size_))
-
-                def __hash__(self) -> int:
-                    """Hash the array."""
-                    raise NotImplementedError("Hashing is not supported for arrays.")
 
             SmartArray.__name__ = f"Array[{type_name}, {size}]"
             SmartArray.__qualname__ = f"Array[{type_name}, {size}]"
@@ -241,12 +211,30 @@ else:
     class Array(metaclass=_ArrayMeta):
         """Generic fixed-size array type.
 
-        This is the runtime class that uses _ArrayMeta to enable
-        Array[T, N] syntax.
+        `Array[T, N]` is the Python equivalent of a C fixed-size array `T arr[N]`.
+        Subscripting creates a concrete array class.
 
-        Note:
-            Arrays are fixed-size and allocated on creation. Use Ptr[Array[T, N]]
-            for dynamic array pointers.
+        Type Parameters:
+            T: The element type (EcoOS-compatible type).
+            N: The array size (non-negative integer literal).
+
+        Attributes:
+            _element_type_: The type of array elements.
+            _size_: The number of elements in the array.
+
+        Example:
+            ```python
+            from eco_python2acom.types.array import Array
+            from eco_python2acom.types.core import Int32
+
+            arr = Array[Int32, 4](10, 20, 30, 40)
+            print(arr[0])   # 10
+            print(bytes(arr))     # raw 16-byte representation
+            arr[-1] = 10
+            ```
         """
 
         pass
+
+
+__all__ = ["Array"]

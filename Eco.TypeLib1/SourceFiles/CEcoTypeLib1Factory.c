@@ -64,7 +64,7 @@ static int16_t ECOCALLMETHOD CEcoTypeLib1_01434A0BFactory_QueryInterface(IEcoCom
 static uint32_t ECOCALLMETHOD CEcoTypeLib1_01434A0BFactory_AddRef(/* in */ IEcoComponentFactory* me) {
     CEcoTypeLib1_01434A0BFactory* pCMe = (CEcoTypeLib1_01434A0BFactory*)me;
 
-    if (me == 0 ) {
+    if ( me == 0 ) {
         return -1; /* ERR_ECO_POINTER */
     }
 
@@ -85,7 +85,7 @@ static uint32_t ECOCALLMETHOD CEcoTypeLib1_01434A0BFactory_AddRef(/* in */ IEcoC
 static uint32_t ECOCALLMETHOD CEcoTypeLib1_01434A0BFactory_Release(/* in */ IEcoComponentFactory* me) {
     CEcoTypeLib1_01434A0BFactory* pCMe = (CEcoTypeLib1_01434A0BFactory*)me;
 
-    if (me == 0 ) {
+    if ( me == 0 ) {
         return -1; /* ERR_ECO_POINTER */
     }
 
@@ -114,7 +114,7 @@ static int16_t ECOCALLMETHOD CEcoTypeLib1_01434A0BFactory_Init(/* in */ struct I
     CEcoTypeLib1_01434A0BFactory* pCMe = (CEcoTypeLib1_01434A0BFactory*)me;
     int16_t result = ERR_ECO_POINTER;
 
-    if (me == 0 ) {
+    if ( me == 0 ) {
         return result;
     }
 
@@ -145,7 +145,7 @@ static int16_t ECOCALLMETHOD CEcoTypeLib1_01434A0BFactory_Alloc(/* in */ struct 
     CEcoTypeLib1_01434A0B* pCObj = 0;
     UGUID* rcid = (UGUID*)&CID_EcoMemoryManager1;
 
-    if (me == 0 || pISystem == 0 ) {
+    if ( me == 0 || pISystem == 0 ) {
         return result; /* ERR_ECO_POINTER */
     }
 
@@ -228,7 +228,7 @@ static int16_t ECOCALLMETHOD CEcoTypeLib1_01434A0BFactory_Alloc(/* in */ struct 
 static char_t* ECOCALLMETHOD CEcoTypeLib1_01434A0BFactory_get_Name(/* in */ struct IEcoComponentFactory* me) {
     CEcoTypeLib1_01434A0BFactory* pCMe = (CEcoTypeLib1_01434A0BFactory*)me;
 
-    if (me == 0 ) {
+    if ( me == 0 ) {
         return 0; /* ERR_ECO_POINTER */
     }
 
@@ -249,7 +249,7 @@ static char_t* ECOCALLMETHOD CEcoTypeLib1_01434A0BFactory_get_Name(/* in */ stru
 static char_t* ECOCALLMETHOD CEcoTypeLib1_01434A0BFactory_get_Version(/* in */ struct IEcoComponentFactory* me) {
     CEcoTypeLib1_01434A0BFactory* pCMe = (CEcoTypeLib1_01434A0BFactory*)me;
 
-    if (me == 0 ) {
+    if ( me == 0 ) {
         return 0; /* ERR_ECO_POINTER */
     }
 
@@ -270,7 +270,7 @@ static char_t* ECOCALLMETHOD CEcoTypeLib1_01434A0BFactory_get_Version(/* in */ s
 static char_t* ECOCALLMETHOD CEcoTypeLib1_01434A0BFactory_get_Manufacturer(/* in */ struct IEcoComponentFactory* me) {
     CEcoTypeLib1_01434A0BFactory* pCMe = (CEcoTypeLib1_01434A0BFactory*)me;
 
-    if (me == 0 ) {
+    if ( me == 0 ) {
         return 0; /* ERR_ECO_POINTER */
     }
 

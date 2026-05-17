@@ -34,11 +34,11 @@ typedef struct CEcoTypeLib1_01434A0B {
 
 
     /* Instance initialization */
-    int16_t (ECOCALLMETHOD *Init)(/*in*/ CEcoTypeLib1_01434A0BPtr_t pCMe, /* in */ IEcoUnknownPtr_t pIUnkSystem);
+    int16_t (ECOCALLMETHOD *Init)(/* in */ CEcoTypeLib1_01434A0BPtr_t pCMe, /* in */ IEcoUnknownPtr_t pIUnkSystem);
     /* Instance creation */
-    int16_t (ECOCALLMETHOD *Create)(/*in*/ CEcoTypeLib1_01434A0BPtr_t pCMe, /* in */ IEcoUnknownPtr_t pIUnkSystem, /* in */ IEcoUnknownPtr_t pIUnkOuter);
+    int16_t (ECOCALLMETHOD *Create)(/* in */ CEcoTypeLib1_01434A0BPtr_t pCMe, /* in */ IEcoUnknownPtr_t pIUnkSystem, /* in */ IEcoUnknownPtr_t pIUnkOuter);
     /* Deletion */
-    void (ECOCALLMETHOD *Delete)(/*in*/ CEcoTypeLib1_01434A0BPtr_t pCMe);
+    void (ECOCALLMETHOD *Delete)(/* in */ CEcoTypeLib1_01434A0BPtr_t pCMe);
 
 
     /* Reference counter */

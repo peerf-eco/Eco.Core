@@ -1,4 +1,7 @@
-default_stages: [commit]
+default_stages: [pre-commit, pre-push]
+default_install_hook_types:
+  - pre-commit
+  - pre-push
 files: ^Eco\.Python2ACOM/
 
 repos:
@@ -8,7 +11,6 @@ repos:
       - id: trailing-whitespace
       - id: end-of-file-fixer
       - id: check-yaml
-      - id: check-json
       - id: check-toml
       - id: check-added-large-files
       - id: check-merge-conflict
@@ -16,27 +18,40 @@ repos:
       - id: detect-private-key
       - id: debug-statements
 
-  - repo: https://github.com/psf/black
-    rev: 23.12.1
+  - repo: local
     hooks:
       - id: black
-        args: [--config=Eco.Python2ACOM/pyproject.toml]
-        language_version: python3.11
+        name: black
+        entry: bash -c 'cd Eco.Python2ACOM && poetry run black .' --
+        language: system
+        pass_filenames: false
+        types: [python]
 
-  - repo: https://github.com/pycqa/isort
-    rev: 5.13.2
-    hooks:
       - id: isort
-        args: [--settings-path=Eco.Python2ACOM/pyproject.toml]
+        name: isort
+        entry: bash -c 'cd Eco.Python2ACOM && poetry run isort .' --
+        language: system
+        pass_filenames: false
+        types: [python]
 
-  - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.1.15
-    hooks:
       - id: ruff
-        args: [--config=Eco.Python2ACOM/pyproject.toml]
+        name: ruff
+        entry: bash -c 'cd Eco.Python2ACOM && poetry run ruff check .' --
+        language: system
+        pass_filenames: false
+        types: [python]
 
-  - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.19.1
-    hooks:
       - id: mypy
-        args: [--config=Eco.Python2ACOM/pyproject.toml]
+        name: mypy
+        entry: bash -c 'cd Eco.Python2ACOM && poetry run mypy .' --
+        language: system
+        pass_filenames: false
+        types: [python]
+
+      - id: pytest
+        name: pytest
+        entry: bash -c 'cd Eco.Python2ACOM && poetry run pytest' --
+        language: system
+        pass_filenames: false
+        stages: [pre-push]
+        types: [python]
