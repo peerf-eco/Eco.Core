@@ -41,10 +41,10 @@ extern const char_t* ECO_TYPE_NAME[];
  * </summary>
  *
  * <description>
- *   Build a `<HEX>.etl` file name from the bytes of a UGUID.
+ *   Build a `<HEX>.etl` file path from the bytes of a UGUID.
  * </description>
  */
-char_t* UGUIDPtrToTypeLibFileName(const UGUID* uguid);
+char_t* UGUIDPtrToTypeLibFilePath(const UGUID* uguid);
 
 /*
  * <summary>

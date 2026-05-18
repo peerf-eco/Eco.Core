@@ -52,7 +52,7 @@ void SaveTypeLib_IEcoCalculatorX(IEcoTypeLib1* pTypeLib) {
     IEcoInterfaceDirectoryEntry1* pEntry = NULL;
     IEcoMethodDescriptor1* pMethod = NULL;
     IEcoParamDescriptor1* pParam = NULL;
-    char_t* fileName = NULL;
+    char_t* filePath = NULL;
 
     /* 1. Get the builder */
     pTypeLib->pVTbl->CreateBuilder(pTypeLib, &pBuilder);
@@ -89,9 +89,9 @@ void SaveTypeLib_IEcoCalculatorX(IEcoTypeLib1* pTypeLib) {
     pDir->pVTbl->AddEntry(pDir, -1, pEntry);
 
     /* 5. Persist via the type-library main interface */
-    fileName = UGUIDPtrToTypeLibFileName(&IID_IEcoCalculatorX);
-    pTypeLib->pVTbl->SaveFile(pTypeLib, fileName, pDir);
-    free(fileName);
+    filePath = UGUIDPtrToTypeLibFilePath(&IID_IEcoCalculatorX);
+    pTypeLib->pVTbl->SaveFile(pTypeLib, filePath, pDir);
+    free(filePath);
 
     /* Release */
     pEntry->pVTbl->Release(pEntry);
@@ -119,7 +119,7 @@ void SaveTypeLib_IEcoCalculatorY(IEcoTypeLib1* pTypeLib) {
     IEcoInterfaceDirectoryEntry1* pEntry = NULL;
     IEcoMethodDescriptor1* pMethod = NULL;
     IEcoParamDescriptor1* pParam = NULL;
-    char_t* fileName = NULL;
+    char_t* filePath = NULL;
 
     /* 1. Get the builder */
     pTypeLib->pVTbl->CreateBuilder(pTypeLib, &pBuilder);
@@ -156,9 +156,9 @@ void SaveTypeLib_IEcoCalculatorY(IEcoTypeLib1* pTypeLib) {
     pDir->pVTbl->AddEntry(pDir, -1, pEntry);
 
     /* 5. Persist via the type-library main interface */
-    fileName = UGUIDPtrToTypeLibFileName(&IID_IEcoCalculatorY);
-    pTypeLib->pVTbl->SaveFile(pTypeLib, fileName, pDir);
-    free(fileName);
+    filePath = UGUIDPtrToTypeLibFilePath(&IID_IEcoCalculatorY);
+    pTypeLib->pVTbl->SaveFile(pTypeLib, filePath, pDir);
+    free(filePath);
 
     /* Release */
     pEntry->pVTbl->Release(pEntry);

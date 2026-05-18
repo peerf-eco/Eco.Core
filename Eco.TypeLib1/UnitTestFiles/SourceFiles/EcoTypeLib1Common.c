@@ -51,17 +51,20 @@ const char_t* ECO_TYPE_NAME[] = {
     "void"       /* ECO_TYPE_VOID */
 };
 
-char_t* UGUIDPtrToTypeLibFileName(const UGUID* uguid) {
+char_t* UGUIDPtrToTypeLibFilePath(const UGUID* uguid) {
+    char_t* path = getenv("ECO_FRAMEWORK_RT");
     char_t result[256] = "";
-    byte_t i;
-    byte_t b;
+    uint32_t len = strlen(path) + 1;
+    uint8_t i = 0;
+    byte_t b = 0;
 
+    strcpy(result, path);
+    strcat(result, "/");
     for (i = 0; i < uguid->Length; i++) {
         b = uguid->Data[i] >> 4;
-        result[i * 2] = (b < 10) ? (b + '0') : ((b - 10) + 'A');
-
+        result[len + i * 2] = (b < 10) ? (b + '0') : ((b - 10) + 'A');
         b = uguid->Data[i] & 0xF;
-        result[i * 2 + 1] = (b < 10) ? (b + '0') : ((b - 10) + 'A');
+        result[len + i * 2 + 1] = (b < 10) ? (b + '0') : ((b - 10) + 'A');
     }
 
     strcat(result, ".etl");
@@ -75,7 +78,7 @@ void LoadAndInspect(IEcoTypeLib1* pTypeLib, const UGUID* riid) {
     IEcoMethodDescriptor1* pMethod = NULL;
     IEcoParamDescriptor1* pParam = NULL;
 
-    char_t* fileName = NULL;
+    char_t* filePath = NULL;
     char_t* name = NULL;
 
     uint16_t typeTag = 0;
@@ -85,8 +88,8 @@ void LoadAndInspect(IEcoTypeLib1* pTypeLib, const UGUID* riid) {
     uint16_t mIndex = 0;
     uint16_t pIndex = 0;
 
-    fileName = UGUIDPtrToTypeLibFileName(riid);
-    if (pTypeLib->pVTbl->LoadFile(pTypeLib, fileName, &pDir) == 0) {
+    filePath = UGUIDPtrToTypeLibFilePath(riid);
+    if (pTypeLib->pVTbl->LoadFile(pTypeLib, filePath, &pDir) == 0) {
         if (pDir->pVTbl->GetEntryByIID(pDir, riid, &pEntry) == 0) {
             pEntry->pVTbl->get_Name(pEntry, &name);
 
@@ -129,5 +132,5 @@ void LoadAndInspect(IEcoTypeLib1* pTypeLib, const UGUID* riid) {
         }
         pDir->pVTbl->Release(pDir);
     }
-    free(fileName);
+    free(filePath);
 }
