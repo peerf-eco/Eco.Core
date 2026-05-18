@@ -9,11 +9,35 @@ extern "C" {
 #endif
 /*
  * Class:     Eco_Core_IEcoUnknownNative
- * Method:    invokeNative
- * Signature: (I[Ljava/lang/Object;Ljava/lang/Class;)Ljava/lang/Object;
+ * Method:    QueryInterface
+ * Signature: (LEco/Core/UGUID;LEco/Core/IEcoUnknownPtr;)S
  */
-JNIEXPORT jobject JNICALL Java_Eco_Core_IEcoUnknownNative_invokeNative
-  (JNIEnv *, jobject, jint, jobjectArray, jclass);
+JNIEXPORT jshort JNICALL Java_Eco_Core_IEcoUnknownNative_QueryInterface
+  (JNIEnv *, jobject, jobject, jobject);
+
+/*
+ * Class:     Eco_Core_IEcoUnknownNative
+ * Method:    AddRef
+ * Signature: ()I
+ */
+JNIEXPORT jint JNICALL Java_Eco_Core_IEcoUnknownNative_AddRef
+  (JNIEnv *, jobject);
+
+/*
+ * Class:     Eco_Core_IEcoUnknownNative
+ * Method:    Release
+ * Signature: ()I
+ */
+JNIEXPORT jint JNICALL Java_Eco_Core_IEcoUnknownNative_Release
+  (JNIEnv *, jobject);
+
+/*
+ * Class:     Eco_Core_IEcoUnknownNative
+ * Method:    GlobalDispatcher
+ * Signature: (I[Ljava/lang/Object;)Ljava/lang/Object;
+ */
+JNIEXPORT jobject JNICALL Java_Eco_Core_IEcoUnknownNative_GlobalDispatcher
+  (JNIEnv *, jobject, jint, jobjectArray);
 
 #ifdef __cplusplus
 }

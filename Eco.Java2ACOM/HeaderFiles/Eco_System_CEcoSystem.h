@@ -10,7 +10,7 @@ extern "C" {
 /*
  * Class:     Eco_System_CEcoSystem
  * Method:    createCEcoSystem
- * Signature: ([Ljava/lang/String;LEco/Core/IEcoSystem;)S
+ * Signature: ([Ljava/lang/String;LEco/Core/IEcoSystem1;)S
  */
 JNIEXPORT jshort JNICALL Java_Eco_System_CEcoSystem_createCEcoSystem
   (JNIEnv *, jclass, jobjectArray, jobject);
@@ -18,7 +18,7 @@ JNIEXPORT jshort JNICALL Java_Eco_System_CEcoSystem_createCEcoSystem
 /*
  * Class:     Eco_System_CEcoSystem
  * Method:    deleteCEcoSystem
- * Signature: (LEco/Core/IEcoSystem;)V
+ * Signature: (LEco/Core/IEcoSystem1;)V
  */
 JNIEXPORT void JNICALL Java_Eco_System_CEcoSystem_deleteCEcoSystem
   (JNIEnv *, jclass, jobject);

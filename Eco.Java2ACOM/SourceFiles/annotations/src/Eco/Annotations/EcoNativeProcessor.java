@@ -101,7 +101,7 @@ public class EcoNativeProcessor extends AbstractProcessor {
         if (!returnType.equals("void")) {
             out.print("return (" + boxIfPrimitive(returnType) + ") ");
         }
-        out.print("invokeNative(" + index + ", new Object[]{");
+        out.print("GlobalDispatcher(" + index + ", new Object[]{");
         for (int i = 0; i < params.size(); i++) {
             VariableElement param = params.get(i);
             out.print(param.getSimpleName());
@@ -109,7 +109,7 @@ public class EcoNativeProcessor extends AbstractProcessor {
                 out.print(", ");
             }
         }
-        out.println("}, " + returnType + ".class);");
+        out.println("});");
         out.println("    }");
         out.println();
     }

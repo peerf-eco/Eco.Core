@@ -1,26 +1,22 @@
 package Eco.Core;
 
 public class IEcoUnknownNative implements IEcoUnknown {
+    protected static long pITypeLib = 0;
     protected long pInstance = 0;
+    protected long pIDesc = 0;
 
     public boolean isNull() {
         return pInstance == 0;
     }
 
     @Override
-    public short QueryInterface(UGUID riid, IEcoUnknownPtr pIUnk) {
-        return (Short) invokeNative(0, new Object[]{riid, pIUnk}, short.class);
-    }
+    public native short QueryInterface(UGUID riid, IEcoUnknownPtr pIUnk);
 
     @Override
-    public int AddRef() {
-        return (Integer) invokeNative(1, new Object[]{}, int.class);
-    }
+    public native int AddRef();
 
     @Override
-    public int Release() {
-        return (Integer) invokeNative(2, new Object[]{}, int.class);
-    }
+    public native int Release();
 
-    protected native Object invokeNative(int VTblIdx, Object[] args, Class<?> returnType);
+    protected native Object GlobalDispatcher(int VTblIdx, Object[] args);
 }
