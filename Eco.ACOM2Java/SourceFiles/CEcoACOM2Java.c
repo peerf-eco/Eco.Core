@@ -70,6 +70,7 @@ ffi_type* GetFfiType(uint16_t typeTag) {
         ECO_FFI_TYPES[ECO_TYPE_INTERFACE] = &ffi_type_pointer;
         ECO_FFI_TYPES[ECO_TYPE_UGUID]     = &ffi_type_pointer;
         ECO_FFI_TYPES[ECO_TYPE_VOIDPTR]   = &ffi_type_pointer;
+        ECO_FFI_TYPES[ECO_TYPE_VOID]      = &ffi_type_void;
     }
     return ECO_FFI_TYPES[typeTag];
 }
