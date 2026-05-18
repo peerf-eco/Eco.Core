@@ -44,7 +44,7 @@ EcoTypeMap ECO_TYPE_MAP[] = {
     { 0, "LEco/Core/IEcoUnknown;", "Eco/Core/IEcoUnknown" }, /* ECO_TYPE_INTERFACE */
     { 0, "LEco/Core/UGUID;",       "Eco/Core/UGUID"       }, /* ECO_TYPE_UGUID */
     { 0, "Ljava/lang/Object;",     "java/lang/Object"     }, /* ECO_TYPE_VOIDPTR */
-    { 1, "V",                      "" },                     /* ECO_TYPE_VOID */
+    { 0, "V",                      "" },                     /* ECO_TYPE_VOID */
 };
 
 ffi_type* ECO_FFI_TYPES[20];
@@ -209,8 +209,19 @@ IEcoInterfaceDescriptor1* GetInterfaceDescriptorByUGUID(IEcoTypeLib1* pITypeLib,
 
     fileName = UGUIDPtrToTypeLibFileName(riid);
     result = pITypeLib->pVTbl->LoadFile(pITypeLib, fileName, &pIDirectory);
-    result = pIDirectory->pVTbl->GetEntryByIID(pIDirectory, riid, &pIEntry);
-    result = pIEntry->pVTbl->get_Descriptor(pIEntry, &pIDesc);
+    if (result != 0) {
+        char_t* rtPath = getenv("ECO_FRAMEWORK_RT");
+        char_t filePath[256] = "";
+        strcpy(filePath, rtPath);
+        strcat(filePath, "/");
+        strcat(filePath, fileName);
+        result = pITypeLib->pVTbl->LoadFile(pITypeLib, filePath, &pIDirectory);
+    }
+
+    if (result == 0) {
+        result = pIDirectory->pVTbl->GetEntryByIID(pIDirectory, riid, &pIEntry);
+        result = pIEntry->pVTbl->get_Descriptor(pIEntry, &pIDesc);
+    }
 
     return pIDesc;
 }
@@ -272,22 +283,22 @@ void ParamToJavaValue(JNIEnv* env, void* arg, uint16_t typeTag, uint8_t flags, j
     } else if (typeTag == ECO_TYPE_ASTRING) {
         if (flags & ECO_PARAM_IN) {
             if (flags & ECO_PARAM_OUT) {
-                (*env)->NewStringUTF(env, **(char_t***)arg);
+                jarg->l = (*env)->NewStringUTF(env, **(char_t***)arg);
             } else {
-                (*env)->NewStringUTF(env, *(char_t**)arg);
+                jarg->l = (*env)->NewStringUTF(env, *(char_t**)arg);
             }
         } else {
-            (*env)->NewStringUTF(env, "");
+            jarg->l = (*env)->NewStringUTF(env, "");
         }
     } else if (typeTag == ECO_TYPE_WSTRING) {
         if (flags & ECO_PARAM_IN) {
             if (flags & ECO_PARAM_OUT) {
-                (*env)->NewString(env, **(wchar_t***)arg, strlen(**(wchar_t***)arg));
+                jarg->l = (*env)->NewString(env, **(wchar_t***)arg, strlen(**(wchar_t***)arg));
             } else {
-                (*env)->NewString(env, *(wchar_t**)arg, strlen(*(wchar_t**)arg));
+                jarg->l = (*env)->NewString(env, *(wchar_t**)arg, strlen(*(wchar_t**)arg));
             }
         } else {
-            (*env)->NewString(env, "", 0);
+            jarg->l = (*env)->NewString(env, "", 0);
         }
     } else if (typeTag == ECO_TYPE_INTERFACE) {
         if (flags & ECO_PARAM_OUT) {
@@ -659,6 +670,46 @@ static uint32_t ECOCALLMETHOD CEcoACOM2Java_3F41E2AA_Release(/* in */ IEcoACOM2J
 /*
  *
  * <summary>
+ *   CreateJavaVM Function
+ * </summary>
+ *
+ * <description>
+ *   Function
+ * </description>
+ *
+ */
+static int16_t ECOCALLMETHOD CEcoACOM2Java_3F41E2AA_CreateJavaVM(/*in*/ IEcoACOM2JavaPtr_t me, /*in*/ char_t* classpath, /* in */ uint64_t minHeapSize, /* in */ uint64_t maxHeapSize) {
+    CEcoACOM2Java_3F41E2AA* pCMe = (CEcoACOM2Java_3F41E2AA*)me;
+    JavaVMInitArgs vm_args;
+    jint i = 0;
+    jint result = 0;
+
+    if (me == 0) {
+        return ERR_ECO_POINTER;
+    }
+
+    vm_args.version = JNI_VERSION_1_8;
+    result = JNI_GetDefaultJavaVMInitArgs(&vm_args);
+    vm_args.nOptions = 3;
+    vm_args.options = (JavaVMOption*) pCMe->m_pIMem->pVTbl->Alloc(pCMe->m_pIMem, sizeof(JavaVMOption) * vm_args.nOptions);
+    vm_args.options[0].optionString = (char_t*) pCMe->m_pIMem->pVTbl->Alloc(pCMe->m_pIMem, (strlen(classpath) + 19));
+    vm_args.options[1].optionString = (char_t*) pCMe->m_pIMem->pVTbl->Alloc(pCMe->m_pIMem, 25);
+    vm_args.options[2].optionString = (char_t*) pCMe->m_pIMem->pVTbl->Alloc(pCMe->m_pIMem, 25);
+    sprintf(vm_args.options[0].optionString, "-Djava.class.path=%s", classpath);
+    sprintf(vm_args.options[1].optionString, "-Xms%llu", minHeapSize);
+    sprintf(vm_args.options[2].optionString, "-Xmx%llu", maxHeapSize);
+    result = JNI_CreateJavaVM(&pCMe->m_jvm, (void**) &pCMe->m_env, &vm_args);
+    for (i = 0; i < vm_args.nOptions; i++) {
+        pCMe->m_pIMem->pVTbl->Free(pCMe->m_pIMem, vm_args.options[i].optionString);
+    }
+    pCMe->m_pIMem->pVTbl->Free(pCMe->m_pIMem, vm_args.options);
+
+    return (int16_t) result;
+}
+
+/*
+ *
+ * <summary>
  *   RegisterComponent Function
  * </summary>
  *
@@ -677,12 +728,15 @@ static int16_t ECOCALLMETHOD CEcoACOM2Java_3F41E2AA_RegisterComponent(/*in*/ IEc
     }
 
     env = pCMe->m_env;
+    if (env == 0) {
+        return ERR_ECO_FAIL;
+    }
     AddClassPath(env, classpath);
 
-    clazz = (jclass*) malloc(sizeof(jclass));
+    clazz = (jclass*) pCMe->m_pIMem->pVTbl->Alloc(pCMe->m_pIMem, sizeof(jclass));
     *clazz = (*env)->FindClass(env, classname);
     if (*clazz == 0) {
-        free(clazz);
+        pCMe->m_pIMem->pVTbl->Free(pCMe->m_pIMem, clazz);
         return ERR_ECO_COMPONENT_NOTFOUND;
     }
 
@@ -721,7 +775,7 @@ static int16_t ECOCALLMETHOD CEcoACOM2Java_3F41E2AA_UnRegisterComponent(/*in*/ I
 
     list->pVTbl->RemoveAt(list, index);
     item = list->pVTbl->Item(list, index);
-    free(item);
+    pCMe->m_pIMem->pVTbl->Free(pCMe->m_pIMem, item);
     list->pVTbl->RemoveAt(list, index);
 
     return ERR_ECO_SUCCESES;
@@ -756,6 +810,10 @@ static int16_t ECOCALLMETHOD CEcoACOM2Java_3F41E2AA_QueryComponent(/*in*/ IEcoAC
     }
 
     env = pCMe->m_env;
+    if (env == 0) {
+        return ERR_ECO_FAIL;
+    }
+
     index = pCMe->m_components->pVTbl->IndexOf(pCMe->m_components, (void*) rcid);
     if (index == -1) {
         return ERR_ECO_COMPONENT_NOTFOUND;
@@ -817,9 +875,7 @@ static int16_t ECOCALLMETHOD initCEcoACOM2Java_3F41E2AA(/*in*/ CEcoACOM2Java_3F4
 
     IEcoInterfaceBus1MemExt* pIMemExt = 0;
     int16_t result = ERR_ECO_POINTER;
-    UGUID* rcid = (UGUID*)&CID_EcoMemoryManager1;	
-
-    JavaVMInitArgs vm_args;
+    UGUID* rcid = (UGUID*)&CID_EcoMemoryManager1;
 
     /* Pointer Validation */
     if (me == 0 ) {
@@ -859,16 +915,6 @@ static int16_t ECOCALLMETHOD initCEcoACOM2Java_3F41E2AA(/*in*/ CEcoACOM2Java_3F4
     if (result != 0 || pCMe->m_components == 0) {
         return result;
     }
-
-    vm_args.version = JNI_VERSION_1_8;
-    vm_args.nOptions = 3;
-    vm_args.options = (JavaVMOption*) malloc(sizeof(JavaVMOption) * vm_args.nOptions);
-    vm_args.options[0].optionString = "-Djava.class.path=C:\\Programming\\Eco.Core\\Eco.Java2ACOM\\BuildFiles\\artifacts\\Eco_Java2ACOM_jar\\Eco.Java2ACOM.jar";
-    vm_args.options[1].optionString = "-Xms8m"; 
-    vm_args.options[2].optionString = "-Xmx16m";
-    vm_args.ignoreUnrecognized = 0;
-    result = (int16_t)JNI_CreateJavaVM(&pCMe->m_jvm, (void**) &pCMe->m_env, &vm_args);
-    free(vm_args.options);
 
     /* Freeing */
     pIBus->pVTbl->Release(pIBus);
@@ -937,6 +983,7 @@ IEcoACOM2JavaVTbl g_xED2D1283E26348DCB9A889E10C8C3657VTbl_3F41E2AA = {
     CEcoACOM2Java_3F41E2AA_QueryInterface,
     CEcoACOM2Java_3F41E2AA_AddRef,
     CEcoACOM2Java_3F41E2AA_Release,
+    CEcoACOM2Java_3F41E2AA_CreateJavaVM,
     CEcoACOM2Java_3F41E2AA_RegisterComponent,
     CEcoACOM2Java_3F41E2AA_UnRegisterComponent,
     CEcoACOM2Java_3F41E2AA_QueryComponent

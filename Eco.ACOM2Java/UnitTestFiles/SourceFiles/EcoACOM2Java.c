@@ -75,12 +75,12 @@ int16_t EcoMain(IEcoUnknown* pIUnk) {
         /* Free in case of an error */
         goto Release;
     }
-    result = pIBus->pVTbl->RegisterComponent(pIBus, &CID_EcoList1, (IEcoUnknown*)GetIEcoComponentFactoryPtr_53884AFC93C448ECAA929C8D3A562281);
+    result = pIBus->pVTbl->RegisterComponent(pIBus, &CID_EcoTypeLib1, (IEcoUnknown*)GetIEcoComponentFactoryPtr_8039E233E9A34D43BAF7833001434A0B);
     if (result != 0 ) {
         /* Free in case of an error */
         goto Release;
     }
-    result = pIBus->pVTbl->RegisterComponent(pIBus, &CID_EcoTypeLib1, (IEcoUnknown*)GetIEcoComponentFactoryPtr_8039E233E9A34D43BAF7833001434A0B);
+    result = pIBus->pVTbl->RegisterComponent(pIBus, &CID_EcoList1, (IEcoUnknown*)GetIEcoComponentFactoryPtr_53884AFC93C448ECAA929C8D3A562281);
     if (result != 0 ) {
         /* Free in case of an error */
         goto Release;
@@ -99,6 +99,11 @@ int16_t EcoMain(IEcoUnknown* pIUnk) {
     result = pIBus->pVTbl->QueryComponent(pIBus, &CID_EcoACOM2Java, 0, &IID_IEcoACOM2Java, (void**) &pIEcoACOM2Java);
     if (result != 0 || pIEcoACOM2Java == 0) {
         /* Free interfaces in case of an error */
+        goto Release;
+    }
+
+    result = pIEcoACOM2Java->pVTbl->CreateJavaVM(pIEcoACOM2Java, "C:\\Programming\\Eco.Core\\Eco.Java2ACOM\\BuildFiles\\artifacts\\Eco_Java2ACOM_jar\\Eco.Java2ACOM.jar", 8 << 20, 16 << 20);
+    if (result != 0) {
         goto Release;
     }
 
