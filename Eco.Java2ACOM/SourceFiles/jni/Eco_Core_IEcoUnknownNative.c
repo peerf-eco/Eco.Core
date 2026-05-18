@@ -53,6 +53,7 @@ ffi_type* GetFfiType(uint16_t typeTag) {
         ECO_FFI_TYPES[ECO_TYPE_INTERFACE] = &ffi_type_pointer;
         ECO_FFI_TYPES[ECO_TYPE_UGUID]     = &ffi_type_pointer;
         ECO_FFI_TYPES[ECO_TYPE_VOIDPTR]   = &ffi_type_pointer;
+        ECO_FFI_TYPES[ECO_TYPE_VOID]      = &ffi_type_void;
     }
     return ECO_FFI_TYPES[typeTag];
 }
@@ -218,7 +219,7 @@ void JavaObjectToParam(JNIEnv* env, jobject obj, uint16_t typeTag, uint8_t flags
         **(UGUID***)arg = malloc(sizeof(UGUID));
         ***(UGUID***)arg = JavaObjectToUGUIDPtr(env, obj);;
     } else if (typeTag == ECO_TYPE_VOIDPTR) {
-        **(jobject**)arg = obj;
+        **(jobject**)arg = (*env)->NewGlobalRef(env, obj);
     }
 }
 
@@ -255,9 +256,7 @@ void ParamToJavaObject(JNIEnv* env, void* arg, uint16_t typeTag, jobject* obj) {
     } else if (typeTag == ECO_TYPE_UGUID) {
         *obj = UGUIDPtrToJavaObject(env, **(UGUID***)arg);
     } else if (typeTag == ECO_TYPE_VOIDPTR) {
-        jclass clazz = (*env)->FindClass(env, "java/lang/Integer");
-        jmethodID method = (*env)->GetMethodID(env, clazz, "<init>", "(I)V");
-        *obj = (*env)->NewObject(env, clazz, method, **(uint32_t**)arg);
+        *obj = **(jobject**)arg;
     }
 }
 
@@ -296,9 +295,11 @@ jobject ResultToJavaObject(JNIEnv* env, ffi_arg* result, uint16_t typeTag) {
     } else if (typeTag == ECO_TYPE_UGUID) {
         return UGUIDPtrToJavaObject(env, *(UGUID**)result);
     } else if (typeTag == ECO_TYPE_VOIDPTR) {
-        jclass clazz = (*env)->FindClass(env, "java/lang/Integer");
-        jmethodID method = (*env)->GetMethodID(env, clazz, "<init>", "(I)V");
-        return (*env)->NewObject(env, clazz, method, *(uint32_t*)result);
+        return *(jobject*)result;
+    } else if (typeTag == ECO_TYPE_VOID) {
+        jclass clazz = (*env)->FindClass(env, "java/lang/Void");
+        jmethodID method = (*env)->GetMethodID(env, clazz, "<init>", "()V");
+        return (*env)->NewObject(env, clazz, method);
     }
 }
 
