@@ -348,12 +348,14 @@
     <ClInclude Include="..\..\..\UnitTestFiles\HeaderFiles\EcoTypeLib1Common.h" />
     <ClInclude Include="..\..\..\UnitTestFiles\HeaderFiles\EcoTypeLib1Calculator.h" />
     <ClInclude Include="..\..\..\UnitTestFiles\HeaderFiles\EcoTypeLib1InterfaceBus1.h" />
+    <ClInclude Include="..\..\..\UnitTestFiles\HeaderFiles\EcoTypeLib1List1.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\UnitTestFiles\SourceFiles\EcoTypeLib1.c" />
     <ClCompile Include="..\..\..\UnitTestFiles\SourceFiles\EcoTypeLib1Common.c" />
     <ClCompile Include="..\..\..\UnitTestFiles\SourceFiles\EcoTypeLib1Calculator.c" />
     <ClCompile Include="..\..\..\UnitTestFiles\SourceFiles\EcoTypeLib1InterfaceBus1.c" />
+    <ClCompile Include="..\..\..\UnitTestFiles\SourceFiles\EcoTypeLib1List1.c" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

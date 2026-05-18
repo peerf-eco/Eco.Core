@@ -4,11 +4,11 @@
  * </character encoding>
  *
  * <summary>
- *   EcoTypeLib1InterfaceBus1
+ *   EcoTypeLib1List1
  * </summary>
  *
  * <description>
- *   Hand-written `.etl` writers for the InterfaceBus1 interface
+ *   Hand-written `.etl` writers for the List1 interface
  * </description>
  *
  * <author>
@@ -17,12 +17,12 @@
  *
  */
 
-#ifndef __ECO_TYPE_LIB_1_INTERFACE_BUS_1_H__
-#define __ECO_TYPE_LIB_1_INTERFACE_BUS_1_H__
+#ifndef __ECO_TYPE_LIB_1_LIST_1_H__
+#define __ECO_TYPE_LIB_1_LIST_1_H__
 
 #include "IEcoBase1.h"
 #include "IEcoTypeLib1.h"
 
-void SaveTypeLib_IEcoInterfaceBus1(IEcoTypeLib1* pTypeLib);
+void SaveTypeLib_IEcoList1(IEcoTypeLib1* pTypeLib);
 
-#endif /* __ECO_TYPE_LIB_1_INTERFACE_BUS_1_H__ */
+#endif /* __ECO_TYPE_LIB_1_LIST_1_H__ */

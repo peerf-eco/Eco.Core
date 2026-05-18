@@ -27,8 +27,9 @@
 #include "IdEcoList1.h"
 
 #include "EcoTypeLib1Common.h"
-#include "EcoTypeLib1Calculator.h"
 #include "EcoTypeLib1InterfaceBus1.h"
+#include "EcoTypeLib1Calculator.h"
+#include "EcoTypeLib1List1.h"
 
 /*
  *
@@ -73,14 +74,16 @@ int16_t EcoMain(IEcoUnknown* pIUnk) {
     if (result != 0 || pTypeLib == NULL) goto Release;
 
     /* Write one `.etl` per supported interface */
-    // SaveTypeLib_IEcoCalculatorX(pTypeLib);
-    // SaveTypeLib_IEcoCalculatorY(pTypeLib);
-    // SaveTypeLib_IEcoInterfaceBus1(pTypeLib);
+    SaveTypeLib_IEcoInterfaceBus1(pTypeLib);
+    SaveTypeLib_IEcoCalculatorX(pTypeLib);
+    SaveTypeLib_IEcoCalculatorY(pTypeLib);
+    SaveTypeLib_IEcoList1(pTypeLib);
 
     /* Smoke check */
-    // LoadAndInspect(pTypeLib, &IID_IEcoCalculatorX);
-    // LoadAndInspect(pTypeLib, &IID_IEcoCalculatorY);
     LoadAndInspect(pTypeLib, &IID_IEcoInterfaceBus1);
+    LoadAndInspect(pTypeLib, &IID_IEcoCalculatorX);
+    LoadAndInspect(pTypeLib, &IID_IEcoCalculatorY);
+    LoadAndInspect(pTypeLib, &IID_IEcoList1);
 
 Release:
 

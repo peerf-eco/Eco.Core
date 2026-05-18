@@ -35,6 +35,9 @@
     <ClCompile Include="..\..\..\UnitTestFiles\SourceFiles\EcoTypeLib1InterfaceBus1.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\UnitTestFiles\SourceFiles\EcoTypeLib1List1.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\UnitTestFiles\HeaderFiles\EcoTypeLib1Common.h">
@@ -44,6 +47,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\UnitTestFiles\HeaderFiles\EcoTypeLib1InterfaceBus1.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\UnitTestFiles\HeaderFiles\EcoTypeLib1List1.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
