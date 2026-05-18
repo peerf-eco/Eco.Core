@@ -42,9 +42,6 @@ public class CEcoCalculatorJ {
 
     private int Release() {
         m_cRef--;
-        if (m_cRef == 0) {
-            // ???
-        }
         return ErrEcoCodes.ERR_ECO_OK;
     }
 
