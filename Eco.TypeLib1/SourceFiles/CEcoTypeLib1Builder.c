@@ -48,8 +48,8 @@ const uint32_t ECO_TYPE_SIZE[] = {
     1,             /* ECO_TYPE_BOOLEAN */
     1,             /* ECO_TYPE_CHAR */
     2,             /* ECO_TYPE_WCHAR */
-    1,             /* ECO_TYPE_ASTRING — size of one ASCII code unit */
-    2,             /* ECO_TYPE_WSTRING — size of one wide code unit */
+    ECO_PTR_SIZE,  /* ECO_TYPE_ASTRING */
+    ECO_PTR_SIZE,  /* ECO_TYPE_WSTRING */
     ECO_PTR_SIZE,  /* ECO_TYPE_INTERFACE — IEcoUnknown* */
     ECO_PTR_SIZE,  /* ECO_TYPE_UGUID — UGUID* */
     ECO_PTR_SIZE,  /* ECO_TYPE_VOIDPTR — void* */

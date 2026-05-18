@@ -138,6 +138,9 @@ static int16_t ECOCALLMETHOD CEcoTypeLib1File_01434A0B_Open(/* in */ IEcoTypeLib
 
     pCMe->m_pIFile = pCMe->m_pIFileMgr->pVTbl->Open(pCMe->m_pIFileMgr, path);
     if (pCMe->m_pIFile == 0) {
+        if (mode & ECO_OPEN_MODE_READ_FILE) {
+            return ERR_ECO_FAIL;
+        }
         pCMe->m_pIFile = pCMe->m_pIFileMgr->pVTbl->Create(pCMe->m_pIFileMgr, path);
     }
     pCMe->m_Alloc = 1;

@@ -297,7 +297,7 @@ static int16_t LoadInterfaceDescriptor(IEcoTypeLib1File* pIFile, IEcoTypeLib1Bui
         IEcoMethodDescriptor1* pIMethod = 0;
         result = LoadMethod(pIFile, pIBuilder, pOffset, &pIMethod);
         if (result != 0) {
-        return result;
+            return result;
         }
         result = (*ppIDesc)->pVTbl->AddMethod(*ppIDesc, pIMethod);
         if (result != 0) {
