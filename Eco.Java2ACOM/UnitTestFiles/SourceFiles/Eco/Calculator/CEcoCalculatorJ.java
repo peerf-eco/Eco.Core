@@ -5,20 +5,28 @@ import Eco.Core.IEcoUnknown;
 import Eco.Core.IEcoUnknownPtr;
 import Eco.Core.UGUID;
 
-public class CEcoCalculatorJ {
-    private IEcoCalculatorX m_iCalcX = null;
-    private IEcoCalculatorY m_iCalcY = null;
-    private int m_cRef = 0;
+class CEcoCalculatorJ {
+    private IEcoCalculatorX m_iCalcX;
+    private IEcoCalculatorY m_iCalcY;
+    private int m_cRef;
 
-    public short create(IEcoUnknownPtr pICalcX) {
+    CEcoCalculatorJ() {
         m_iCalcX = new CEcoCalculatorJ_IEcoCalculatorX();
         m_iCalcY = new CEcoCalculatorJ_IEcoCalculatorY();
         m_cRef = 1;
-        pICalcX.iUnk = m_iCalcX;
+    }
+
+    short Init(IEcoUnknown iUnkSystem) {
         return ErrEcoCodes.ERR_ECO_OK;
     }
 
-    private short QueryInterface(UGUID riid, IEcoUnknownPtr pIUnk) {
+    short Create(IEcoUnknown iUnkSystem, IEcoUnknown iUnkOuter) {
+        return ErrEcoCodes.ERR_ECO_OK;
+    }
+
+    void Delete() {}
+
+    short QueryInterface(UGUID riid, IEcoUnknownPtr pIUnk) {
         if (riid.equals(IEcoCalculatorX.IID)) {
             pIUnk.iUnk = m_iCalcX;
             m_iCalcX.AddRef();
@@ -35,14 +43,17 @@ public class CEcoCalculatorJ {
         return ErrEcoCodes.ERR_ECO_OK;
     }
 
-    private int AddRef() {
+    int AddRef() {
         m_cRef++;
-        return ErrEcoCodes.ERR_ECO_OK;
+        return m_cRef;
     }
 
-    private int Release() {
+    int Release() {
         m_cRef--;
-        return ErrEcoCodes.ERR_ECO_OK;
+        if (m_cRef == 0) {
+            Delete();
+        }
+        return m_cRef;
     }
 
     private class CEcoCalculatorJ_IEcoCalculatorX implements IEcoCalculatorX {

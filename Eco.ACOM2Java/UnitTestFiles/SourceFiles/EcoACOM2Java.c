@@ -107,7 +107,7 @@ int16_t EcoMain(IEcoUnknown* pIUnk) {
         goto Release;
     }
 
-    result = pIEcoACOM2Java->pVTbl->RegisterComponent(pIEcoACOM2Java, "C:\\Programming\\Eco.Core\\Eco.Java2ACOM\\BuildFiles\\production\\UnitTestFiles", "Eco/Calculator/CEcoCalculatorJ", &CID_EcoCalculatorJ);
+    result = pIEcoACOM2Java->pVTbl->RegisterComponent(pIEcoACOM2Java, &CID_EcoCalculatorJ, "C:\\Programming\\Eco.Core\\Eco.Java2ACOM\\BuildFiles\\production\\UnitTestFiles", "Eco/Calculator/CEcoCalculatorJFactory");
     if (result != 0) {
         goto Release;
     }

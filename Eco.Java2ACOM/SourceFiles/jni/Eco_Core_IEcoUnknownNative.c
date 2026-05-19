@@ -217,7 +217,7 @@ void JavaObjectToParam(JNIEnv* env, jobject obj, uint16_t typeTag, uint8_t flags
         **(void***)arg = GetPointerToInterface(env, obj);
     } else if (typeTag == ECO_TYPE_UGUID) {
         **(UGUID***)arg = malloc(sizeof(UGUID));
-        ***(UGUID***)arg = JavaObjectToUGUIDPtr(env, obj);;
+        ***(UGUID***)arg = JavaObjectToUGUIDPtr(env, obj);
     } else if (typeTag == ECO_TYPE_VOIDPTR) {
         **(jobject**)arg = (*env)->NewGlobalRef(env, obj);
     }
