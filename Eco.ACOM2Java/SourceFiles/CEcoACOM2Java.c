@@ -723,8 +723,10 @@ static int16_t ECOCALLMETHOD CEcoACOM2Java_3F41E2AA_CreateJavaVM(/*in*/ IEcoACOM
  */
 static int16_t ECOCALLMETHOD CEcoACOM2Java_3F41E2AA_RegisterComponent(/*in*/ IEcoACOM2JavaPtr_t me, /*in*/ const UGUID* rcid, /*in*/ char_t* classpath, /*in*/ char_t* factoryClassname) {
     CEcoACOM2Java_3F41E2AA* pCMe = (CEcoACOM2Java_3F41E2AA*)me;
-    JNIEnv* env;
-    jclass* clazz;
+    JNIEnv* env = 0;
+    jclass clazz = 0;
+    jmethodID method = 0;
+    jobject* obj = 0;
 
     if (me == 0) {
         return ERR_ECO_POINTER;
@@ -736,15 +738,17 @@ static int16_t ECOCALLMETHOD CEcoACOM2Java_3F41E2AA_RegisterComponent(/*in*/ IEc
     }
     AddClassPath(env, classpath);
 
-    clazz = (jclass*) pCMe->m_pIMem->pVTbl->Alloc(pCMe->m_pIMem, sizeof(jclass));
-    *clazz = (*env)->FindClass(env, factoryClassname);
-    if (*clazz == 0) {
-        pCMe->m_pIMem->pVTbl->Free(pCMe->m_pIMem, clazz);
+    clazz = (*env)->FindClass(env, factoryClassname);
+    if (clazz == 0) {
         return ERR_ECO_COMPONENT_NOTFOUND;
     }
 
-    pCMe->m_components->pVTbl->Add(pCMe->m_components, (void*) rcid);
-    pCMe->m_components->pVTbl->Add(pCMe->m_components, (void*) clazz);
+    obj = (jobject*) pCMe->m_pIMem->pVTbl->Alloc(pCMe->m_pIMem, sizeof(jobject));
+    method = (*env)->GetMethodID(env, clazz, "<init>", "()V");
+    *obj = (*env)->NewObject(env, clazz, method);
+
+    pCMe->m_componentFactories->pVTbl->Add(pCMe->m_componentFactories, (void*) rcid);
+    pCMe->m_componentFactories->pVTbl->Add(pCMe->m_componentFactories, (void*) obj);
 
     return ERR_ECO_SUCCESES;
 }
@@ -762,7 +766,8 @@ static int16_t ECOCALLMETHOD CEcoACOM2Java_3F41E2AA_RegisterComponent(/*in*/ IEc
  */
 static int16_t ECOCALLMETHOD CEcoACOM2Java_3F41E2AA_UnRegisterComponent(/*in*/ IEcoACOM2JavaPtr_t me, /*in*/ const UGUID* rcid) {
     CEcoACOM2Java_3F41E2AA* pCMe = (CEcoACOM2Java_3F41E2AA*)me;
-    IEcoList1* list;
+    JNIEnv* env = 0;
+    IEcoList1* list = 0;
     uint32_t index = 0;
     void* item = 0;
 
@@ -770,7 +775,12 @@ static int16_t ECOCALLMETHOD CEcoACOM2Java_3F41E2AA_UnRegisterComponent(/*in*/ I
         return ERR_ECO_POINTER;
     }
 
-    list = pCMe->m_components;
+    env = pCMe->m_env;
+    if (env == 0) {
+        return ERR_ECO_FAIL;
+    }
+
+    list = pCMe->m_componentFactories;
     index = list->pVTbl->IndexOf(list, rcid);
     if (index == -1) {
         return ERR_ECO_INVALIDARG;
@@ -778,6 +788,7 @@ static int16_t ECOCALLMETHOD CEcoACOM2Java_3F41E2AA_UnRegisterComponent(/*in*/ I
 
     list->pVTbl->RemoveAt(list, index);
     item = list->pVTbl->Item(list, index);
+    (*env)->DeleteLocalRef(env, *(jobject*)item);
     pCMe->m_pIMem->pVTbl->Free(pCMe->m_pIMem, item);
     list->pVTbl->RemoveAt(list, index);
 
@@ -816,7 +827,7 @@ static int16_t ECOCALLMETHOD CEcoACOM2Java_3F41E2AA_QueryComponent(/*in*/ IEcoAC
         return ERR_ECO_FAIL;
     }
 
-    index = pCMe->m_components->pVTbl->IndexOf(pCMe->m_components, (void*) rcid);
+    index = pCMe->m_componentFactories->pVTbl->IndexOf(pCMe->m_componentFactories, (void*) rcid);
     if (index == -1) {
         return ERR_ECO_COMPONENT_NOTFOUND;
     }
@@ -826,19 +837,15 @@ static int16_t ECOCALLMETHOD CEcoACOM2Java_3F41E2AA_QueryComponent(/*in*/ IEcoAC
     field = (*env)->GetFieldID(env, clazz, "iUnk", "LEco/Core/IEcoUnknown;");
     obj = (*env)->NewObject(env, clazz, method);
 
-    clazz = *(jclass*)(pCMe->m_components->pVTbl->Item(pCMe->m_components, index + 1));
-    method = (*env)->GetMethodID(env, clazz, "<init>", "()V");
-    factoryObj = (*env)->NewObject(env, clazz, method);
-
+    factoryObj = *(jobject*)(pCMe->m_componentFactories->pVTbl->Item(pCMe->m_componentFactories, index + 1));
+    clazz = (*env)->GetObjectClass(env, factoryObj);
     method = (*env)->GetMethodID(env, clazz, "Alloc", "(LEco/Core/IEcoUnknown;LEco/Core/IEcoUnknown;LEco/Core/UGUID;LEco/Core/IEcoUnknownPtr;)S");
     result = (*env)->CallShortMethod(env, factoryObj, method, 0, 0, UGUIDPtrToJavaObject(env, riid), obj);
     if (result != 0) {
         return result;
     }
 
-    (*env)->DeleteLocalRef(env, factoryObj);
     obj = (*env)->GetObjectField(env, obj, field);
-
     pIDesc = GetInterfaceDescriptorByUGUID(pCMe->m_pITypeLib, riid);
     *(EcoJavaProxy**)ppv = CreateEcoJavaProxy(env, obj, pIDesc, pCMe->m_pIMem, pCMe->m_pITypeLib);
 
@@ -901,8 +908,8 @@ static int16_t ECOCALLMETHOD initCEcoACOM2Java_3F41E2AA(/*in*/ CEcoACOM2Java_3F4
         return result;
     }
 
-    result = pIBus->pVTbl->QueryComponent(pIBus, &CID_EcoList1, 0, &IID_IEcoList1, (void**) &pCMe->m_components);
-    if (result != 0 || pCMe->m_components == 0) {
+    result = pIBus->pVTbl->QueryComponent(pIBus, &CID_EcoList1, 0, &IID_IEcoList1, (void**) &pCMe->m_componentFactories);
+    if (result != 0 || pCMe->m_componentFactories == 0) {
         return result;
     }
 
@@ -956,9 +963,9 @@ static void ECOCALLMETHOD deleteCEcoACOM2Java_3F41E2AA(/* in */ CEcoACOM2Java_3F
         if (pCMe->m_jvm != 0) {
             (*pCMe->m_jvm)->DestroyJavaVM(pCMe->m_jvm);
         }
-        if (pCMe->m_components != 0) {
-            pCMe->m_components->pVTbl->Clear(pCMe->m_components);
-            pCMe->m_components->pVTbl->Release(pCMe->m_components);
+        if (pCMe->m_componentFactories != 0) {
+            pCMe->m_componentFactories->pVTbl->Clear(pCMe->m_componentFactories);
+            pCMe->m_componentFactories->pVTbl->Release(pCMe->m_componentFactories);
         }
         if ( pCMe->m_pISys != 0 ) {
             pCMe->m_pISys->pVTbl->Release(pCMe->m_pISys);
@@ -994,5 +1001,5 @@ CEcoACOM2Java_3F41E2AA g_xCEcoACOM2Java_3F41E2AA = {
     0,  /* m_pITypeLib */
     0,  /* m_jvm */
     0,  /* m_env */
-    0  /* m_components */
+    0  /* m_componentFactories */
 };

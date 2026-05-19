@@ -60,7 +60,7 @@ typedef struct CEcoACOM2Java_3F41E2AA {
     IEcoTypeLib1* m_pITypeLib;
     JavaVM* m_jvm;
     JNIEnv* m_env;
-    IEcoList1* m_components;
+    IEcoList1* m_componentFactories;
 
 } CEcoACOM2Java_3F41E2AA;
 

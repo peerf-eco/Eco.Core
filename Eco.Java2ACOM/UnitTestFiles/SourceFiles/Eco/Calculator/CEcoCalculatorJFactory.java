@@ -45,7 +45,7 @@ public class CEcoCalculatorJFactory implements IEcoComponentFactory {
     }
 
     @Override
-    public short Alloc(IEcoUnknown iSystem, IEcoUnknown iUnknownOuter, UGUID riid, IEcoUnknownPtr pIUnknown) {
+    public short Alloc(IEcoUnknown iSystem, IEcoUnknown iUnknownOuter, UGUID riid, IEcoUnknownPtr pIUnk) {
         if (iUnknownOuter != null && !riid.equals(IEcoUnknown.IID)) {
             return ErrEcoCodes.ERR_ECO_NOAGGREGATION;
         }
@@ -54,7 +54,7 @@ public class CEcoCalculatorJFactory implements IEcoComponentFactory {
         if (result != 0) return result;
         result = cObj.Init(iSystem);
         if (result != 0) return result;
-        result = cObj.QueryInterface(riid, pIUnknown);
+        result = cObj.QueryInterface(riid, pIUnk);
         if (result != 0) return result;
         cObj.Release();
         return result;
