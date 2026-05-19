@@ -802,6 +802,7 @@ static int16_t ECOCALLMETHOD CEcoACOM2Java_3F41E2AA_QueryComponent(/*in*/ IEcoAC
     jclass clazz;
     jmethodID method;
     jfieldID field;
+    jobject factoryObj;
     jobject obj;
     int16_t result = 0;
     uint32_t index = 0;
@@ -826,13 +827,18 @@ static int16_t ECOCALLMETHOD CEcoACOM2Java_3F41E2AA_QueryComponent(/*in*/ IEcoAC
     obj = (*env)->NewObject(env, clazz, method);
 
     clazz = *(jclass*)(pCMe->m_components->pVTbl->Item(pCMe->m_components, index + 1));
-    method = (*env)->GetStaticMethodID(env, clazz, "Alloc", "(LEco/Core/IEcoUnknown;LEco/Core/IEcoUnknown;LEco/Core/UGUID;LEco/Core/IEcoUnknownPtr;)S");
-    result = (*env)->CallStaticShortMethod(env, clazz, method, 0, 0, UGUIDPtrToJavaObject(env, riid), obj);
+    method = (*env)->GetMethodID(env, clazz, "<init>", "()V");
+    factoryObj = (*env)->NewObject(env, clazz, method);
+
+    method = (*env)->GetMethodID(env, clazz, "Alloc", "(LEco/Core/IEcoUnknown;LEco/Core/IEcoUnknown;LEco/Core/UGUID;LEco/Core/IEcoUnknownPtr;)S");
+    result = (*env)->CallShortMethod(env, factoryObj, method, 0, 0, UGUIDPtrToJavaObject(env, riid), obj);
     if (result != 0) {
         return result;
     }
 
+    (*env)->DeleteLocalRef(env, factoryObj);
     obj = (*env)->GetObjectField(env, obj, field);
+
     pIDesc = GetInterfaceDescriptorByUGUID(pCMe->m_pITypeLib, riid);
     *(EcoJavaProxy**)ppv = CreateEcoJavaProxy(env, obj, pIDesc, pCMe->m_pIMem, pCMe->m_pITypeLib);
 

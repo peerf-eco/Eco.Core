@@ -6,14 +6,10 @@ import Eco.List.IdEcoList1;
 import Eco.System.EcoApp;
 import Eco.InterfaceBus.IEcoInterfaceBus1;
 import Eco.InterfaceBus.IEcoInterfaceBus1Native;
-import Eco.MemoryManager.IEcoMemoryAllocator1Native;
-import Eco.FileSystemManagement.IEcoFileManager1Native;
 
 public class EcoTest implements EcoApp {
     private static IEcoSystem1Native iSys;
     private static IEcoInterfaceBus1Native iBus;
-    private static IEcoMemoryAllocator1Native iMem;
-    private static IEcoFileManager1Native iFileMgr;
     private static IEcoCalculatorX iCalcX;
     private static IEcoCalculatorY iCalcY;
     private static IEcoList1 iList;

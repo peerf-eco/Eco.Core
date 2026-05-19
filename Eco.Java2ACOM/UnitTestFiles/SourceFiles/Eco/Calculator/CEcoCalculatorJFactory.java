@@ -1,12 +1,51 @@
 package Eco.Calculator;
 
-import Eco.Core.ErrEcoCodes;
-import Eco.Core.IEcoUnknown;
-import Eco.Core.IEcoUnknownPtr;
-import Eco.Core.UGUID;
+import Eco.Core.*;
 
-public class CEcoCalculatorJFactory {
-    public static short Alloc(IEcoUnknown iSystem, IEcoUnknown iUnknownOuter, UGUID riid, IEcoUnknownPtr pIUnknown) {
+public class CEcoCalculatorJFactory implements IEcoComponentFactory {
+    private int m_cRef;
+    private String m_Name;
+    private String m_Version;
+    private String m_Manufacturer;
+
+    public CEcoCalculatorJFactory() {
+        m_cRef = 0;
+        m_Name = "EcoCalculatorJ";
+        m_Version = "1.0.0.0";
+        m_Manufacturer = "PeerF";
+    }
+
+    @Override
+    public short QueryInterface(UGUID riid, IEcoUnknownPtr pIUnk) {
+        if (riid.equals(IEcoUnknown.IID) || riid.equals(IEcoComponentFactory.IID)) {
+            pIUnk.iUnk = this;
+        } else {
+            pIUnk.iUnk = null;
+            return ErrEcoCodes.ERR_ECO_NOINTERFACE;
+        }
+        AddRef();
+        return 0;
+    }
+
+    @Override
+    public int AddRef() {
+        m_cRef++;
+        return m_cRef;
+    }
+
+    @Override
+    public int Release() {
+        m_cRef--;
+        return m_cRef;
+    }
+
+    @Override
+    public short Init(IEcoUnknown iSystem, IEcoUnknown iUnk) {
+        return ErrEcoCodes.ERR_ECO_OK;
+    }
+
+    @Override
+    public short Alloc(IEcoUnknown iSystem, IEcoUnknown iUnknownOuter, UGUID riid, IEcoUnknownPtr pIUnknown) {
         if (iUnknownOuter != null && !riid.equals(IEcoUnknown.IID)) {
             return ErrEcoCodes.ERR_ECO_NOAGGREGATION;
         }
@@ -19,5 +58,20 @@ public class CEcoCalculatorJFactory {
         if (result != 0) return result;
         cObj.Release();
         return result;
+    }
+
+    @Override
+    public String get_Name() {
+        return m_Name;
+    }
+
+    @Override
+    public String get_Version() {
+        return m_Version;
+    }
+
+    @Override
+    public String get_Manufacturer() {
+        return m_Manufacturer;
     }
 }
