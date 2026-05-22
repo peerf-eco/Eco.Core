@@ -1,9 +1,7 @@
 package Eco.Core;
 
 public class IEcoUnknownNative implements IEcoUnknown {
-    protected static long pITypeLib = 0;
     protected long pInstance = 0;
-    protected long pIDesc = 0;
 
     public boolean isNull() {
         return pInstance == 0;

@@ -135,6 +135,7 @@ IEcoInterfaceDescriptor1* GetInterfaceDescriptorByUGUID(IEcoTypeLib1* pITypeLib,
     IEcoInterfaceDirectory1* pIDirectory = 0;
     IEcoInterfaceDirectoryEntry1* pIEntry = 0;
     IEcoInterfaceDescriptor1* pIDesc = 0;
+    EcoDescCacheEntry* pDescCacheEntry = 0;
     char_t* fileName = 0;
     int16_t result = 0;
 
@@ -148,28 +149,36 @@ IEcoInterfaceDescriptor1* GetInterfaceDescriptorByUGUID(IEcoTypeLib1* pITypeLib,
         strcat(filePath, fileName);
         result = pITypeLib->pVTbl->LoadFile(pITypeLib, filePath, &pIDirectory);
     }
+    free(fileName);
 
     if (result == 0) {
         result = pIDirectory->pVTbl->GetEntryByIID(pIDirectory, riid, &pIEntry);
         result = pIEntry->pVTbl->get_Descriptor(pIEntry, &pIDesc);
     }
 
+    pDescCacheEntry = (EcoDescCacheEntry*) malloc(sizeof(EcoDescCacheEntry));
+    pDescCacheEntry->riid = *riid;
+    pDescCacheEntry->pIDirectory = pIDirectory;
+    pDescCacheEntry->pIDesc = pIDesc;
+    g_pIDescCacheList->pVTbl->Add(g_pIDescCacheList, pDescCacheEntry);
+
     return pIDesc;
 }
 
 IEcoInterfaceDescriptor1* GetInterfaceDescriptor(JNIEnv* env, jobject iUnk) {
-    jclass clazz = (*env)->GetObjectClass(env, iUnk);
-    jfieldID field = (*env)->GetFieldID(env, clazz, "pIDesc", "J");
-    IEcoInterfaceDescriptor1* pIDesc = (IEcoInterfaceDescriptor1*) (*env)->GetLongField(env, iUnk, field);
+    EcoDescCacheEntry* pDescCacheEntry = 0;
+    UGUID riid = GetUGUIDFromInterfaceJavaObject(env, iUnk);
+    uint32_t count = g_pIDescCacheList->pVTbl->Count(g_pIDescCacheList);
+    uint32_t index = 0;
 
-    if (pIDesc == 0) {
-        IEcoTypeLib1* pITypeLib = GetTypeLibPointer(env, iUnk);
-        UGUID riid = GetUGUIDFromInterfaceJavaObject(env, iUnk);
-        pIDesc = GetInterfaceDescriptorByUGUID(pITypeLib, &riid);
-        (*env)->SetLongField(env, iUnk, field, (jlong)pIDesc);
+    for (index = 0; index < count; index++) {
+        pDescCacheEntry = (EcoDescCacheEntry*) g_pIDescCacheList->pVTbl->Item(g_pIDescCacheList, index);
+        if (IsEqualUGUID(&pDescCacheEntry->riid, &riid)) {
+            return pDescCacheEntry->pIDesc;
+        }
     }
 
-    return pIDesc;
+    return GetInterfaceDescriptorByUGUID(g_pITypeLib, &riid);
 }
 
 void SetInterfaceDescriptor(JNIEnv* env, jobject iUnk, IEcoInterfaceDescriptor1* pIDesc) {
@@ -340,6 +349,7 @@ JNIEXPORT jobject JNICALL Java_Eco_Core_IEcoUnknownNative_GlobalDispatcher(JNIEn
     ffi_cif cif;
     ffi_arg cResult;
 
+    jobject* jArgs = (jobject*)malloc(sizeof(jobject) * count);
     void** cArgs = (void**) malloc(sizeof(void*) * (count + 1));
     ffi_type** ffiTypes = (ffi_type**) malloc(sizeof(ffi_type*) * (count + 1));
     ffi_type* retType = 0;
@@ -352,13 +362,13 @@ JNIEXPORT jobject JNICALL Java_Eco_Core_IEcoUnknownNative_GlobalDispatcher(JNIEn
 
     pIDesc->pVTbl->get_MethodAtIndex(pIDesc, VTblIdx - 3, &pIMethod);
     for (index = 0; index < count; index++) {
-        jobject arg = (*env)->GetObjectArrayElement(env, args, index);
+        jArgs[index] = (*env)->GetObjectArrayElement(env, args, index);
 
         pIMethod->pVTbl->GetParamAtIndex(pIMethod, index, &pIParam);
         pIParam->pVTbl->get_Type(pIParam, &typeTag);
         flags = pIParam->pVTbl->get_Flags(pIParam);
 
-        JavaObjectToParam(env, arg, typeTag, flags, &cArgs[index + 1]);
+        JavaObjectToParam(env, jArgs[index], typeTag, flags, &cArgs[index + 1]);
         if (flags & ECO_PARAM_OUT) {
             ffiTypes[index + 1] = &ffi_type_pointer;
         } else {
@@ -380,9 +390,8 @@ JNIEXPORT jobject JNICALL Java_Eco_Core_IEcoUnknownNative_GlobalDispatcher(JNIEn
         pIMethod->pVTbl->GetParamAtIndex(pIMethod, index, &pIParam);
         flags = pIParam->pVTbl->get_Flags(pIParam);
         if (flags & ECO_PARAM_OUT) {
-            jobject arg = (*env)->GetObjectArrayElement(env, args, index);
             pIParam->pVTbl->get_Type(pIParam, &typeTag);
-            ParamToJavaObject(env, cArgs[index + 1], typeTag, &arg);
+            ParamToJavaObject(env, cArgs[index + 1], typeTag, &jArgs[index]);
         }
     }
 
@@ -390,14 +399,21 @@ JNIEXPORT jobject JNICALL Java_Eco_Core_IEcoUnknownNative_GlobalDispatcher(JNIEn
         pIMethod->pVTbl->GetParamAtIndex(pIMethod, index, &pIParam);
         pIParam->pVTbl->get_Type(pIParam, &typeTag);
         flags = pIParam->pVTbl->get_Flags(pIParam);
+        if ((flags & ECO_PARAM_OUT) == 0 && typeTag == ECO_TYPE_ASTRING) {
+            (*env)->ReleaseStringUTFChars(env, jArgs[index], *(char_t**)cArgs[index + 1]);
+        }
+        if ((flags & ECO_PARAM_OUT) == 0 && typeTag == ECO_TYPE_WSTRING) {
+            (*env)->ReleaseStringChars(env, jArgs[index], *(jchar**)cArgs[index + 1]);
+        }
         if ((flags & ECO_PARAM_OUT) && typeTag == ECO_TYPE_UGUID) {
-            free(**(void***)(cArgs[index + 1]));
+            free(**(void***)cArgs[index + 1]);
         }
         if ((flags & ECO_PARAM_OUT) || typeTag == ECO_TYPE_UGUID) {
-            free(*(void**)(cArgs[index + 1]));
+            free(*(void**)cArgs[index + 1]);
         }
         free(cArgs[index + 1]);
     }
+    free(jArgs);
     free(cArgs);
     free(ffiTypes);
 
