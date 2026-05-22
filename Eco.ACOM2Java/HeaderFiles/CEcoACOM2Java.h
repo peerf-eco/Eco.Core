@@ -82,6 +82,7 @@ typedef struct EcoJavaProxy {
     uint32_t m_cRef;
     IEcoMemoryAllocator1* m_pIMem;
     IEcoTypeLib1* m_pITypeLib;
+    IEcoInterfaceDirectory1* m_pIDirectory;
     IEcoInterfaceDescriptor1* m_pIDesc;
     JavaVM* m_jvm;
     jobject m_obj;
