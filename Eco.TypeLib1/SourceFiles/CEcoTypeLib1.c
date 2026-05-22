@@ -421,10 +421,11 @@ static int16_t ECOCALLMETHOD CEcoTypeLib1_01434A0B_LoadFile(/* in */ IEcoTypeLib
         count--;
     }
 
-    result = pCMe->m_pIFile->pVTbl->Read(pCMe->m_pIFile, 0, 2, &count);
+    result = pCMe->m_pIFile->pVTbl->Read(pCMe->m_pIFile, offset, 2, &count);
     if (result != 0) {
         goto LoadRelease;
     }
+    offset += 2;
 
     while (count != 0) {
         IEcoAnnotationDescriptor1* pIAnnotation = 0;
