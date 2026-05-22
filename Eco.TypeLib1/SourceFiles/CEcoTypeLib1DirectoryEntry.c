@@ -189,12 +189,21 @@ static int16_t ECOCALLMETHOD CEcoTypeLib1DirectoryEntry_01434A0B_get_Name(/* in 
  */
 static int16_t ECOCALLMETHOD CEcoTypeLib1DirectoryEntry_01434A0B_set_Name(/* in */ IEcoInterfaceDirectoryEntry1Ptr_t me, /* in */ char_t* name) {
     CEcoTypeLib1DirectoryEntry_01434A0B* pCMe = (CEcoTypeLib1DirectoryEntry_01434A0B*)me;
+    uint32_t size = 0;
 
     if (me == 0) {
         return ERR_ECO_POINTER;
     }
 
-    pCMe->m_Name = name;
+    if (pCMe->m_Name != 0) {
+        pCMe->m_pIMem->pVTbl->Free(pCMe->m_pIMem, pCMe->m_Name);
+        pCMe->m_Name = 0;
+    }
+    if (name != 0) {
+        size = strlen(name) + 1;
+        pCMe->m_Name = (char_t*)pCMe->m_pIMem->pVTbl->Alloc(pCMe->m_pIMem, size);
+        pCMe->m_pIMem->pVTbl->Copy(pCMe->m_pIMem, (void*)pCMe->m_Name, (void*)name, size);
+    }
     return ERR_ECO_SUCCESES;
 }
 
@@ -233,12 +242,21 @@ static int16_t ECOCALLMETHOD CEcoTypeLib1DirectoryEntry_01434A0B_get_Namespace(/
  */
 static int16_t ECOCALLMETHOD CEcoTypeLib1DirectoryEntry_01434A0B_set_Namespace(/* in */ IEcoInterfaceDirectoryEntry1Ptr_t me, /* in */ char_t* namespace) {
     CEcoTypeLib1DirectoryEntry_01434A0B* pCMe = (CEcoTypeLib1DirectoryEntry_01434A0B*)me;
+    uint32_t size = 0;
 
     if (me == 0) {
         return ERR_ECO_POINTER;
     }
 
-    pCMe->m_Namespace = namespace;
+    if (pCMe->m_Namespace != 0) {
+        pCMe->m_pIMem->pVTbl->Free(pCMe->m_pIMem, pCMe->m_Namespace);
+        pCMe->m_Namespace = 0;
+    }
+    if (namespace != 0) {
+        size = strlen(namespace) + 1;
+        pCMe->m_Namespace = (char_t*)pCMe->m_pIMem->pVTbl->Alloc(pCMe->m_pIMem, size);
+        pCMe->m_pIMem->pVTbl->Copy(pCMe->m_pIMem, (void*)pCMe->m_Namespace, (void*)namespace, size);
+    }
     return ERR_ECO_SUCCESES;
 }
 
@@ -253,7 +271,7 @@ static int16_t ECOCALLMETHOD CEcoTypeLib1DirectoryEntry_01434A0B_set_Namespace(/
  * </description>
  *
  */
-static int16_t ECOCALLMETHOD CEcoTypeLib1DirectoryEntry_01434A0B_get_Descriptor(/* in */ IEcoInterfaceDirectoryEntry1Ptr_t me, /* out */ struct IEcoInterfaceDescriptor1** ppDescriptor) {
+static int16_t ECOCALLMETHOD CEcoTypeLib1DirectoryEntry_01434A0B_get_Descriptor(/* in */ IEcoInterfaceDirectoryEntry1Ptr_t me, /* out */ IEcoInterfaceDescriptor1** ppDescriptor) {
     CEcoTypeLib1DirectoryEntry_01434A0B* pCMe = (CEcoTypeLib1DirectoryEntry_01434A0B*)me;
 
     if (me == 0 || ppDescriptor == 0) {
@@ -275,14 +293,21 @@ static int16_t ECOCALLMETHOD CEcoTypeLib1DirectoryEntry_01434A0B_get_Descriptor(
  * </description>
  *
  */
-static int16_t ECOCALLMETHOD CEcoTypeLib1DirectoryEntry_01434A0B_set_Descriptor(/* in */ IEcoInterfaceDirectoryEntry1Ptr_t me, /* in */ struct IEcoInterfaceDescriptor1* pDescriptor) {
+static int16_t ECOCALLMETHOD CEcoTypeLib1DirectoryEntry_01434A0B_set_Descriptor(/* in */ IEcoInterfaceDirectoryEntry1Ptr_t me, /* in */ IEcoInterfaceDescriptor1* pDescriptor) {
     CEcoTypeLib1DirectoryEntry_01434A0B* pCMe = (CEcoTypeLib1DirectoryEntry_01434A0B*)me;
 
     if (me == 0) {
         return ERR_ECO_POINTER;
     }
 
-    pCMe->m_pIDescriptor = pDescriptor;
+    if (pCMe->m_pIDescriptor != 0) {
+        pCMe->m_pIDescriptor->pVTbl->Release(pCMe->m_pIDescriptor);
+        pCMe->m_pIDescriptor = 0;
+    }
+    if (pDescriptor != 0) {
+        pDescriptor->pVTbl->AddRef(pDescriptor);
+        pCMe->m_pIDescriptor = pDescriptor;
+    }
     return ERR_ECO_SUCCESES;
 }
 
@@ -380,6 +405,15 @@ static void ECOCALLMETHOD deleteCEcoTypeLib1DirectoryEntry_01434A0B(/* in */ CEc
     if ( pCMe != 0 ) {
         pIMem = pCMe->m_pIMem;
         /* Freeing */
+        if ( pCMe->m_pIDescriptor != 0 ) {
+            pCMe->m_pIDescriptor->pVTbl->Release(pCMe->m_pIDescriptor);
+        }
+        if ( pCMe->m_Name != 0 ) {
+            pIMem->pVTbl->Free(pIMem, pCMe->m_Name);
+        }
+        if ( pCMe->m_Namespace != 0 ) {
+            pIMem->pVTbl->Free(pIMem, pCMe->m_Namespace);
+        }
         if ( pCMe->m_pISys != 0 ) {
             pCMe->m_pISys->pVTbl->Release(pCMe->m_pISys);
         }

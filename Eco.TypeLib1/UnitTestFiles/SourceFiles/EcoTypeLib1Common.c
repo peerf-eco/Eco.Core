@@ -121,13 +121,8 @@ void LoadAndInspect(IEcoTypeLib1* pTypeLib, const UGUID* riid) {
                            COLOR_YELLOW "%s" COLOR_RESET ", "
                            COLOR_BLUE "0x%.2X" COLOR_RESET ")\n",
                            name, ECO_TYPE_NAME[typeTag], flags);
-
-                    pParam->pVTbl->Release(pParam);
                 }
-                pMethod->pVTbl->Release(pMethod);
             }
-            pDesc->pVTbl->Release(pDesc);
-            pEntry->pVTbl->Release(pEntry);
             printf("\n");
         }
         pDir->pVTbl->Release(pDir);

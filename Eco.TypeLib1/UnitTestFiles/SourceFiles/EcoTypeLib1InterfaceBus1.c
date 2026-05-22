@@ -63,49 +63,68 @@ void SaveTypeLib_IEcoInterfaceBus1(IEcoTypeLib1* pTypeLib) {
     pBuilder->pVTbl->CreateMethod(pBuilder, "Init", 0, &pMethod);
     pBuilder->pVTbl->CreateParameter(pBuilder, "", ECO_TYPE_INT16, ECO_PARAM_OUT, &pParam);
     pMethod->pVTbl->set_Result(pMethod, pParam);
+    pParam->pVTbl->Release(pParam);
     pDesc->pVTbl->AddMethod(pDesc, pMethod);
+    pMethod->pVTbl->Release(pMethod);
 
     /* --- int16_t InitWith([in] voidptr_t heapStartAddress, [in] uint32_t size) --- */
     pBuilder->pVTbl->CreateMethod(pBuilder, "InitWith", 0, &pMethod);
     pBuilder->pVTbl->CreateParameter(pBuilder, "heapStartAddress", ECO_TYPE_VOIDPTR, ECO_PARAM_IN, &pParam);
     pMethod->pVTbl->AddParameter(pMethod, pParam);
+    pParam->pVTbl->Release(pParam);
     pBuilder->pVTbl->CreateParameter(pBuilder, "size", ECO_TYPE_UINT32, ECO_PARAM_IN, &pParam);
     pMethod->pVTbl->AddParameter(pMethod, pParam);
+    pParam->pVTbl->Release(pParam);
     pBuilder->pVTbl->CreateParameter(pBuilder, "", ECO_TYPE_INT16, ECO_PARAM_OUT, &pParam);
     pMethod->pVTbl->set_Result(pMethod, pParam);
+    pParam->pVTbl->Release(pParam);
     pDesc->pVTbl->AddMethod(pDesc, pMethod);
+    pMethod->pVTbl->Release(pMethod);
 
     /* --- int16_t RegisterComponent([in] UGUIDPtr_t rcid, [in] IEcoUnknownPtr_t pIFactory) --- */
     pBuilder->pVTbl->CreateMethod(pBuilder, "RegisterComponent", 0, &pMethod);
     pBuilder->pVTbl->CreateParameter(pBuilder, "rcid", ECO_TYPE_UGUID, ECO_PARAM_IN, &pParam);
     pMethod->pVTbl->AddParameter(pMethod, pParam);
+    pParam->pVTbl->Release(pParam);
     pBuilder->pVTbl->CreateParameter(pBuilder, "pIFactory", ECO_TYPE_INTERFACE, ECO_PARAM_IN, &pParam);
     pMethod->pVTbl->AddParameter(pMethod, pParam);
+    pParam->pVTbl->Release(pParam);
     pBuilder->pVTbl->CreateParameter(pBuilder, "", ECO_TYPE_INT16, ECO_PARAM_OUT, &pParam);
     pMethod->pVTbl->set_Result(pMethod, pParam);
+    pParam->pVTbl->Release(pParam);
     pDesc->pVTbl->AddMethod(pDesc, pMethod);
+    pMethod->pVTbl->Release(pMethod);
 
     /* --- int16_t UnRegisterComponent([in] UGUIDPtr_t rcid) --- */
     pBuilder->pVTbl->CreateMethod(pBuilder, "UnRegisterComponent", 0, &pMethod);
     pBuilder->pVTbl->CreateParameter(pBuilder, "rcid", ECO_TYPE_UGUID, ECO_PARAM_IN, &pParam);
     pMethod->pVTbl->AddParameter(pMethod, pParam);
+    pParam->pVTbl->Release(pParam);
     pBuilder->pVTbl->CreateParameter(pBuilder, "", ECO_TYPE_INT16, ECO_PARAM_OUT, &pParam);
     pMethod->pVTbl->set_Result(pMethod, pParam);
+    pParam->pVTbl->Release(pParam);
     pDesc->pVTbl->AddMethod(pDesc, pMethod);
+    pMethod->pVTbl->Release(pMethod);
 
     /* --- int16_t QueryComponent([in] UGUIDPtr_t rcid, [in] IEcoUnknownPtr_t pIUnkOuter, [in] UGUIDPtr_t riid, [out] voidptr_t ppv) --- */
     pBuilder->pVTbl->CreateMethod(pBuilder, "QueryComponent", 0, &pMethod);
     pBuilder->pVTbl->CreateParameter(pBuilder, "rcid", ECO_TYPE_UGUID, ECO_PARAM_IN, &pParam);
     pMethod->pVTbl->AddParameter(pMethod, pParam);
+    pParam->pVTbl->Release(pParam);
     pBuilder->pVTbl->CreateParameter(pBuilder, "pIUnkOuter", ECO_TYPE_INTERFACE, ECO_PARAM_IN, &pParam);
     pMethod->pVTbl->AddParameter(pMethod, pParam);
+    pParam->pVTbl->Release(pParam);
     pBuilder->pVTbl->CreateParameter(pBuilder, "riid", ECO_TYPE_UGUID, ECO_PARAM_IN, &pParam);
     pMethod->pVTbl->AddParameter(pMethod, pParam);
+    pParam->pVTbl->Release(pParam);
     pBuilder->pVTbl->CreateParameter(pBuilder, "ppv", ECO_TYPE_INTERFACE, ECO_PARAM_OUT, &pParam);
     pMethod->pVTbl->AddParameter(pMethod, pParam);
+    pParam->pVTbl->Release(pParam);
     pBuilder->pVTbl->CreateParameter(pBuilder, "", ECO_TYPE_INT16, ECO_PARAM_OUT, &pParam);
     pMethod->pVTbl->set_Result(pMethod, pParam);
+    pParam->pVTbl->Release(pParam);
     pDesc->pVTbl->AddMethod(pDesc, pMethod);
+    pMethod->pVTbl->Release(pMethod);
 
     /* 3. Create the directory entry */
     pBuilder->pVTbl->CreateInterfaceDirectoryEntry(pBuilder, "IEcoInterfaceBus1", "Eco.InterfaceBus1", &IID_IEcoInterfaceBus1, pDesc, &pEntry);

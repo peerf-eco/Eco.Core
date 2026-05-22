@@ -25,6 +25,8 @@
 #define __I_ECO_INTERFACE_DESCRIPTOR_1_H__
 
 #include "IEcoBase1.h"
+#include "IEcoMethodDescriptor1.h"
+#include "IEcoConstDescriptor1.h"
 
 
 /* Флаги интерфейса (InterfaceDescriptor) - упакованы в 1 байт */
@@ -63,18 +65,18 @@ typedef struct IEcoInterfaceDescriptor1VTbl {
     /* IEcoInterfaceDescriptor1: Наполнение методами */
     
     /* Добавление готового дескриптора метода */
-    int16_t (ECOCALLMETHOD *AddMethod)(/* in */ IEcoInterfaceDescriptor1Ptr_t me, /* in */ struct IEcoMethodDescriptor1* pIMethod);
+    int16_t (ECOCALLMETHOD *AddMethod)(/* in */ IEcoInterfaceDescriptor1Ptr_t me, /* in */ IEcoMethodDescriptor1* pIMethod);
     
     uint16_t (ECOCALLMETHOD *get_MethodCount)(/* in */ IEcoInterfaceDescriptor1Ptr_t me);
-    int16_t (ECOCALLMETHOD *get_MethodAtIndex)(/* in */ IEcoInterfaceDescriptor1Ptr_t me, /* in */ uint16_t index, /* out */ struct IEcoMethodDescriptor1** ppIMethod);
+    int16_t (ECOCALLMETHOD *get_MethodAtIndex)(/* in */ IEcoInterfaceDescriptor1Ptr_t me, /* in */ uint16_t index, /* out */ IEcoMethodDescriptor1** ppIMethod);
 
     /* IEcoInterfaceDescriptor1: Наполнение константами */
     
     /* Добавление готового дескриптора константы */
-    int16_t (ECOCALLMETHOD *AddConstant)(/* in */ IEcoInterfaceDescriptor1Ptr_t me, /* in */ struct IEcoConstDescriptor1* pIConst);
+    int16_t (ECOCALLMETHOD *AddConstant)(/* in */ IEcoInterfaceDescriptor1Ptr_t me, /* in */ IEcoConstDescriptor1* pIConst);
     
     uint16_t (ECOCALLMETHOD *get_ConstantCount)(/* in */ IEcoInterfaceDescriptor1Ptr_t me);
-    int16_t (ECOCALLMETHOD *get_ConstantAtIndex)(/* in */ IEcoInterfaceDescriptor1Ptr_t me, /* in */ uint16_t index, /* out */ struct IEcoConstDescriptor1** ppIConst);
+    int16_t (ECOCALLMETHOD *get_ConstantAtIndex)(/* in */ IEcoInterfaceDescriptor1Ptr_t me, /* in */ uint16_t index, /* out */ IEcoConstDescriptor1** ppIConst);
 
 } IEcoInterfaceDescriptor1VTbl, *IEcoInterfaceDescriptor1VTblPtr_t;
 

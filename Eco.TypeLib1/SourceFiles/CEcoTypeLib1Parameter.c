@@ -145,12 +145,21 @@ static int16_t ECOCALLMETHOD CEcoTypeLib1Parameter_01434A0B_get_Name(/* in */ IE
  */
 static int16_t ECOCALLMETHOD CEcoTypeLib1Parameter_01434A0B_set_Name(/* in */ IEcoParamDescriptor1Ptr_t me, /* in */ char_t* name) {
     CEcoTypeLib1Parameter_01434A0B* pCMe = (CEcoTypeLib1Parameter_01434A0B*)me;
+    uint32_t size = 0;
 
     if (me == 0) {
         return ERR_ECO_POINTER;
     }
 
-    pCMe->m_Name = name;
+    if (pCMe->m_Name != 0) {
+        pCMe->m_pIMem->pVTbl->Free(pCMe->m_pIMem, pCMe->m_Name);
+        pCMe->m_Name = 0;
+    }
+    if (name != 0) {
+        size = strlen(name) + 1;
+        pCMe->m_Name = (char_t*)pCMe->m_pIMem->pVTbl->Alloc(pCMe->m_pIMem, size);
+        pCMe->m_pIMem->pVTbl->Copy(pCMe->m_pIMem, (void*)pCMe->m_Name, (void*)name, size);
+    }
     return ERR_ECO_SUCCESES;
 }
 
@@ -335,6 +344,9 @@ static void ECOCALLMETHOD deleteCEcoTypeLib1Parameter_01434A0B(/* in */ CEcoType
     if ( pCMe != 0 ) {
         pIMem = pCMe->m_pIMem;
         /* Freeing */
+        if ( pCMe->m_Name != 0 ) {
+            pIMem->pVTbl->Free(pIMem, pCMe->m_Name);
+        }
         if ( pCMe->m_pISys != 0 ) {
             pCMe->m_pISys->pVTbl->Release(pCMe->m_pISys);
         }

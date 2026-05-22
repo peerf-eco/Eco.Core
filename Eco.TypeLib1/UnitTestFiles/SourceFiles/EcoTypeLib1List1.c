@@ -63,63 +63,86 @@ void SaveTypeLib_IEcoList1(IEcoTypeLib1* pTypeLib) {
     pBuilder->pVTbl->CreateMethod(pBuilder, "Count", 0, &pMethod);
     pBuilder->pVTbl->CreateParameter(pBuilder, "", ECO_TYPE_UINT32, ECO_PARAM_OUT, &pParam);
     pMethod->pVTbl->set_Result(pMethod, pParam);
+    pParam->pVTbl->Release(pParam);
     pDesc->pVTbl->AddMethod(pDesc, pMethod);
+    pMethod->pVTbl->Release(pMethod);
 
     /* --- Описываем метод: voidptr_t Item([in] uint32_t index) --- */
     pBuilder->pVTbl->CreateMethod(pBuilder, "Item", 0, &pMethod);
     pBuilder->pVTbl->CreateParameter(pBuilder, "index", ECO_TYPE_UINT32, ECO_PARAM_IN, &pParam);
     pMethod->pVTbl->AddParameter(pMethod, pParam);
+    pParam->pVTbl->Release(pParam);
     pBuilder->pVTbl->CreateParameter(pBuilder, "", ECO_TYPE_VOIDPTR, ECO_PARAM_OUT, &pParam);
     pMethod->pVTbl->set_Result(pMethod, pParam);
+    pParam->pVTbl->Release(pParam);
     pDesc->pVTbl->AddMethod(pDesc, pMethod);
+    pMethod->pVTbl->Release(pMethod);
 
     /* --- Описываем метод: uint32_t Add([in] voidptr_t value) --- */
     pBuilder->pVTbl->CreateMethod(pBuilder, "Add", 0, &pMethod);
     pBuilder->pVTbl->CreateParameter(pBuilder, "value", ECO_TYPE_VOIDPTR, ECO_PARAM_IN, &pParam);
     pMethod->pVTbl->AddParameter(pMethod, pParam);
+    pParam->pVTbl->Release(pParam);
     pBuilder->pVTbl->CreateParameter(pBuilder, "", ECO_TYPE_UINT32, ECO_PARAM_OUT, &pParam);
     pMethod->pVTbl->set_Result(pMethod, pParam);
+    pParam->pVTbl->Release(pParam);
     pDesc->pVTbl->AddMethod(pDesc, pMethod);
+    pMethod->pVTbl->Release(pMethod);
 
     /* --- Описываем метод: uint32_t IndexOf([in] voidptr_t value) --- */
     pBuilder->pVTbl->CreateMethod(pBuilder, "IndexOf", 0, &pMethod);
     pBuilder->pVTbl->CreateParameter(pBuilder, "value", ECO_TYPE_VOIDPTR, ECO_PARAM_IN, &pParam);
     pMethod->pVTbl->AddParameter(pMethod, pParam);
+    pParam->pVTbl->Release(pParam);
     pBuilder->pVTbl->CreateParameter(pBuilder, "", ECO_TYPE_UINT32, ECO_PARAM_OUT, &pParam);
     pMethod->pVTbl->set_Result(pMethod, pParam);
+    pParam->pVTbl->Release(pParam);
     pDesc->pVTbl->AddMethod(pDesc, pMethod);
+    pMethod->pVTbl->Release(pMethod);
 
     /* --- Описываем метод: void InsertAt([in] uint32_t index, [in] voidptr_t value) --- */
     pBuilder->pVTbl->CreateMethod(pBuilder, "InsertAt", 0, &pMethod);
     pBuilder->pVTbl->CreateParameter(pBuilder, "index", ECO_TYPE_UINT32, ECO_PARAM_IN, &pParam);
     pMethod->pVTbl->AddParameter(pMethod, pParam);
+    pParam->pVTbl->Release(pParam);
     pBuilder->pVTbl->CreateParameter(pBuilder, "value", ECO_TYPE_VOIDPTR, ECO_PARAM_IN, &pParam);
     pMethod->pVTbl->AddParameter(pMethod, pParam);
+    pParam->pVTbl->Release(pParam);
     pBuilder->pVTbl->CreateParameter(pBuilder, "", ECO_TYPE_VOID, ECO_PARAM_OUT, &pParam);
     pMethod->pVTbl->set_Result(pMethod, pParam);
+    pParam->pVTbl->Release(pParam);
     pDesc->pVTbl->AddMethod(pDesc, pMethod);
+    pMethod->pVTbl->Release(pMethod);
 
     /* --- Описываем метод: void Remove([in] voidptr_t value) --- */
     pBuilder->pVTbl->CreateMethod(pBuilder, "Remove", 0, &pMethod);
     pBuilder->pVTbl->CreateParameter(pBuilder, "value", ECO_TYPE_VOIDPTR, ECO_PARAM_IN, &pParam);
     pMethod->pVTbl->AddParameter(pMethod, pParam);
+    pParam->pVTbl->Release(pParam);
     pBuilder->pVTbl->CreateParameter(pBuilder, "", ECO_TYPE_VOID, ECO_PARAM_OUT, &pParam);
     pMethod->pVTbl->set_Result(pMethod, pParam);
+    pParam->pVTbl->Release(pParam);
     pDesc->pVTbl->AddMethod(pDesc, pMethod);
+    pMethod->pVTbl->Release(pMethod);
 
     /* --- Описываем метод: void RemoveAt([in] uint32_t index) --- */
     pBuilder->pVTbl->CreateMethod(pBuilder, "RemoveAt", 0, &pMethod);
     pBuilder->pVTbl->CreateParameter(pBuilder, "index", ECO_TYPE_UINT32, ECO_PARAM_IN, &pParam);
     pMethod->pVTbl->AddParameter(pMethod, pParam);
+    pParam->pVTbl->Release(pParam);
     pBuilder->pVTbl->CreateParameter(pBuilder, "", ECO_TYPE_VOID, ECO_PARAM_OUT, &pParam);
     pMethod->pVTbl->set_Result(pMethod, pParam);
+    pParam->pVTbl->Release(pParam);
     pDesc->pVTbl->AddMethod(pDesc, pMethod);
+    pMethod->pVTbl->Release(pMethod);
 
     /* --- Описываем метод: void Clear() --- */
     pBuilder->pVTbl->CreateMethod(pBuilder, "Clear", 0, &pMethod);
     pBuilder->pVTbl->CreateParameter(pBuilder, "", ECO_TYPE_VOID, ECO_PARAM_OUT, &pParam);
     pMethod->pVTbl->set_Result(pMethod, pParam);
+    pParam->pVTbl->Release(pParam);
     pDesc->pVTbl->AddMethod(pDesc, pMethod);
+    pMethod->pVTbl->Release(pMethod);
 
     /* 3. Create the directory entry */
     pBuilder->pVTbl->CreateInterfaceDirectoryEntry(pBuilder, "IEcoList1", "Eco.List1", &IID_IEcoList1, pDesc, &pEntry);

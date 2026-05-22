@@ -25,6 +25,7 @@
 #define __I_ECO_INTERFACE_DIRECTORY_ENTRY_1_H__
 
 #include "IEcoBase1.h"
+#include "IEcoInterfaceDescriptor1.h"
 
 /* IEcoInterfaceDirectoryEntry1 IID = {F3D1C80F-34C2-478F-8D93-EB7ED39977E5} */
 #ifndef __IID_IEcoInterfaceDirectoryEntry1
@@ -47,8 +48,8 @@ typedef struct IEcoInterfaceDirectoryEntry1VTbl {
     int16_t (ECOCALLMETHOD *set_Name)(IEcoInterfaceDirectoryEntry1Ptr_t me, /* in */ char_t* name);
     int16_t (ECOCALLMETHOD *get_Namespace)(IEcoInterfaceDirectoryEntry1Ptr_t me, /* out */ char_t** ppNamespace);
     int16_t (ECOCALLMETHOD *set_Namespace)(IEcoInterfaceDirectoryEntry1Ptr_t me, /* in */ char_t* namespace);
-    int16_t (ECOCALLMETHOD *get_Descriptor)(IEcoInterfaceDirectoryEntry1Ptr_t me, /* out */ struct IEcoInterfaceDescriptor1** ppDescriptor);
-    int16_t (ECOCALLMETHOD *set_Descriptor)(IEcoInterfaceDirectoryEntry1Ptr_t me, /* in */ struct IEcoInterfaceDescriptor1* pDescriptor);
+    int16_t (ECOCALLMETHOD *get_Descriptor)(IEcoInterfaceDirectoryEntry1Ptr_t me, /* out */ IEcoInterfaceDescriptor1** ppDescriptor);
+    int16_t (ECOCALLMETHOD *set_Descriptor)(IEcoInterfaceDirectoryEntry1Ptr_t me, /* in */ IEcoInterfaceDescriptor1* pDescriptor);
 
 } IEcoInterfaceDirectoryEntry1VTbl, *IEcoInterfaceDirectoryEntry1VTblPtr_t;
 

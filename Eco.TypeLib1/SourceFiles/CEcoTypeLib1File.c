@@ -157,6 +157,7 @@ static int16_t ECOCALLMETHOD CEcoTypeLib1File_01434A0B_Open(/* in */ IEcoTypeLib
     }
     if ((mode & ECO_OPEN_MODE_WRITE_FILE) == 0) {
         pCMe->m_pIFile->pVTbl->Close(pCMe->m_pIFile);
+        pCMe->m_pIFile->pVTbl->Release(pCMe->m_pIFile);
         pCMe->m_pIFile = 0;
     }
     return ERR_ECO_SUCCESES;
@@ -183,6 +184,8 @@ static int16_t ECOCALLMETHOD CEcoTypeLib1File_01434A0B_Close(/* in */ IEcoTypeLi
     if (pCMe->m_pIFile != 0) {
         pCMe->m_pIFile->pVTbl->Write(pCMe->m_pIFile, pCMe->m_pBuffer, &pCMe->m_Size);
         pCMe->m_pIFile->pVTbl->Close(pCMe->m_pIFile);
+        pCMe->m_pIFile->pVTbl->Release(pCMe->m_pIFile);
+        pCMe->m_pIFile = 0;
     }
     if (pCMe->m_Alloc != 0) {
         pCMe->m_pIMem->pVTbl->Free(pCMe->m_pIMem, pCMe->m_pBuffer);
@@ -446,6 +449,9 @@ static void ECOCALLMETHOD deleteCEcoTypeLib1File_01434A0B(/* in */ CEcoTypeLib1F
         /* Freeing */
         if ( pCMe->m_pIFileMgr != 0 ) {
             pCMe->m_pIFileMgr->pVTbl->Release(pCMe->m_pIFileMgr);
+        }
+        if ( pCMe->m_pIFile != 0) {
+            pCMe->m_pIFile->pVTbl->Release(pCMe->m_pIFile);
         }
         if ( pCMe->m_pISys != 0 ) {
             pCMe->m_pISys->pVTbl->Release(pCMe->m_pISys);

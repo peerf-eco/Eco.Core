@@ -25,6 +25,7 @@
 #define __I_ECO_METHOD_DESCRIPTOR_1_H__
 
 #include "IEcoBase1.h"
+#include "IEcoParamDescriptor1.h"
 
 /* IEcoMethodDescriptor1 IID = {74D2637A-E0CE-41B1-8876-038E40CBC64E} */
 #ifndef __IID_IEcoMethodDescriptor1
@@ -49,13 +50,13 @@ typedef struct IEcoMethodDescriptor1VTbl {
     int16_t (ECOCALLMETHOD *set_Flags)(/* in */ IEcoMethodDescriptor1Ptr_t me, /* in */ uint8_t flags);
 
     /* Управление аргументами */
-    int16_t (ECOCALLMETHOD *AddParameter)(/* in */ IEcoMethodDescriptor1Ptr_t me, /* in */ struct IEcoParamDescriptor1* pIParam);
+    int16_t (ECOCALLMETHOD *AddParameter)(/* in */ IEcoMethodDescriptor1Ptr_t me, /* in */ IEcoParamDescriptor1* pIParam);
     uint8_t (ECOCALLMETHOD *get_ParamCount)(/* in */ IEcoMethodDescriptor1Ptr_t me);
-    int16_t (ECOCALLMETHOD *GetParamAtIndex)(/* in */ IEcoMethodDescriptor1Ptr_t me, /* in */ uint8_t index, /* out */ struct IEcoParamDescriptor1** ppIParam);
+    int16_t (ECOCALLMETHOD *GetParamAtIndex)(/* in */ IEcoMethodDescriptor1Ptr_t me, /* in */ uint8_t index, /* out */ IEcoParamDescriptor1** ppIParam);
 
     /* Управление результатом (result в MethodDescriptor) */
-    int16_t (ECOCALLMETHOD *set_Result)(/* in */ IEcoMethodDescriptor1Ptr_t me, /* in */ struct IEcoParamDescriptor1* pIParam);
-    int16_t (ECOCALLMETHOD *get_Result)(/* in */ IEcoMethodDescriptor1Ptr_t me, /* out */ struct IEcoParamDescriptor1** ppIParam);
+    int16_t (ECOCALLMETHOD *set_Result)(/* in */ IEcoMethodDescriptor1Ptr_t me, /* in */ IEcoParamDescriptor1* pIParam);
+    int16_t (ECOCALLMETHOD *get_Result)(/* in */ IEcoMethodDescriptor1Ptr_t me, /* out */ IEcoParamDescriptor1** ppIParam);
 
 } IEcoMethodDescriptor1VTbl, *IEcoMethodDescriptor1VTblPtr_t;
 

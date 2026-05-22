@@ -63,6 +63,8 @@ int16_t EcoMain(IEcoUnknown* pIUnk) {
     /* Registration of static components in static-link mode */
     result = pIBus->pVTbl->RegisterComponent(pIBus, &CID_EcoTypeLib1, (IEcoUnknown*)GetIEcoComponentFactoryPtr_8039E233E9A34D43BAF7833001434A0B);
     if (result != 0) goto Release;
+    result = pIBus->pVTbl->RegisterComponent(pIBus, &CID_EcoList1, (IEcoUnknown*)GetIEcoComponentFactoryPtr_53884AFC93C448ECAA929C8D3A562281);
+    if (result != 0) goto Release;
 #endif
 
     /* Getting the memory management interface */

@@ -28,20 +28,44 @@
 extern CEcoTypeLib1File_01434A0B g_xCEcoTypeLib1File_01434A0B;
 extern CEcoTypeLib1Builder_01434A0B g_xCEcoTypeLib1Builder_01434A0B;
 
-static void AllocEcoTypeLib1File(IEcoMemoryAllocator1* pIMem, IEcoUnknown* pIUnkSystem, IEcoTypeLib1File** ppIFile) {
+static int16_t AllocEcoTypeLib1File(IEcoMemoryAllocator1* pIMem, IEcoUnknown* pIUnkSystem, IEcoTypeLib1File** ppIFile) {
     CEcoTypeLib1File_01434A0B* pCFile = (CEcoTypeLib1File_01434A0B*) pIMem->pVTbl->Alloc(pIMem, sizeof(CEcoTypeLib1File_01434A0B));
+    int16_t result = 0;
+
     pIMem->pVTbl->Copy(pIMem, (void*)pCFile, &g_xCEcoTypeLib1File_01434A0B, sizeof(CEcoTypeLib1File_01434A0B));
-    pCFile->Create(pCFile, pIUnkSystem, 0);
-    pCFile->Init(pCFile, pIUnkSystem);
+
+    result = pCFile->Create(pCFile, pIUnkSystem, 0);
+    if (result != 0) {
+        return result;
+    }
+
+    result = pCFile->Init(pCFile, pIUnkSystem);
+    if (result != 0) {
+        return result;
+    }
+
     *ppIFile = (IEcoTypeLib1File*) pCFile;
+    return result;
 }
 
 static int16_t AllocEcoTypeLib1Builder(IEcoMemoryAllocator1* pIMem, IEcoUnknown* pIUnkSystem, IEcoTypeLib1Builder** ppIBuilder) {
     CEcoTypeLib1Builder_01434A0B* pCBuilder = (CEcoTypeLib1Builder_01434A0B*) pIMem->pVTbl->Alloc(pIMem, sizeof(CEcoTypeLib1Builder_01434A0B));
+    int16_t result = 0;
+
     pIMem->pVTbl->Copy(pIMem, (void*)pCBuilder, &g_xCEcoTypeLib1Builder_01434A0B, sizeof(CEcoTypeLib1Builder_01434A0B));
-    pCBuilder->Create(pCBuilder, pIUnkSystem, 0);
-    pCBuilder->Init(pCBuilder, pIUnkSystem);
+
+    result = pCBuilder->Create(pCBuilder, pIUnkSystem, 0);
+    if (result != 0) {
+        return result;
+    }
+
+    result = pCBuilder->Init(pCBuilder, pIUnkSystem);
+    if (result != 0) {
+        return result;
+    }
+
     *ppIBuilder = (IEcoTypeLib1Builder*) pCBuilder;
+    return result;
 }
 
 /*
@@ -131,7 +155,7 @@ static uint32_t ECOCALLMETHOD CEcoTypeLib1_01434A0B_Release(/* in */ IEcoTypeLib
     return pCMe->m_cRef;
 }
 
-static int16_t LoadParameter(IEcoTypeLib1File* pIFile, IEcoTypeLib1Builder* pIBuilder, uint32_t* pOffset, IEcoParamDescriptor1** ppIParam) {
+static int16_t LoadParameter(IEcoTypeLib1File* pIFile, IEcoTypeLib1Builder* pIBuilder, IEcoMemoryAllocator1* pIMem, uint32_t* pOffset, IEcoParamDescriptor1** ppIParam) {
     char_t* name = 0;
     uint16_t typeTag = 0;
     uint8_t flags = 0;
@@ -146,17 +170,21 @@ static int16_t LoadParameter(IEcoTypeLib1File* pIFile, IEcoTypeLib1Builder* pIBu
 
     result = pIFile->pVTbl->Read(pIFile, *pOffset, 2, &typeTag);
     if (result != 0) {
+        pIMem->pVTbl->Free(pIMem, name);
         return result;
     }
     *pOffset += 2;
 
     result = pIFile->pVTbl->Read(pIFile, *pOffset, 1, &flags);
     if (result != 0) {
+        pIMem->pVTbl->Free(pIMem, name);
         return result;
     }
     *pOffset += 1;
 
-    return pIBuilder->pVTbl->CreateParameter(pIBuilder, name, typeTag, flags, ppIParam);
+    result = pIBuilder->pVTbl->CreateParameter(pIBuilder, name, typeTag, flags, ppIParam);
+    pIMem->pVTbl->Free(pIMem, name);
+    return result;
 }
 
 static int16_t LoadConstant(IEcoTypeLib1File* pIFile, IEcoTypeLib1Builder* pIBuilder, IEcoMemoryAllocator1* pIMem, uint32_t* pOffset, IEcoConstDescriptor1** ppIConst) {
@@ -174,6 +202,7 @@ static int16_t LoadConstant(IEcoTypeLib1File* pIFile, IEcoTypeLib1Builder* pIBui
 
     result = pIFile->pVTbl->Read(pIFile, *pOffset, 2, &typeTag);
     if (result != 0) {
+        pIMem->pVTbl->Free(pIMem, name);
         return result;
     }
     *pOffset += 2;
@@ -183,16 +212,18 @@ static int16_t LoadConstant(IEcoTypeLib1File* pIFile, IEcoTypeLib1Builder* pIBui
     result = pIFile->pVTbl->Read(pIFile, *pOffset, size, value);
     if (result != 0) {
         pIMem->pVTbl->Free(pIMem, value);
+        pIMem->pVTbl->Free(pIMem, name);
         return result;
     }
     *pOffset += size;
 
     result = pIBuilder->pVTbl->CreateConstant(pIBuilder, name, typeTag, value, ppIConst);
     pIMem->pVTbl->Free(pIMem, value);
+    pIMem->pVTbl->Free(pIMem, name);
     return result;
 }
 
-static int16_t LoadMethod(IEcoTypeLib1File* pIFile, IEcoTypeLib1Builder* pIBuilder, uint32_t* pOffset, IEcoMethodDescriptor1** ppIMethod) {
+static int16_t LoadMethod(IEcoTypeLib1File* pIFile, IEcoTypeLib1Builder* pIBuilder, IEcoMemoryAllocator1* pIMem, uint32_t* pOffset, IEcoMethodDescriptor1** ppIMethod) {
     IEcoParamDescriptor1* pIParam = 0;
     char_t* name = 0;
     uint8_t flags = 0;
@@ -208,11 +239,13 @@ static int16_t LoadMethod(IEcoTypeLib1File* pIFile, IEcoTypeLib1Builder* pIBuild
 
     result = pIFile->pVTbl->Read(pIFile, *pOffset, 1, &flags);
     if (result != 0) {
+        pIMem->pVTbl->Free(pIMem, name);
         return result;
     }
     *pOffset += 1;
 
     result = pIBuilder->pVTbl->CreateMethod(pIBuilder, name, flags, ppIMethod);
+    pIMem->pVTbl->Free(pIMem, name);
     if (result != 0) {
         return result;
     }
@@ -224,26 +257,29 @@ static int16_t LoadMethod(IEcoTypeLib1File* pIFile, IEcoTypeLib1Builder* pIBuild
     *pOffset += 1;
 
     while (count != 0) {
-        result = LoadParameter(pIFile, pIBuilder, pOffset, &pIParam);
+        result = LoadParameter(pIFile, pIBuilder, pIMem, pOffset, &pIParam);
         if (result != 0) {
             return result;
         }
         result = (*ppIMethod)->pVTbl->AddParameter(*ppIMethod, pIParam);
+        pIParam->pVTbl->Release(pIParam);
         if (result != 0) {
             return result;
         }
         count--;
     }
 
-    result = LoadParameter(pIFile, pIBuilder, pOffset, &pIParam);
+    result = LoadParameter(pIFile, pIBuilder, pIMem, pOffset, &pIParam);
     if (result != 0) {
         return result;
     }
 
-    return (*ppIMethod)->pVTbl->set_Result(*ppIMethod, pIParam);
+    result = (*ppIMethod)->pVTbl->set_Result(*ppIMethod, pIParam);
+    pIParam->pVTbl->Release(pIParam);
+    return result;
 }
 
-static int16_t LoadAnnotation(IEcoTypeLib1File* pIFile, IEcoTypeLib1Builder* pIBuilder, uint32_t* pOffset, IEcoAnnotationDescriptor1** ppIAnnotation) {
+static int16_t LoadAnnotation(IEcoTypeLib1File* pIFile, IEcoTypeLib1Builder* pIBuilder, IEcoMemoryAllocator1* pIMem, uint32_t* pOffset, IEcoAnnotationDescriptor1** ppIAnnotation) {
     char_t* key = 0;
     char_t* value = 0;
     uint32_t size = 0;
@@ -257,11 +293,15 @@ static int16_t LoadAnnotation(IEcoTypeLib1File* pIFile, IEcoTypeLib1Builder* pIB
 
     result = pIFile->pVTbl->ReadString(pIFile, *pOffset, &size, &value);
     if (result != 0) {
+        pIMem->pVTbl->Free(pIMem, key);
         return result;
     }
     *pOffset += size;
 
-    return pIBuilder->pVTbl->CreateAnnotation(pIBuilder, key, value, ppIAnnotation);
+    result = pIBuilder->pVTbl->CreateAnnotation(pIBuilder, key, value, ppIAnnotation);
+    pIMem->pVTbl->Free(pIMem, key);
+    pIMem->pVTbl->Free(pIMem, value);
+    return result;
 }
 
 static int16_t LoadInterfaceDescriptor(IEcoTypeLib1File* pIFile, IEcoTypeLib1Builder* pIBuilder, IEcoMemoryAllocator1* pIMem, uint32_t* pOffset, IEcoInterfaceDescriptor1** ppIDesc) {
@@ -295,11 +335,12 @@ static int16_t LoadInterfaceDescriptor(IEcoTypeLib1File* pIFile, IEcoTypeLib1Bui
 
     while (count != 0) {
         IEcoMethodDescriptor1* pIMethod = 0;
-        result = LoadMethod(pIFile, pIBuilder, pOffset, &pIMethod);
+        result = LoadMethod(pIFile, pIBuilder, pIMem, pOffset, &pIMethod);
         if (result != 0) {
             return result;
         }
         result = (*ppIDesc)->pVTbl->AddMethod(*ppIDesc, pIMethod);
+        pIMethod->pVTbl->Release(pIMethod);
         if (result != 0) {
             return result;
         }
@@ -319,6 +360,7 @@ static int16_t LoadInterfaceDescriptor(IEcoTypeLib1File* pIFile, IEcoTypeLib1Bui
             return result;
         }
         result = (*ppIDesc)->pVTbl->AddConstant(*ppIDesc, pIConst);
+        pIConst->pVTbl->Release(pIConst);
         if (result != 0) {
             return result;
         }
@@ -359,16 +401,23 @@ static int16_t LoadInterfaceDirectoryEntry(IEcoTypeLib1File* pIFile, IEcoTypeLib
 
     result = pIFile->pVTbl->ReadString(pIFile, *pOffset, &size, &namespace);
     if (result != 0) {
+        pIMem->pVTbl->Free(pIMem, name);
         return result;
     }
     *pOffset += size;
 
     result = LoadInterfaceDescriptor(pIFile, pIBuilder, pIMem, pOffset, &pIDesc);
     if (result != 0) {
+        pIMem->pVTbl->Free(pIMem, name);
+        pIMem->pVTbl->Free(pIMem, namespace);
         return result;
     }
 
-    return pIBuilder->pVTbl->CreateInterfaceDirectoryEntry(pIBuilder, name, namespace, &iid, pIDesc, ppIEntry);
+    result = pIBuilder->pVTbl->CreateInterfaceDirectoryEntry(pIBuilder, name, namespace, &iid, pIDesc, ppIEntry);
+    pIDesc->pVTbl->Release(pIDesc);
+    pIMem->pVTbl->Free(pIMem, name);
+    pIMem->pVTbl->Free(pIMem, namespace);
+    return result;
 }
 
 /*
@@ -415,6 +464,7 @@ static int16_t ECOCALLMETHOD CEcoTypeLib1_01434A0B_LoadFile(/* in */ IEcoTypeLib
             goto LoadRelease;
         }
         result = (*ppIDirectory)->pVTbl->AddEntry(*ppIDirectory, -1, pIEntry);
+        pIEntry->pVTbl->Release(pIEntry);
         if (result != 0) {
             goto LoadRelease;
         }
@@ -429,11 +479,12 @@ static int16_t ECOCALLMETHOD CEcoTypeLib1_01434A0B_LoadFile(/* in */ IEcoTypeLib
 
     while (count != 0) {
         IEcoAnnotationDescriptor1* pIAnnotation = 0;
-        result = LoadAnnotation(pCMe->m_pIFile, pCMe->m_pIBuilder, &offset, &pIAnnotation);
+        result = LoadAnnotation(pCMe->m_pIFile, pCMe->m_pIBuilder, pCMe->m_pIMem, &offset, &pIAnnotation);
         if (result != 0) {
             goto LoadRelease;
         }
         result = (*ppIDirectory)->pVTbl->AddAnnotation(*ppIDirectory, -1, pIAnnotation);
+        pIAnnotation->pVTbl->Release(pIAnnotation);
         if (result != 0) {
             goto LoadRelease;
         }
@@ -794,8 +845,7 @@ static int16_t ECOCALLMETHOD CEcoTypeLib1_01434A0B_CreateBuilder(/* in */ IEcoTy
         return ERR_ECO_POINTER;
     }
 
-    AllocEcoTypeLib1Builder(pCMe->m_pIMem, pCMe->m_pISys, ppIBuilder);
-    return ERR_ECO_SUCCESES;
+    return AllocEcoTypeLib1Builder(pCMe->m_pIMem, pCMe->m_pISys, ppIBuilder);
 }
 
 /*
@@ -811,12 +861,17 @@ static int16_t ECOCALLMETHOD CEcoTypeLib1_01434A0B_CreateBuilder(/* in */ IEcoTy
  */
 static int16_t ECOCALLMETHOD CEcoTypeLib1_01434A0B_Open(/* in */ IEcoTypeLib1Ptr_t me, const char_t* path, struct IEcoTypeLib1File** ppIFile) {
     CEcoTypeLib1_01434A0B* pCMe = (CEcoTypeLib1_01434A0B*)me;
+    int16_t result = 0;
 
     if (me == 0 || ppIFile == 0) {
         return ERR_ECO_POINTER;
     }
 
-    AllocEcoTypeLib1File(pCMe->m_pIMem, pCMe->m_pISys, ppIFile);
+    result = AllocEcoTypeLib1File(pCMe->m_pIMem, pCMe->m_pISys, ppIFile);
+    if (result != 0) {
+        return result;
+    }
+
     return (*ppIFile)->pVTbl->Open(*ppIFile, path, ECO_OPEN_MODE_READ_FILE | ECO_OPEN_MODE_WRITE_FILE);
 }
 
@@ -869,9 +924,12 @@ static int16_t ECOCALLMETHOD initCEcoTypeLib1_01434A0B(/*in*/ CEcoTypeLib1_01434
         result = ERR_ECO_GET_MEMORY_ALLOCATOR;
     }
 
-    AllocEcoTypeLib1File(pCMe->m_pIMem, pIUnkSystem, &pCMe->m_pIFile);
-    AllocEcoTypeLib1Builder(pCMe->m_pIMem, pIUnkSystem, &pCMe->m_pIBuilder);
+    result = AllocEcoTypeLib1File(pCMe->m_pIMem, pIUnkSystem, &pCMe->m_pIFile);
+    if (result != 0) {
+        return result;
+    }
 
+    result = AllocEcoTypeLib1Builder(pCMe->m_pIMem, pIUnkSystem, &pCMe->m_pIBuilder);
     return result;
 }
 

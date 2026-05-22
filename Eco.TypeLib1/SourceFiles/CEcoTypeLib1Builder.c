@@ -64,60 +64,144 @@ extern CEcoTypeLib1Interface_01434A0B g_xCEcoTypeLib1Interface_01434A0B;
 extern CEcoTypeLib1DirectoryEntry_01434A0B g_xCEcoTypeLib1DirectoryEntry_01434A0B;
 extern CEcoTypeLib1Directory_01434A0B g_xCEcoTypeLib1Directory_01434A0B;
 
-static void AllocEcoTypeLib1Parameter(IEcoMemoryAllocator1* pIMem, IEcoUnknown* pIUnkSystem, IEcoParamDescriptor1** ppIParam) {
+static int16_t AllocEcoTypeLib1Parameter(IEcoMemoryAllocator1* pIMem, IEcoUnknown* pIUnkSystem, IEcoParamDescriptor1** ppIParam) {
     CEcoTypeLib1Parameter_01434A0B* pCParam = (CEcoTypeLib1Parameter_01434A0B*) pIMem->pVTbl->Alloc(pIMem, sizeof(CEcoTypeLib1Parameter_01434A0B));
+    int16_t result = 0;
+
     pIMem->pVTbl->Copy(pIMem, (void*)pCParam, &g_xCEcoTypeLib1Parameter_01434A0B, sizeof(CEcoTypeLib1Parameter_01434A0B));
-    pCParam->Create(pCParam, pIUnkSystem, 0);
-    pCParam->Init(pCParam, pIUnkSystem);
+
+    result = pCParam->Create(pCParam, pIUnkSystem, 0);
+    if (result != 0) {
+        return result;
+    }
+
+    result = pCParam->Init(pCParam, pIUnkSystem);
+    if (result != 0) {
+        return result;
+    }
+
     *ppIParam = (IEcoParamDescriptor1*) pCParam;
+    return result;
 }
 
-static void AllocEcoTypeLib1Method(IEcoMemoryAllocator1* pIMem, IEcoUnknown* pIUnkSystem, IEcoMethodDescriptor1** ppIMethod) {
+static int16_t AllocEcoTypeLib1Method(IEcoMemoryAllocator1* pIMem, IEcoUnknown* pIUnkSystem, IEcoMethodDescriptor1** ppIMethod) {
     CEcoTypeLib1Method_01434A0B* pCMethod = (CEcoTypeLib1Method_01434A0B*) pIMem->pVTbl->Alloc(pIMem, sizeof(CEcoTypeLib1Method_01434A0B));
+    int16_t result = 0;
+
     pIMem->pVTbl->Copy(pIMem, (void*)pCMethod, &g_xCEcoTypeLib1Method_01434A0B, sizeof(CEcoTypeLib1Method_01434A0B));
-    pCMethod->Create(pCMethod, pIUnkSystem, 0);
-    pCMethod->Init(pCMethod, pIUnkSystem);
+
+    result = pCMethod->Create(pCMethod, pIUnkSystem, 0);
+    if (result != 0) {
+        return result;
+    }
+
+    result = pCMethod->Init(pCMethod, pIUnkSystem);
+    if (result != 0) {
+        return result;
+    }
+
     *ppIMethod = (IEcoMethodDescriptor1*) pCMethod;
+    return result;
 }
 
-static void AllocEcoTypeLib1Const(IEcoMemoryAllocator1* pIMem, IEcoUnknown* pIUnkSystem, IEcoConstDescriptor1** ppIConst) {
+static int16_t AllocEcoTypeLib1Const(IEcoMemoryAllocator1* pIMem, IEcoUnknown* pIUnkSystem, IEcoConstDescriptor1** ppIConst) {
     CEcoTypeLib1Const_01434A0B* pCConst = (CEcoTypeLib1Const_01434A0B*) pIMem->pVTbl->Alloc(pIMem, sizeof(CEcoTypeLib1Const_01434A0B));
+    int16_t result = 0;
+
     pIMem->pVTbl->Copy(pIMem, (void*)pCConst, &g_xCEcoTypeLib1Const_01434A0B, sizeof(CEcoTypeLib1Const_01434A0B));
-    pCConst->Create(pCConst, pIUnkSystem, 0);
-    pCConst->Init(pCConst, pIUnkSystem);
+
+    result = pCConst->Create(pCConst, pIUnkSystem, 0);
+    if (result != 0) {
+        return result;
+    }
+
+    result = pCConst->Init(pCConst, pIUnkSystem);
+    if (result != 0) {
+        return result;
+    }
+
     *ppIConst = (IEcoConstDescriptor1*) pCConst;
+    return result;
 }
 
-static void AllocEcoTypeLib1Annotation(IEcoMemoryAllocator1* pIMem, IEcoUnknown* pIUnkSystem, IEcoAnnotationDescriptor1** ppIAnnotation) {
+static int16_t AllocEcoTypeLib1Annotation(IEcoMemoryAllocator1* pIMem, IEcoUnknown* pIUnkSystem, IEcoAnnotationDescriptor1** ppIAnnotation) {
     CEcoTypeLib1Annotation_01434A0B* pCAnnotation = (CEcoTypeLib1Annotation_01434A0B*) pIMem->pVTbl->Alloc(pIMem, sizeof(CEcoTypeLib1Annotation_01434A0B));
+    int16_t result = 0;
+
     pIMem->pVTbl->Copy(pIMem, (void*)pCAnnotation, &g_xCEcoTypeLib1Annotation_01434A0B, sizeof(CEcoTypeLib1Annotation_01434A0B));
-    pCAnnotation->Create(pCAnnotation, pIUnkSystem, 0);
-    pCAnnotation->Init(pCAnnotation, pIUnkSystem);
+
+    result = pCAnnotation->Create(pCAnnotation, pIUnkSystem, 0);
+    if (result != 0) {
+        return result;
+    }
+
+    result = pCAnnotation->Init(pCAnnotation, pIUnkSystem);
+    if (result != 0) {
+        return result;
+    }
+
     *ppIAnnotation = (IEcoAnnotationDescriptor1*) pCAnnotation;
+    return result;
 }
 
-static void AllocEcoTypeLib1Interface(IEcoMemoryAllocator1* pIMem, IEcoUnknown* pIUnkSystem, IEcoInterfaceDescriptor1** ppIDesc) {
+static int16_t AllocEcoTypeLib1Interface(IEcoMemoryAllocator1* pIMem, IEcoUnknown* pIUnkSystem, IEcoInterfaceDescriptor1** ppIDesc) {
     CEcoTypeLib1Interface_01434A0B* pCDesc = (CEcoTypeLib1Interface_01434A0B*) pIMem->pVTbl->Alloc(pIMem, sizeof(CEcoTypeLib1Interface_01434A0B));
+    int16_t result = 0;
+
     pIMem->pVTbl->Copy(pIMem, (void*)pCDesc, &g_xCEcoTypeLib1Interface_01434A0B, sizeof(CEcoTypeLib1Interface_01434A0B));
-    pCDesc->Create(pCDesc, pIUnkSystem, 0);
-    pCDesc->Init(pCDesc, pIUnkSystem);
+
+    result = pCDesc->Create(pCDesc, pIUnkSystem, 0);
+    if (result != 0) {
+        return result;
+    }
+
+    result = pCDesc->Init(pCDesc, pIUnkSystem);
+    if (result != 0) {
+        return result;
+    }
+
     *ppIDesc = (IEcoInterfaceDescriptor1*) pCDesc;
+    return result;
 }
 
-static void AllocEcoTypeLib1DirectoryEntry(IEcoMemoryAllocator1* pIMem, IEcoUnknown* pIUnkSystem, IEcoInterfaceDirectoryEntry1** ppIEntry) {
+static int16_t AllocEcoTypeLib1DirectoryEntry(IEcoMemoryAllocator1* pIMem, IEcoUnknown* pIUnkSystem, IEcoInterfaceDirectoryEntry1** ppIEntry) {
     CEcoTypeLib1DirectoryEntry_01434A0B* pCEntry = (CEcoTypeLib1DirectoryEntry_01434A0B*) pIMem->pVTbl->Alloc(pIMem, sizeof(CEcoTypeLib1DirectoryEntry_01434A0B));
+    int16_t result = 0;
+
     pIMem->pVTbl->Copy(pIMem, (void*)pCEntry, &g_xCEcoTypeLib1DirectoryEntry_01434A0B, sizeof(CEcoTypeLib1DirectoryEntry_01434A0B));
-    pCEntry->Create(pCEntry, pIUnkSystem, 0);
-    pCEntry->Init(pCEntry, pIUnkSystem);
+
+    result = pCEntry->Create(pCEntry, pIUnkSystem, 0);
+    if (result != 0) {
+        return result;
+    }
+
+    result = pCEntry->Init(pCEntry, pIUnkSystem);
+    if (result != 0) {
+        return result;
+    }
+
     *ppIEntry = (IEcoInterfaceDirectoryEntry1*) pCEntry;
+    return result;
 }
 
-static void AllocEcoTypeLib1Directory(IEcoMemoryAllocator1* pIMem, IEcoUnknown* pIUnkSystem, IEcoInterfaceDirectory1** ppIDirectory) {
+static int16_t AllocEcoTypeLib1Directory(IEcoMemoryAllocator1* pIMem, IEcoUnknown* pIUnkSystem, IEcoInterfaceDirectory1** ppIDirectory) {
     CEcoTypeLib1Directory_01434A0B* pCDirectory = (CEcoTypeLib1Directory_01434A0B*) pIMem->pVTbl->Alloc(pIMem, sizeof(CEcoTypeLib1Directory_01434A0B));
+    int16_t result = 0;
+
     pIMem->pVTbl->Copy(pIMem, (void*)pCDirectory, &g_xCEcoTypeLib1Directory_01434A0B, sizeof(CEcoTypeLib1Directory_01434A0B));
-    pCDirectory->Create(pCDirectory, pIUnkSystem, 0);
-    pCDirectory->Init(pCDirectory, pIUnkSystem);
+
+    result = pCDirectory->Create(pCDirectory, pIUnkSystem, 0);
+    if (result != 0) {
+        return result;
+    }
+
+    result = pCDirectory->Init(pCDirectory, pIUnkSystem);
+    if (result != 0) {
+        return result;
+    }
+
     *ppIDirectory = (IEcoInterfaceDirectory1*) pCDirectory;
+    return result;
 }
 
 /*
@@ -220,16 +304,28 @@ static uint32_t ECOCALLMETHOD CEcoTypeLib1Builder_01434A0B_Release(/* in */ IEco
  */
 static int16_t ECOCALLMETHOD CEcoTypeLib1Builder_01434A0B_CreateParameter(/* in */ IEcoTypeLib1BuilderPtr_t me, /* in */ const char_t* name, /* in */ uint16_t typeTag, /* in */ uint8_t flags, /* out */ struct IEcoParamDescriptor1** ppIParam) {
     CEcoTypeLib1Builder_01434A0B* pCMe = (CEcoTypeLib1Builder_01434A0B*)me;
+    int16_t result = 0;
 
     if (me == 0 || ppIParam == 0) {
         return ERR_ECO_POINTER;
     }
 
-    AllocEcoTypeLib1Parameter(pCMe->m_pIMem, pCMe->m_pISys, ppIParam);
-    (*ppIParam)->pVTbl->set_Name(*ppIParam, name);
-    (*ppIParam)->pVTbl->set_Type(*ppIParam, typeTag);
-    (*ppIParam)->pVTbl->set_Flags(*ppIParam, flags);
-    return ERR_ECO_SUCCESES;
+    result = AllocEcoTypeLib1Parameter(pCMe->m_pIMem, pCMe->m_pISys, ppIParam);
+    if (result != 0) {
+        return result;
+    }
+
+    result = (*ppIParam)->pVTbl->set_Name(*ppIParam, name);
+    if (result != 0) {
+        return result;
+    }
+
+    result = (*ppIParam)->pVTbl->set_Type(*ppIParam, typeTag);
+    if (result != 0) {
+        return result;
+    }
+
+    return (*ppIParam)->pVTbl->set_Flags(*ppIParam, flags);
 }
 
 /*
@@ -245,15 +341,23 @@ static int16_t ECOCALLMETHOD CEcoTypeLib1Builder_01434A0B_CreateParameter(/* in 
  */
 static int16_t ECOCALLMETHOD CEcoTypeLib1Builder_01434A0B_CreateMethod(/* in */ IEcoTypeLib1BuilderPtr_t me, /* in */ const char_t* name, /* in */ uint8_t flags, /* out */ struct IEcoMethodDescriptor1** ppIMethod) {
     CEcoTypeLib1Builder_01434A0B* pCMe = (CEcoTypeLib1Builder_01434A0B*)me;
+    int16_t result = 0;
 
     if (me == 0 || ppIMethod == 0) {
         return ERR_ECO_POINTER;
     }
 
-    AllocEcoTypeLib1Method(pCMe->m_pIMem, pCMe->m_pISys, ppIMethod);
-    (*ppIMethod)->pVTbl->set_Name(*ppIMethod, name);
-    (*ppIMethod)->pVTbl->set_Flags(*ppIMethod, flags);
-    return ERR_ECO_SUCCESES;
+    result = AllocEcoTypeLib1Method(pCMe->m_pIMem, pCMe->m_pISys, ppIMethod);
+    if (result != 0) {
+        return result;
+    }
+
+    result = (*ppIMethod)->pVTbl->set_Name(*ppIMethod, name);
+    if (result != 0) {
+        return result;
+    }
+
+    return (*ppIMethod)->pVTbl->set_Flags(*ppIMethod, flags);
 }
 
 /*
@@ -269,15 +373,23 @@ static int16_t ECOCALLMETHOD CEcoTypeLib1Builder_01434A0B_CreateMethod(/* in */ 
  */
 static int16_t ECOCALLMETHOD CEcoTypeLib1Builder_01434A0B_CreateAnnotation(/* in */ IEcoTypeLib1BuilderPtr_t me, /* in */ const char_t* key, /* in */ const char_t* value, /* out */ struct IEcoAnnotationDescriptor1** ppIAnnotation) {
     CEcoTypeLib1Builder_01434A0B* pCMe = (CEcoTypeLib1Builder_01434A0B*)me;
+    int16_t result = 0;
 
     if (me == 0 || ppIAnnotation == 0) {
         return ERR_ECO_POINTER;
     }
 
-    AllocEcoTypeLib1Annotation(pCMe->m_pIMem, pCMe->m_pISys, ppIAnnotation);
-    (*ppIAnnotation)->pVTbl->set_Key(*ppIAnnotation, key);
-    (*ppIAnnotation)->pVTbl->set_Value(*ppIAnnotation, value);
-    return ERR_ECO_SUCCESES;
+    result = AllocEcoTypeLib1Annotation(pCMe->m_pIMem, pCMe->m_pISys, ppIAnnotation);
+    if (result != 0) {
+        return result;
+    }
+
+    result = (*ppIAnnotation)->pVTbl->set_Key(*ppIAnnotation, key);
+    if (result != 0) {
+        return result;
+    }
+
+    return (*ppIAnnotation)->pVTbl->set_Value(*ppIAnnotation, value);
 }
 
 /*
@@ -293,16 +405,28 @@ static int16_t ECOCALLMETHOD CEcoTypeLib1Builder_01434A0B_CreateAnnotation(/* in
  */
 static int16_t ECOCALLMETHOD CEcoTypeLib1Builder_01434A0B_CreateConstant(/* in */ IEcoTypeLib1BuilderPtr_t me, /* in */ const char_t* name, /* in */ uint16_t typeTag, /* in */ voidptr_t value, /* out */ struct IEcoConstDescriptor1** ppIConst) {
     CEcoTypeLib1Builder_01434A0B* pCMe = (CEcoTypeLib1Builder_01434A0B*)me;
+    int16_t result = 0;
 
     if (me == 0 || ppIConst == 0) {
         return ERR_ECO_POINTER;
     }
 
-    AllocEcoTypeLib1Const(pCMe->m_pIMem, pCMe->m_pISys, ppIConst);
-    (*ppIConst)->pVTbl->set_Name(*ppIConst, name);
-    (*ppIConst)->pVTbl->set_Type(*ppIConst, typeTag);
-    (*ppIConst)->pVTbl->set_Value(*ppIConst, ECO_TYPE_SIZE[typeTag], value);
-    return ERR_ECO_SUCCESES;
+    result = AllocEcoTypeLib1Const(pCMe->m_pIMem, pCMe->m_pISys, ppIConst);
+    if (result != 0) {
+        return result;
+    }
+
+    result = (*ppIConst)->pVTbl->set_Name(*ppIConst, name);
+    if (result != 0) {
+        return result;
+    }
+
+    result = (*ppIConst)->pVTbl->set_Type(*ppIConst, typeTag);
+    if (result != 0) {
+        return result;
+    }
+
+    return (*ppIConst)->pVTbl->set_Value(*ppIConst, ECO_TYPE_SIZE[typeTag], value);
 }
 
 /*
@@ -318,15 +442,23 @@ static int16_t ECOCALLMETHOD CEcoTypeLib1Builder_01434A0B_CreateConstant(/* in *
  */
 static int16_t ECOCALLMETHOD CEcoTypeLib1Builder_01434A0B_CreateInterfaceDescriptor(/* in */ IEcoTypeLib1BuilderPtr_t me, /* in */ uint16_t parentIndex, /* in */ uint8_t flags, /* out */ struct IEcoInterfaceDescriptor1** ppIDesc) {
     CEcoTypeLib1Builder_01434A0B* pCMe = (CEcoTypeLib1Builder_01434A0B*)me;
+    int16_t result = 0;
 
     if (me == 0 || ppIDesc == 0) {
         return ERR_ECO_POINTER;
     }
 
-    AllocEcoTypeLib1Interface(pCMe->m_pIMem, pCMe->m_pISys, ppIDesc);
-    (*ppIDesc)->pVTbl->set_ParentIndex(*ppIDesc, parentIndex);
-    (*ppIDesc)->pVTbl->set_Flags(*ppIDesc, flags);
-    return ERR_ECO_SUCCESES;
+    result = AllocEcoTypeLib1Interface(pCMe->m_pIMem, pCMe->m_pISys, ppIDesc);
+    if (result != 0) {
+        return result;
+    }
+
+    result = (*ppIDesc)->pVTbl->set_ParentIndex(*ppIDesc, parentIndex);
+    if (result != 0) {
+        return result;
+    }
+
+    return (*ppIDesc)->pVTbl->set_Flags(*ppIDesc, flags);
 }
 
 /*
@@ -342,17 +474,33 @@ static int16_t ECOCALLMETHOD CEcoTypeLib1Builder_01434A0B_CreateInterfaceDescrip
  */
 static int16_t ECOCALLMETHOD CEcoTypeLib1Builder_01434A0B_CreateInterfaceDirectoryEntry(/* in */ IEcoTypeLib1BuilderPtr_t me, /* in */ const char_t* name, /* in */ const char_t* namespace, /* in */ const UGUID* iid, /* in */ struct IEcoInterfaceDescriptor1* pIDesc, /* out */ struct IEcoInterfaceDirectoryEntry1** ppIEntry) {
     CEcoTypeLib1Builder_01434A0B* pCMe = (CEcoTypeLib1Builder_01434A0B*)me;
+    int16_t result = 0;
 
     if (me == 0 || ppIEntry == 0) {
         return ERR_ECO_POINTER;
     }
 
-    AllocEcoTypeLib1DirectoryEntry(pCMe->m_pIMem, pCMe->m_pISys, ppIEntry);
-    (*ppIEntry)->pVTbl->set_Name(*ppIEntry, name);
-    (*ppIEntry)->pVTbl->set_Namespace(*ppIEntry, namespace);
-    (*ppIEntry)->pVTbl->set_IID(*ppIEntry, *iid);
-    (*ppIEntry)->pVTbl->set_Descriptor(*ppIEntry, pIDesc);
-    return ERR_ECO_SUCCESES;
+    result = AllocEcoTypeLib1DirectoryEntry(pCMe->m_pIMem, pCMe->m_pISys, ppIEntry);
+    if (result != 0) {
+        return result;
+    }
+
+    result = (*ppIEntry)->pVTbl->set_Name(*ppIEntry, name);
+    if (result != 0) {
+        return result;
+    }
+
+    result = (*ppIEntry)->pVTbl->set_Namespace(*ppIEntry, namespace);
+    if (result != 0) {
+        return result;
+    }
+
+    result = (*ppIEntry)->pVTbl->set_IID(*ppIEntry, *iid);
+    if (result != 0) {
+        return result;
+    }
+
+    return (*ppIEntry)->pVTbl->set_Descriptor(*ppIEntry, pIDesc);
 }
 
 /*
@@ -373,8 +521,7 @@ static int16_t ECOCALLMETHOD CEcoTypeLib1Builder_01434A0B_CreateInterfaceDirecto
         return ERR_ECO_POINTER;
     }
 
-    AllocEcoTypeLib1Directory(pCMe->m_pIMem, pCMe->m_pISys, ppIDirectory);
-    return ERR_ECO_SUCCESES;
+    return AllocEcoTypeLib1Directory(pCMe->m_pIMem, pCMe->m_pISys, ppIDirectory);
 }
 
 

@@ -143,12 +143,21 @@ static int16_t ECOCALLMETHOD CEcoTypeLib1Annotation_01434A0B_get_Key(/* in */ IE
  */
 static int16_t ECOCALLMETHOD CEcoTypeLib1Annotation_01434A0B_set_Key(/* in */ IEcoAnnotationDescriptor1Ptr_t me, /* in */ char_t* key) {
     CEcoTypeLib1Annotation_01434A0B* pCMe = (CEcoTypeLib1Annotation_01434A0B*)me;
+    uint32_t size = 0;
 
     if (me == 0) {
         return ERR_ECO_POINTER;
     }
 
-    pCMe->m_Key = key;
+    if (pCMe->m_Key != 0) {
+        pCMe->m_pIMem->pVTbl->Free(pCMe->m_pIMem, pCMe->m_Key);
+        pCMe->m_Key = 0;
+    }
+    if (key != 0) {
+        size = strlen(key) + 1;
+        pCMe->m_Key = (char_t*)pCMe->m_pIMem->pVTbl->Alloc(pCMe->m_pIMem, size);
+        pCMe->m_pIMem->pVTbl->Copy(pCMe->m_pIMem, (void*)pCMe->m_Key, (void*)key, size);
+    }
     return ERR_ECO_SUCCESES;
 }
 
@@ -187,12 +196,21 @@ static int16_t ECOCALLMETHOD CEcoTypeLib1Annotation_01434A0B_get_Value(/* in */ 
  */
 static int16_t ECOCALLMETHOD CEcoTypeLib1Annotation_01434A0B_set_Value(/* in */ IEcoAnnotationDescriptor1Ptr_t me, /* in */ char_t* value) {
     CEcoTypeLib1Annotation_01434A0B* pCMe = (CEcoTypeLib1Annotation_01434A0B*)me;
+    uint32_t size = 0;
 
     if (me == 0) {
         return ERR_ECO_POINTER;
     }
 
-    pCMe->m_Value = value;
+    if (pCMe->m_Value != 0) {
+        pCMe->m_pIMem->pVTbl->Free(pCMe->m_pIMem, pCMe->m_Value);
+        pCMe->m_Value = 0;
+    }
+    if (value != 0) {
+        size = strlen(value) + 1;
+        pCMe->m_Value = (char_t*)pCMe->m_pIMem->pVTbl->Alloc(pCMe->m_pIMem, size);
+        pCMe->m_pIMem->pVTbl->Copy(pCMe->m_pIMem, (void*)pCMe->m_Value, (void*)value, size);
+    }
     return ERR_ECO_SUCCESES;
 }
 
@@ -284,6 +302,12 @@ static void ECOCALLMETHOD deleteCEcoTypeLib1Annotation_01434A0B(/* in */ CEcoTyp
     if ( pCMe != 0 ) {
         pIMem = pCMe->m_pIMem;
         /* Освобождение */
+        if ( pCMe->m_Key != 0 ) {
+            pIMem->pVTbl->Free(pIMem, pCMe->m_Key);
+        }
+        if ( pCMe->m_Value != 0 ) {
+            pIMem->pVTbl->Free(pIMem, pCMe->m_Value);
+        }
         if ( pCMe->m_pISys != 0 ) {
             pCMe->m_pISys->pVTbl->Release(pCMe->m_pISys);
         }

@@ -23,6 +23,7 @@
 #include "IEcoInterfaceDirectoryEntry1.h"
 #include "IEcoSystem1.h"
 #include "IdEcoMemoryManager1.h"
+#include "IEcoInterfaceDescriptor1.h"
 
 typedef struct CEcoTypeLib1DirectoryEntry_01434A0B* CEcoTypeLib1DirectoryEntry_01434A0BPtr_t;
 
@@ -53,7 +54,7 @@ typedef struct CEcoTypeLib1DirectoryEntry_01434A0B {
     UGUID m_IID;
     char_t* m_Name;
     char_t* m_Namespace;
-    struct IEcoInterfaceDescriptor1* m_pIDescriptor;
+    IEcoInterfaceDescriptor1* m_pIDescriptor;
 
 } CEcoTypeLib1DirectoryEntry_01434A0B;
 
