@@ -59,7 +59,6 @@ typedef struct CEcoACOM2Java_3F41E2AA {
     /* Instance data */
     IEcoTypeLib1* m_pITypeLib;
     JavaVM* m_jvm;
-    JNIEnv* m_env;
     IEcoList1* m_componentFactories;
 
 } CEcoACOM2Java_3F41E2AA;
@@ -82,7 +81,7 @@ typedef struct EcoJavaProxy {
     IEcoMemoryAllocator1* m_pIMem;
     IEcoTypeLib1* m_pITypeLib;
     IEcoInterfaceDescriptor1* m_pIDesc;
-    JNIEnv* m_env;
+    JavaVM* m_jvm;
     jobject m_obj;
     MethodContext* m_methods;
 } EcoJavaProxy;
