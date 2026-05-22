@@ -75,6 +75,8 @@ typedef struct MethodContext {
     jmethodID methodId;
 } MethodContext;
 
+struct EcoJavaProxyGroup;
+
 typedef struct EcoJavaProxy {
     void** m_pVTbl;
     uint32_t m_cRef;
@@ -84,7 +86,15 @@ typedef struct EcoJavaProxy {
     JavaVM* m_jvm;
     jobject m_obj;
     MethodContext* m_methods;
+    UGUID m_iid;
+    struct EcoJavaProxyGroup* m_group;
 } EcoJavaProxy;
+
+typedef struct EcoJavaProxyGroup {
+    EcoJavaProxy** proxies;
+    uint32_t count;
+    IEcoMemoryAllocator1* pIMem;
+} EcoJavaProxyGroup;
 
 typedef struct EcoTypeMap {
     bool_t isPrimitive;
