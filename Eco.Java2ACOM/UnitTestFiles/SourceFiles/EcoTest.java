@@ -11,7 +11,7 @@ public class EcoTest implements EcoApp {
     private static IEcoCalculatorX iCalcX;
     private static IEcoCalculatorY iCalcY;
     private static IEcoList1 iList;
-    private static IEcoTest1 iTestC;
+    private static IEcoTest1 iTest;
 
     @Override
     public void EcoMain(IEcoUnknown iUnk) {
@@ -212,8 +212,8 @@ public class EcoTest implements EcoApp {
     private short TestComponent() {
         System.out.println("\n==== Test Component ====");
 
-        iTestC = new IEcoTest1Native();
-        short result = iBus.QueryComponent(IdEcoTest1.CID, new IEcoUnknownNative(), IEcoTest1.IID, new Pointer<>((iTestC)));
+        iTest = new IEcoTest1Native();
+        short result = iBus.QueryComponent(IdEcoTest1.CID, new IEcoUnknownNative(), IEcoTest1.IID, new Pointer<>((iTest)));
         if (result != 0) return result;
         System.out.println("IEcoTest1 QueryComponent: OK\n");
 
@@ -223,7 +223,7 @@ public class EcoTest implements EcoApp {
         Pointer<Byte> int8_out = new Pointer<>((byte) 0);
         byte int8_res;
 
-        int8_res = iTestC.TestInt8(int8_in, int8_in_out, int8_out);
+        int8_res = iTest.TestInt8(int8_in, int8_in_out, int8_out);
         System.out.println("12 * 2 = " + int8_res);
         System.out.println("12 - 23 = " + int8_in_out.value);
         System.out.println("-42 = " + int8_out.value);
@@ -240,7 +240,7 @@ public class EcoTest implements EcoApp {
         Pointer<Short> int16_out = new Pointer<>((short) 0);
         short int16_res;
 
-        int16_res = iTestC.TestInt16(int16_in, int16_in_out, int16_out);
+        int16_res = iTest.TestInt16(int16_in, int16_in_out, int16_out);
         System.out.println("1234 * 2 = " + int16_res);
         System.out.println("1234 - 2345 = " + int16_in_out.value);
         System.out.println("-1234 = " + int16_out.value);
@@ -257,7 +257,7 @@ public class EcoTest implements EcoApp {
         Pointer<Integer> int32_out = new Pointer<>(0);
         int int32_res;
 
-        int32_res = iTestC.TestInt32(int32_in, int32_in_out, int32_out);
+        int32_res = iTest.TestInt32(int32_in, int32_in_out, int32_out);
         System.out.println("123456 * 2 = " + int32_res);
         System.out.println("123456 - 234567 = " + int32_in_out.value);
         System.out.println("-123456 = " + int32_out.value);
@@ -274,7 +274,7 @@ public class EcoTest implements EcoApp {
         Pointer<Long> int64_out = new Pointer<>(0L);
         long int64_res;
 
-        int64_res = iTestC.TestInt64(int64_in, int64_in_out, int64_out);
+        int64_res = iTest.TestInt64(int64_in, int64_in_out, int64_out);
         System.out.println("12345678901 * 2 = " + int64_res);
         System.out.println("12345678901 - 23456789012 = " + int64_in_out.value);
         System.out.println("-1234567890123 = " + int64_out.value);
@@ -291,7 +291,7 @@ public class EcoTest implements EcoApp {
         Pointer<Byte> uint8_out = new Pointer<>((byte) 0);
         byte uint8_res;
 
-        uint8_res = iTestC.TestUInt8(uint8_in, uint8_in_out, uint8_out);
+        uint8_res = iTest.TestUInt8(uint8_in, uint8_in_out, uint8_out);
         System.out.println("21 * 2 = " + uint8_res);
         System.out.println("21 + 32 = " + uint8_in_out.value);
         System.out.println("200 = " + Byte.toUnsignedInt(uint8_out.value));
@@ -308,7 +308,7 @@ public class EcoTest implements EcoApp {
         Pointer<Short> uint16_out = new Pointer<>((short) 0);
         short uint16_res;
 
-        uint16_res = iTestC.TestUInt16(uint16_in, uint16_in_out, uint16_out);
+        uint16_res = iTest.TestUInt16(uint16_in, uint16_in_out, uint16_out);
         System.out.println("4321 * 2 = " + uint16_res);
         System.out.println("4321 + 5432 = " + uint16_in_out.value);
         System.out.println("50000 = " + Short.toUnsignedInt(uint16_out.value));
@@ -325,7 +325,7 @@ public class EcoTest implements EcoApp {
         Pointer<Integer> uint32_out = new Pointer<>(0);
         int uint32_res;
 
-        uint32_res = iTestC.TestUInt32(uint32_in, uint32_in_out, uint32_out);
+        uint32_res = iTest.TestUInt32(uint32_in, uint32_in_out, uint32_out);
         System.out.println("654321 * 2 = " + uint32_res);
         System.out.println("654321 + 765432 = " + uint32_in_out.value);
         System.out.println("3000000000 = " + Integer.toUnsignedLong(uint32_out.value));
@@ -342,7 +342,7 @@ public class EcoTest implements EcoApp {
         Pointer<Long> uint64_out = new Pointer<>(0L);
         long uint64_res;
 
-        uint64_res = iTestC.TestUInt64(uint64_in, uint64_in_out, uint64_out);
+        uint64_res = iTest.TestUInt64(uint64_in, uint64_in_out, uint64_out);
         System.out.println("10987654321 * 2 = " + uint64_res);
         System.out.println("10987654321 + 21098765432 = " + uint64_in_out.value);
         System.out.println("9876543210123 = " + uint64_out.value);
@@ -359,7 +359,7 @@ public class EcoTest implements EcoApp {
         Pointer<Float> float_out = new Pointer<>(0F);
         float float_res;
 
-        float_res = iTestC.TestFloat(float_in, float_in_out, float_out);
+        float_res = iTest.TestFloat(float_in, float_in_out, float_out);
         System.out.println("1.25 * 2 = " + float_res);
         System.out.println("1.25 + 2.5 = " + float_in_out.value);
         System.out.println("1.5 = " + float_out.value);
@@ -376,7 +376,7 @@ public class EcoTest implements EcoApp {
         Pointer<Double> double_out = new Pointer<>(0.0);
         double double_res;
 
-        double_res = iTestC.TestDouble(double_in, double_in_out, double_out);
+        double_res = iTest.TestDouble(double_in, double_in_out, double_out);
         System.out.println("1.125 * 2 = " + double_res);
         System.out.println("1.125 + 2.75 = " + double_in_out.value);
         System.out.println("3.141592653589793 = " + double_out.value);
@@ -393,7 +393,7 @@ public class EcoTest implements EcoApp {
         Pointer<Boolean> bool_out = new Pointer<>(false);
         boolean bool_res;
 
-        bool_res = iTestC.TestBoolean(bool_in, bool_in_out, bool_out);
+        bool_res = iTest.TestBoolean(bool_in, bool_in_out, bool_out);
         System.out.println("!true = " + bool_res);
         System.out.println("false ^ true = " + bool_in_out.value);
         System.out.println("true = " + bool_out.value);
@@ -410,7 +410,7 @@ public class EcoTest implements EcoApp {
         Pointer<Character> char_out = new Pointer<>((char) 0);
         char char_res;
 
-        char_res = iTestC.TestChar(char_in, char_in_out, char_out);
+        char_res = iTest.TestChar(char_in, char_in_out, char_out);
         System.out.println("A + 1 = " + char_res);
         System.out.println("A + 4 = " + char_in_out.value);
         System.out.println("Z = " + char_out.value);
@@ -427,7 +427,7 @@ public class EcoTest implements EcoApp {
         Pointer<Character> wchar_out = new Pointer<>((char) 0);
         char wchar_res;
 
-        wchar_res = iTestC.TestWChar(wchar_in, wchar_in_out, wchar_out);
+        wchar_res = iTest.TestWChar(wchar_in, wchar_in_out, wchar_out);
         System.out.println("а + 1 = " + wchar_res);
         System.out.println("а + 4 = " + wchar_in_out.value);
         System.out.println("я = " + wchar_out.value);
@@ -444,7 +444,7 @@ public class EcoTest implements EcoApp {
         Pointer<String> astring_out = new Pointer<>("");
         String astring_res;
 
-        astring_res = iTestC.TestAString(astring_in, astring_in_out, astring_out);
+        astring_res = iTest.TestAString(astring_in, astring_in_out, astring_out);
         System.out.println(astring_res);
         System.out.println(astring_in_out.value);
         System.out.println(astring_out.value);
@@ -461,7 +461,7 @@ public class EcoTest implements EcoApp {
         Pointer<String> wstring_out = new Pointer<>("");
         String wstring_res;
 
-        wstring_res = iTestC.TestWString(wstring_in, wstring_in_out, wstring_out);
+        wstring_res = iTest.TestWString(wstring_in, wstring_in_out, wstring_out);
         System.out.println(wstring_res);
         System.out.println(wstring_in_out.value);
         System.out.println(wstring_out.value);
@@ -478,7 +478,7 @@ public class EcoTest implements EcoApp {
         Pointer<UGUID> uguid_out = new Pointer<>();
         UGUID uguid_res;
 
-        uguid_res = iTestC.TestUGUID(uguid_in, uguid_in_out, uguid_out);
+        uguid_res = iTest.TestUGUID(uguid_in, uguid_in_out, uguid_out);
         System.out.println(uguid_res);
         System.out.println(uguid_in_out.value);
         System.out.println(uguid_out.value);
@@ -494,19 +494,19 @@ public class EcoTest implements EcoApp {
         }
 
         /* ==== TestInterface ==== */
-        IEcoUnknown interface_in = iTestC;
+        IEcoUnknown interface_in = iTest;
         Pointer<IEcoUnknown> interface_in_out = new Pointer<>(new IEcoUnknownNative());
         Pointer<IEcoUnknown> interface_out = new Pointer<>(new IEcoUnknownNative());
         IEcoUnknown interface_res;
 
-        interface_res = iTestC.TestInterface(interface_in, interface_in_out, interface_out);
+        interface_res = iTest.TestInterface(interface_in, interface_in_out, interface_out);
         int count1 = interface_res.Release();
         System.out.println("res.Release: " + count1);
         int count2 = interface_in_out.value.Release();
         System.out.println("in_out.Release: " + count2);
         int count3 = interface_out.value.AddRef();
         System.out.println("out.AddRef: " + count3);
-        int count4 = iTestC.Release();
+        int count4 = iTest.Release();
         System.out.println("orig.Release: " + count4);
         if (count1 == 2 && count2 == 1 && count3 == 2 && count4 == 1) {
             System.out.println("TestInterface: OK\n");
@@ -521,7 +521,7 @@ public class EcoTest implements EcoApp {
         Pointer<Object> obj_out = new Pointer<>(false);
         Object obj_res;
 
-        obj_res = iTestC.TestVoidPtr(obj_in, obj_in_out, obj_out);
+        obj_res = iTest.TestVoidPtr(obj_in, obj_in_out, obj_out);
         System.out.println("res = " + obj_res);
         System.out.println("in+out = " + obj_in_out.value);
         System.out.println("out = " + obj_out.value);
@@ -533,8 +533,8 @@ public class EcoTest implements EcoApp {
         }
 
         /* ==== TestVoid + GetLastVoidInput ==== */
-        iTestC.TestVoid(42);
-        int output = iTestC.GetLastVoidInput();
+        iTest.TestVoid(42);
+        int output = iTest.GetLastVoidInput();
         System.out.println("output = " + output);
         if (output == 42) {
             System.out.println("TestVoid + GetLastVoidInput: OK\n");
@@ -569,9 +569,9 @@ public class EcoTest implements EcoApp {
             System.out.println("IEcoList1 Release");
             iList.Release();
         }
-        if (iTestC != null && !((IEcoTest1Native) iTestC).isNull()) {
+        if (iTest != null && !((IEcoTest1Native) iTest).isNull()) {
             System.out.println("IEcoTestC1 Release");
-            iTestC.Release();
+            iTest.Release();
         }
     }
 }
