@@ -13,6 +13,13 @@ public class UGUID {
         Data = new byte[]{};
     }
 
+    public UGUID(UGUID uguid) {
+        Preamble = uguid.Preamble;
+        Length = uguid.Length;
+        Data = new byte[uguid.Data.length];
+        System.arraycopy(uguid.Data, 0, Data, 0, uguid.Data.length);
+    }
+
     public UGUID(byte Preamble, byte Length, byte... Data) {
         this.Preamble = Preamble;
         this.Length = Length;
