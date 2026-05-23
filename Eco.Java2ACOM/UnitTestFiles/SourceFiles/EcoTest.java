@@ -38,13 +38,21 @@ public class EcoTest implements EcoApp {
         iSys = new IEcoSystem1Native();
         iBus = new IEcoInterfaceBus1Native();
 
+        System.out.print("IEcoSystem1 QueryInterface");
         short result = iUnk.QueryInterface(IEcoSystem1.GID_x86_32, new Pointer<>(iSys));
-        if (result != 0) return result;
-        System.out.println("IEcoSystem1 QueryInterface: OK");
+        if (result != 0) {
+            System.out.println(": Fail");
+            return result;
+        }
+        System.out.println(": OK");
 
+        System.out.print("IEcoInterfaceBus1 QueryInterface");
         result = iSys.QueryInterface(IEcoInterfaceBus1.IID, new Pointer<>(iBus));
-        if (result != 0) return result;
-        System.out.println("IEcoInterfaceBus1 QueryInterface: OK");
+        if (result != 0) {
+            System.out.println(": Fail");
+            return result;
+        }
+        System.out.println(": OK");
 
         return result;
     }
@@ -55,13 +63,21 @@ public class EcoTest implements EcoApp {
         iCalcX = new IEcoCalculatorXNative();
         iCalcY = new IEcoCalculatorYNative();
 
+        System.out.print("IEcoCalculatorX QueryComponent");
         short result = iBus.QueryComponent(IdEcoCalculatorC.CID, new IEcoUnknownNative(), IEcoCalculatorX.IID, new Pointer<>(iCalcX));
-        if (result != 0) return result;
-        System.out.println("IEcoCalculatorX QueryComponent: OK");
+        if (result != 0) {
+            System.out.println(": Fail");
+            return result;
+        }
+        System.out.println(": OK");
 
+        System.out.print("IEcoCalculatorY QueryInterface");
         result = iCalcX.QueryInterface(IEcoCalculatorY.IID, new Pointer<>(iCalcY));
-        if (result != 0) return result;
-        System.out.println("IEcoCalculatorY QueryInterface: OK");
+        if (result != 0) {
+            System.out.println(": Fail");
+            return result;
+        }
+        System.out.println("I: OK");
 
         int resultAddition = iCalcX.Addition((short) 9, (short) 10);
         System.out.print("Addition: 9 + 10 = " + resultAddition);
@@ -106,9 +122,14 @@ public class EcoTest implements EcoApp {
         System.out.println("\n==== Test List ====");
 
         iList = new IEcoList1Native();
+
+        System.out.print("IEcoList1 QueryComponent");
         short result = iBus.QueryComponent(IdEcoList1.CID, new IEcoUnknownNative(), IEcoList1.IID, new Pointer<>(iList));
-        if (result != 0) return result;
-        System.out.println("IEcoList1 QueryComponent: OK");
+        if (result != 0) {
+            System.out.println(": Fail");
+            return result;
+        }
+        System.out.println(": OK");
 
         Object obj1 = "OK1";
         Object obj2 = "OK2";
@@ -213,9 +234,14 @@ public class EcoTest implements EcoApp {
         System.out.println("\n==== Test Component ====");
 
         iTest = new IEcoTest1Native();
+
+        System.out.print("IEcoTest1 QueryComponent");
         short result = iBus.QueryComponent(IdEcoTest1.CID, new IEcoUnknownNative(), IEcoTest1.IID, new Pointer<>((iTest)));
-        if (result != 0) return result;
-        System.out.println("IEcoTest1 QueryComponent: OK\n");
+        if (result != 0) {
+            System.out.println(": Fail\n");
+            return result;
+        }
+        System.out.println(": OK\n");
 
         /* ==== TestInt8 ==== */
         byte int8_in = 12;
