@@ -69,7 +69,7 @@ void SaveTypeLib_IEcoCalculatorX(IEcoTypeLib1* pTypeLib) {
     pBuilder->pVTbl->CreateParameter(pBuilder, "b", ECO_TYPE_INT16, ECO_PARAM_IN, &pParam);
     pMethod->pVTbl->AddParameter(pMethod, pParam);
     pParam->pVTbl->Release(pParam);
-    pBuilder->pVTbl->CreateParameter(pBuilder, "", ECO_TYPE_INT32, ECO_PARAM_OUT, &pParam);
+    pBuilder->pVTbl->CreateParameter(pBuilder, "", ECO_TYPE_INT32, ECO_PARAM_RETVAL, &pParam);
     pMethod->pVTbl->set_Result(pMethod, pParam);
     pParam->pVTbl->Release(pParam);
     pDesc->pVTbl->AddMethod(pDesc, pMethod);
@@ -83,7 +83,7 @@ void SaveTypeLib_IEcoCalculatorX(IEcoTypeLib1* pTypeLib) {
     pBuilder->pVTbl->CreateParameter(pBuilder, "b", ECO_TYPE_INT16, ECO_PARAM_IN, &pParam);
     pMethod->pVTbl->AddParameter(pMethod, pParam);
     pParam->pVTbl->Release(pParam);
-    pBuilder->pVTbl->CreateParameter(pBuilder, "", ECO_TYPE_INT16, ECO_PARAM_OUT, &pParam);
+    pBuilder->pVTbl->CreateParameter(pBuilder, "", ECO_TYPE_INT16, ECO_PARAM_RETVAL, &pParam);
     pMethod->pVTbl->set_Result(pMethod, pParam);
     pParam->pVTbl->Release(pParam);
     pDesc->pVTbl->AddMethod(pDesc, pMethod);
@@ -144,7 +144,7 @@ void SaveTypeLib_IEcoCalculatorY(IEcoTypeLib1* pTypeLib) {
     pBuilder->pVTbl->CreateParameter(pBuilder, "b", ECO_TYPE_INT16, ECO_PARAM_IN, &pParam);
     pMethod->pVTbl->AddParameter(pMethod, pParam);
     pParam->pVTbl->Release(pParam);
-    pBuilder->pVTbl->CreateParameter(pBuilder, "", ECO_TYPE_INT32, ECO_PARAM_OUT, &pParam);
+    pBuilder->pVTbl->CreateParameter(pBuilder, "", ECO_TYPE_INT32, ECO_PARAM_RETVAL, &pParam);
     pMethod->pVTbl->set_Result(pMethod, pParam);
     pParam->pVTbl->Release(pParam);
     pDesc->pVTbl->AddMethod(pDesc, pMethod);
@@ -158,7 +158,7 @@ void SaveTypeLib_IEcoCalculatorY(IEcoTypeLib1* pTypeLib) {
     pBuilder->pVTbl->CreateParameter(pBuilder, "b", ECO_TYPE_INT16, ECO_PARAM_IN, &pParam);
     pMethod->pVTbl->AddParameter(pMethod, pParam);
     pParam->pVTbl->Release(pParam);
-    pBuilder->pVTbl->CreateParameter(pBuilder, "", ECO_TYPE_INT16, ECO_PARAM_OUT, &pParam);
+    pBuilder->pVTbl->CreateParameter(pBuilder, "", ECO_TYPE_INT16, ECO_PARAM_RETVAL, &pParam);
     pMethod->pVTbl->set_Result(pMethod, pParam);
     pParam->pVTbl->Release(pParam);
     pDesc->pVTbl->AddMethod(pDesc, pMethod);

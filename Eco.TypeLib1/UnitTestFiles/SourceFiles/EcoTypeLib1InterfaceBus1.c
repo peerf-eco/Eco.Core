@@ -4,12 +4,11 @@
  * </character encoding>
  *
  * <summary>
- *   EcoTypeLib1Calculator
+ *   EcoTypeLib1InterfaceBus1
  * </summary>
  *
  * <description>
- *   Implementation of the hand-written `.etl` writers for
- *   `IEcoCalculatorX` and `IEcoCalculatorY`.
+ *   Implementation of the hand-written `.etl` writer for `IEcoInterfaceBus1`.
  * </description>
  *
  * <author>
@@ -61,7 +60,7 @@ void SaveTypeLib_IEcoInterfaceBus1(IEcoTypeLib1* pTypeLib) {
 
     /* --- int16_t Init() --- */
     pBuilder->pVTbl->CreateMethod(pBuilder, "Init", 0, &pMethod);
-    pBuilder->pVTbl->CreateParameter(pBuilder, "", ECO_TYPE_INT16, ECO_PARAM_OUT, &pParam);
+    pBuilder->pVTbl->CreateParameter(pBuilder, "", ECO_TYPE_INT16, ECO_PARAM_RETVAL, &pParam);
     pMethod->pVTbl->set_Result(pMethod, pParam);
     pParam->pVTbl->Release(pParam);
     pDesc->pVTbl->AddMethod(pDesc, pMethod);
@@ -75,7 +74,7 @@ void SaveTypeLib_IEcoInterfaceBus1(IEcoTypeLib1* pTypeLib) {
     pBuilder->pVTbl->CreateParameter(pBuilder, "size", ECO_TYPE_UINT32, ECO_PARAM_IN, &pParam);
     pMethod->pVTbl->AddParameter(pMethod, pParam);
     pParam->pVTbl->Release(pParam);
-    pBuilder->pVTbl->CreateParameter(pBuilder, "", ECO_TYPE_INT16, ECO_PARAM_OUT, &pParam);
+    pBuilder->pVTbl->CreateParameter(pBuilder, "", ECO_TYPE_INT16, ECO_PARAM_RETVAL, &pParam);
     pMethod->pVTbl->set_Result(pMethod, pParam);
     pParam->pVTbl->Release(pParam);
     pDesc->pVTbl->AddMethod(pDesc, pMethod);
@@ -89,7 +88,7 @@ void SaveTypeLib_IEcoInterfaceBus1(IEcoTypeLib1* pTypeLib) {
     pBuilder->pVTbl->CreateParameter(pBuilder, "pIFactory", ECO_TYPE_INTERFACE, ECO_PARAM_IN, &pParam);
     pMethod->pVTbl->AddParameter(pMethod, pParam);
     pParam->pVTbl->Release(pParam);
-    pBuilder->pVTbl->CreateParameter(pBuilder, "", ECO_TYPE_INT16, ECO_PARAM_OUT, &pParam);
+    pBuilder->pVTbl->CreateParameter(pBuilder, "", ECO_TYPE_INT16, ECO_PARAM_RETVAL, &pParam);
     pMethod->pVTbl->set_Result(pMethod, pParam);
     pParam->pVTbl->Release(pParam);
     pDesc->pVTbl->AddMethod(pDesc, pMethod);
@@ -100,13 +99,13 @@ void SaveTypeLib_IEcoInterfaceBus1(IEcoTypeLib1* pTypeLib) {
     pBuilder->pVTbl->CreateParameter(pBuilder, "rcid", ECO_TYPE_UGUID, ECO_PARAM_IN, &pParam);
     pMethod->pVTbl->AddParameter(pMethod, pParam);
     pParam->pVTbl->Release(pParam);
-    pBuilder->pVTbl->CreateParameter(pBuilder, "", ECO_TYPE_INT16, ECO_PARAM_OUT, &pParam);
+    pBuilder->pVTbl->CreateParameter(pBuilder, "", ECO_TYPE_INT16, ECO_PARAM_RETVAL, &pParam);
     pMethod->pVTbl->set_Result(pMethod, pParam);
     pParam->pVTbl->Release(pParam);
     pDesc->pVTbl->AddMethod(pDesc, pMethod);
     pMethod->pVTbl->Release(pMethod);
 
-    /* --- int16_t QueryComponent([in] UGUIDPtr_t rcid, [in] IEcoUnknownPtr_t pIUnkOuter, [in] UGUIDPtr_t riid, [out] voidptr_t ppv) --- */
+    /* --- int16_t QueryComponent([in] UGUIDPtr_t rcid, [in] IEcoUnknownPtr_t pIUnkOuter, [in] UGUIDPtr_t riid, [out] IEcoUnknownPtr_t ppv) --- */
     pBuilder->pVTbl->CreateMethod(pBuilder, "QueryComponent", 0, &pMethod);
     pBuilder->pVTbl->CreateParameter(pBuilder, "rcid", ECO_TYPE_UGUID, ECO_PARAM_IN, &pParam);
     pMethod->pVTbl->AddParameter(pMethod, pParam);
@@ -120,7 +119,7 @@ void SaveTypeLib_IEcoInterfaceBus1(IEcoTypeLib1* pTypeLib) {
     pBuilder->pVTbl->CreateParameter(pBuilder, "ppv", ECO_TYPE_INTERFACE, ECO_PARAM_OUT, &pParam);
     pMethod->pVTbl->AddParameter(pMethod, pParam);
     pParam->pVTbl->Release(pParam);
-    pBuilder->pVTbl->CreateParameter(pBuilder, "", ECO_TYPE_INT16, ECO_PARAM_OUT, &pParam);
+    pBuilder->pVTbl->CreateParameter(pBuilder, "", ECO_TYPE_INT16, ECO_PARAM_RETVAL, &pParam);
     pMethod->pVTbl->set_Result(pMethod, pParam);
     pParam->pVTbl->Release(pParam);
     pDesc->pVTbl->AddMethod(pDesc, pMethod);

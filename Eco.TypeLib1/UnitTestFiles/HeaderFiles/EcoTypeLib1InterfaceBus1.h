@@ -8,7 +8,7 @@
  * </summary>
  *
  * <description>
- *   Hand-written `.etl` writers for the InterfaceBus1 interface
+ *   Hand-written `.etl` writer for the InterfaceBus1 interface
  * </description>
  *
  * <author>
