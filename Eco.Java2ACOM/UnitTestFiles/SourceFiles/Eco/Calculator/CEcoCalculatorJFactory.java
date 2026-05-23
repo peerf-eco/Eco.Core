@@ -4,9 +4,9 @@ import Eco.Core.*;
 
 public class CEcoCalculatorJFactory implements IEcoComponentFactory {
     private int m_cRef;
-    private String m_Name;
-    private String m_Version;
-    private String m_Manufacturer;
+    private final String m_Name;
+    private final String m_Version;
+    private final String m_Manufacturer;
 
     public CEcoCalculatorJFactory() {
         m_cRef = 0;
