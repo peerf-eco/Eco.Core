@@ -11,7 +11,7 @@ public class EcoTest implements EcoApp {
     private static IEcoCalculatorX iCalcX;
     private static IEcoCalculatorY iCalcY;
     private static IEcoList1 iList;
-    private static IEcoTestC1 iTestC;
+    private static IEcoTest1 iTestC;
 
     @Override
     public void EcoMain(IEcoUnknown iUnk) {
@@ -27,7 +27,7 @@ public class EcoTest implements EcoApp {
         if (result != 0) return result;
         result = TestList();
         if (result != 0) return result;
-        result = TestC();
+        result = TestComponent();
         if (result != 0) return result;
         return result;
     }
@@ -106,7 +106,7 @@ public class EcoTest implements EcoApp {
         System.out.println("\n==== Test List ====");
 
         iList = new IEcoList1Native();
-        short result = iBus.QueryComponent(IdEcoList1.CID, new IEcoUnknownNative(), IEcoList1.IID, new Pointer(iList));
+        short result = iBus.QueryComponent(IdEcoList1.CID, new IEcoUnknownNative(), IEcoList1.IID, new Pointer<>(iList));
         if (result != 0) return result;
         System.out.println("IEcoList1 QueryComponent: OK");
 
@@ -209,11 +209,11 @@ public class EcoTest implements EcoApp {
         return result;
     }
 
-    private short TestC() {
+    private short TestComponent() {
         System.out.println("\n==== Test C ====");
 
-        iTestC = new IEcoTestC1Native();
-        short result = iBus.QueryComponent(IdEcoTestC1.CID, new IEcoUnknownNative(), IEcoTestC1.IID, new Pointer<>((iTestC)));
+        iTestC = new IEcoTest1Native();
+        short result = iBus.QueryComponent(IdEcoTestC1.CID, new IEcoUnknownNative(), IEcoTest1.IID, new Pointer<>((iTestC)));
         if (result != 0) return result;
         System.out.println("IEcoTestC1 QueryComponent: OK\n");
 
@@ -569,7 +569,7 @@ public class EcoTest implements EcoApp {
             System.out.println("IEcoList1 Release");
             iList.Release();
         }
-        if (iTestC != null && !((IEcoTestC1Native) iTestC).isNull()) {
+        if (iTestC != null && !((IEcoTest1Native) iTestC).isNull()) {
             System.out.println("IEcoTestC1 Release");
             iTestC.Release();
         }

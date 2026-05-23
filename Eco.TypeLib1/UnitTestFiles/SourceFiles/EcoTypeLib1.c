@@ -25,13 +25,13 @@
 #include "IdEcoFileSystemManagement1.h"
 #include "IdEcoTypeLib1.h"
 #include "IdEcoList1.h"
-#include "IEcoTestC1.h"
+#include "IEcoTest1.h"
 
 #include "EcoTypeLib1Common.h"
 #include "EcoTypeLib1InterfaceBus1.h"
 #include "EcoTypeLib1Calculator.h"
 #include "EcoTypeLib1List1.h"
-#include "EcoTypeLib1TestC1.h"
+#include "EcoTypeLib1Test1.h"
 
 /*
  *
@@ -82,14 +82,14 @@ int16_t EcoMain(IEcoUnknown* pIUnk) {
     SaveTypeLib_IEcoCalculatorX(pTypeLib);
     SaveTypeLib_IEcoCalculatorY(pTypeLib);
     SaveTypeLib_IEcoList1(pTypeLib);
-    SaveTypeLib_IEcoTestC1(pTypeLib);
+    SaveTypeLib_IEcoTest1(pTypeLib);
 
     /* Smoke check */
     LoadAndInspect(pTypeLib, &IID_IEcoInterfaceBus1);
     LoadAndInspect(pTypeLib, &IID_IEcoCalculatorX);
     LoadAndInspect(pTypeLib, &IID_IEcoCalculatorY);
     LoadAndInspect(pTypeLib, &IID_IEcoList1);
-    LoadAndInspect(pTypeLib, &IID_IEcoTestC1);
+    LoadAndInspect(pTypeLib, &IID_IEcoTest1);
 
 Release:
 
