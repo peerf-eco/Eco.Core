@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="Eco.Test1:jar">
+    <output-path>$PROJECT_DIR$/BuildFiles/artifacts/Eco_Test1_jar</output-path>
+    <root id="archive" name="Eco.Test1.jar">
+      <element id="module-output" name="Eco.Test1" />
+    </root>
+  </artifact>
+</component>
