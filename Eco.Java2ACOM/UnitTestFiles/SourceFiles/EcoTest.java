@@ -213,7 +213,7 @@ public class EcoTest implements EcoApp {
         System.out.println("\n==== Test Component ====");
 
         iTestC = new IEcoTest1Native();
-        short result = iBus.QueryComponent(IdEcoTestC1.CID, new IEcoUnknownNative(), IEcoTest1.IID, new Pointer<>((iTestC)));
+        short result = iBus.QueryComponent(IdEcoTest1.CID, new IEcoUnknownNative(), IEcoTest1.IID, new Pointer<>((iTestC)));
         if (result != 0) return result;
         System.out.println("IEcoTest1 QueryComponent: OK\n");
 
