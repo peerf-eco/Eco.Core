@@ -2,7 +2,7 @@ package Eco.Calculator;
 
 import Eco.Core.ErrEcoCodes;
 import Eco.Core.IEcoUnknown;
-import Eco.Core.IEcoUnknownPtr;
+import Eco.Core.Pointer;
 import Eco.Core.UGUID;
 
 class CEcoCalculatorJ {
@@ -26,18 +26,18 @@ class CEcoCalculatorJ {
 
     void Delete() {}
 
-    short QueryInterface(UGUID riid, IEcoUnknownPtr pIUnk) {
+    short QueryInterface(UGUID riid, Pointer<IEcoUnknown> pIUnk) {
         if (riid.equals(IEcoCalculatorX.IID)) {
-            pIUnk.iUnk = m_iCalcX;
+            pIUnk.value = m_iCalcX;
             m_iCalcX.AddRef();
         } else if (riid.equals(IEcoCalculatorY.IID)) {
-            pIUnk.iUnk = m_iCalcY;
+            pIUnk.value = m_iCalcY;
             m_iCalcY.AddRef();
         } else if (riid.equals(IEcoUnknown.IID)) {
-            pIUnk.iUnk = m_iCalcX;
+            pIUnk.value = m_iCalcX;
             m_iCalcX.AddRef();
         } else {
-            pIUnk.iUnk = null;
+            pIUnk.value = null;
             return ErrEcoCodes.ERR_ECO_NOINTERFACE;
         }
         return ErrEcoCodes.ERR_ECO_OK;
@@ -58,7 +58,7 @@ class CEcoCalculatorJ {
 
     private class CEcoCalculatorJ_IEcoCalculatorX implements IEcoCalculatorX {
         @Override
-        public short QueryInterface(UGUID riid, IEcoUnknownPtr pIUnk) {
+        public short QueryInterface(UGUID riid, Pointer<IEcoUnknown> pIUnk) {
             return CEcoCalculatorJ.this.QueryInterface(riid, pIUnk);
         }
 
@@ -85,7 +85,7 @@ class CEcoCalculatorJ {
 
     private class CEcoCalculatorJ_IEcoCalculatorY implements IEcoCalculatorY {
         @Override
-        public short QueryInterface(UGUID riid, IEcoUnknownPtr pIUnk) {
+        public short QueryInterface(UGUID riid, Pointer<IEcoUnknown> pIUnk) {
             return CEcoCalculatorJ.this.QueryInterface(riid, pIUnk);
         }
 

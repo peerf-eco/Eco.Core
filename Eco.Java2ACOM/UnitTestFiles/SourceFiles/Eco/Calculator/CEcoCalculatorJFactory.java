@@ -16,11 +16,11 @@ public class CEcoCalculatorJFactory implements IEcoComponentFactory {
     }
 
     @Override
-    public short QueryInterface(UGUID riid, IEcoUnknownPtr pIUnk) {
+    public short QueryInterface(UGUID riid, Pointer<IEcoUnknown> pIUnk) {
         if (riid.equals(IEcoUnknown.IID) || riid.equals(IEcoComponentFactory.IID)) {
-            pIUnk.iUnk = this;
+            pIUnk.value = this;
         } else {
-            pIUnk.iUnk = null;
+            pIUnk.value = null;
             return ErrEcoCodes.ERR_ECO_NOINTERFACE;
         }
         AddRef();
@@ -45,7 +45,7 @@ public class CEcoCalculatorJFactory implements IEcoComponentFactory {
     }
 
     @Override
-    public short Alloc(IEcoUnknown iSystem, IEcoUnknown iUnknownOuter, UGUID riid, IEcoUnknownPtr pIUnk) {
+    public short Alloc(IEcoUnknown iSystem, IEcoUnknown iUnknownOuter, UGUID riid, Pointer<IEcoUnknown> pIUnk) {
         if (iUnknownOuter != null && !riid.equals(IEcoUnknown.IID)) {
             return ErrEcoCodes.ERR_ECO_NOAGGREGATION;
         }
