@@ -1,0 +1,13 @@
+{
+  "appType": "Component",
+  "options": {
+    "postfixNamespace": false,
+    "connectionPoints": false,
+    "aggregationInner": false,
+    "aggregationOuter": false,
+    "containmentOuter": false,
+    "unitTest": false,
+    "threadSafe": false
+  },
+  "pathType": "Relative"
+}
