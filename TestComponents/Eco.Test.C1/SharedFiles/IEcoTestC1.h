@@ -76,11 +76,17 @@ typedef struct IEcoTestC1VTbl {
     /*
      * Строки:
      *   result   = новая строка "RESULT:<in>";
-     *   *inOut   = новая строка "INOUT:<старое значение>+<in>";
+     *   *inOut   = новая строка "<старое значение>:<in>";
      *   *out     = новая строка "OUT".
-     * Память под все новые строки выделяется через IEcoMemoryAllocator1.
      */
     char_t*  (ECOCALLMETHOD *TestAString)(/* in */ IEcoTestC1Ptr_t me, /* in */ char_t*  in, /* inout */ char_t**  inOut, /* out */ char_t**  out);
+
+    /*
+     * Строки:
+     *   result   = новая строка "РЕЗУЛЬТАТ:<in>";
+     *   *inOut   = новая строка "<старое значение>:<in>";
+     *   *out     = новая строка "ВЫХОД".
+     */
     wchar_t* (ECOCALLMETHOD *TestWString)(/* in */ IEcoTestC1Ptr_t me, /* in */ wchar_t* in, /* inout */ wchar_t** inOut, /* out */ wchar_t** out);
 
     /*
@@ -92,13 +98,13 @@ typedef struct IEcoTestC1VTbl {
     UGUID*   (ECOCALLMETHOD *TestUGUID)  (/* in */ IEcoTestC1Ptr_t me, /* in */ const UGUID* in, /* inout */ UGUID** inOut, /* out */ UGUID** out);
 
     /*
-     * Интерфейс (тип не поддерживается в качестве результата, поэтому
-     * метод возвращает код ошибки):
-     *   - in    : выполняется AddRef/Release для проверки целостности счетчика;
-     *   - inOut : старый указатель освобождается, новый = in (AddRef);
-     *   - out   : *out = in (AddRef).
+     * Интерфейс:
+     *   - result : возвращается in (без AddRef);
+     *   - in     : выполняется AddRef/Release для проверки целостности счетчика;
+     *   - inOut  : старый указатель освобождается, новый = in (AddRef);
+     *   - out    : *out = in (AddRef).
      */
-    int16_t  (ECOCALLMETHOD *TestInterface)(/* in */ IEcoTestC1Ptr_t me, /* in */ IEcoUnknown* in, /* inout */ IEcoUnknown** inOut, /* out */ IEcoUnknown** out);
+    IEcoUnknown* (ECOCALLMETHOD *TestInterface)(/* in */ IEcoTestC1Ptr_t me, /* in */ IEcoUnknown* in, /* inout */ IEcoUnknown** inOut, /* out */ IEcoUnknown** out);
 
     /*
      * VoidPtr:

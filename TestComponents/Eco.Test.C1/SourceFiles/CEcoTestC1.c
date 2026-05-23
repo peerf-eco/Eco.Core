@@ -71,7 +71,7 @@ static char_t* TestC1_DupAString(IEcoMemoryAllocator1* pIMem, const char_t* src)
     char_t* dst = (char_t*)pIMem->pVTbl->Alloc(pIMem, len + 1);
     if (dst != 0) {
         if (len != 0) {
-            memcpy(dst, src, len);
+            pIMem->pVTbl->Copy(pIMem, dst, src, len);
         }
         dst[len] = 0;
     }
@@ -83,7 +83,7 @@ static wchar_t* TestC1_DupWString(IEcoMemoryAllocator1* pIMem, const wchar_t* sr
     wchar_t* dst = (wchar_t*)pIMem->pVTbl->Alloc(pIMem, (len + 1) * (uint32_t)sizeof(wchar_t));
     if (dst != 0) {
         if (len != 0) {
-            memcpy(dst, src, len * sizeof(wchar_t));
+            pIMem->pVTbl->Copy(pIMem, dst, src, len * sizeof(wchar_t));
         }
         dst[len] = 0;
     }
@@ -97,10 +97,10 @@ static char_t* TestC1_PrefixedAString(IEcoMemoryAllocator1* pIMem, const char_t*
     uint32_t total = prefixLen + 1 /*':'*/ + srcLen;
     char_t* dst = (char_t*)pIMem->pVTbl->Alloc(pIMem, total + 1);
     if (dst != 0) {
-        memcpy(dst, prefix, prefixLen);
+        pIMem->pVTbl->Copy(pIMem, dst, prefix, prefixLen);
         dst[prefixLen] = ':';
         if (srcLen != 0) {
-            memcpy(dst + prefixLen + 1, src, srcLen);
+            pIMem->pVTbl->Copy(pIMem, dst + prefixLen + 1, src, srcLen);
         }
         dst[total] = 0;
     }
@@ -108,21 +108,19 @@ static char_t* TestC1_PrefixedAString(IEcoMemoryAllocator1* pIMem, const char_t*
 }
 
 /* Формирует широкую строку вида "<prefix>:<src>". prefix задается ASCII-литералом. */
-static wchar_t* TestC1_PrefixedWString(IEcoMemoryAllocator1* pIMem, const char_t* prefix, const wchar_t* src) {
-    uint32_t prefixLen = TestC1_AStrLen(prefix);
+static wchar_t* TestC1_PrefixedWString(IEcoMemoryAllocator1* pIMem, const wchar_t* prefix, const wchar_t* src) {
+    uint32_t prefixLen = TestC1_WStrLen(prefix);
     uint32_t srcLen = TestC1_WStrLen(src);
     uint32_t total = prefixLen + 1 /*':'*/ + srcLen;
-    wchar_t* dst = (wchar_t*)pIMem->pVTbl->Alloc(pIMem, (total + 1) * (uint32_t)sizeof(wchar_t));
+    wchar_t* dst = (wchar_t*)pIMem->pVTbl->Alloc(pIMem, (total + 1) * sizeof(wchar_t));
     uint32_t i = 0;
     if (dst == 0) {
         return 0;
     }
-    for (i = 0; i < prefixLen; i++) {
-        dst[i] = (wchar_t)(unsigned char)prefix[i];
-    }
+    pIMem->pVTbl->Copy(pIMem, dst, prefix, prefixLen * sizeof(wchar_t));
     dst[prefixLen] = (wchar_t)':';
     if (srcLen != 0) {
-        memcpy(dst + prefixLen + 1, src, srcLen * sizeof(wchar_t));
+        pIMem->pVTbl->Copy(pIMem, dst + prefixLen + 1, src, srcLen * sizeof(wchar_t));
     }
     dst[total] = 0;
     return dst;
@@ -300,7 +298,8 @@ static wchar_t* ECOCALLMETHOD CEcoTestC1_816BDCCA_TestWString(IEcoTestC1Ptr_t me
     CEcoTestC1_816BDCCA* pCMe = (CEcoTestC1_816BDCCA*)me;
     IEcoMemoryAllocator1* pIMem = 0;
     static const wchar_t emptyWStr[] = { 0 };
-    static const wchar_t outWStr[]   = { L'O', L'U', L'T', 0 };
+    static const wchar_t outWStr[]   = { 1042, 1067, 1061, 1054, 1044, 0 }; // ВЫХОД
+    static const wchar_t resultWStr[]   = { 1056, 1045, 1047, 1059, 1051, 1068, 1058, 1040, 1058, 0 }; // РЕЗУЛЬТАТ
 
     if (me == 0 || pCMe->m_pIMem == 0) {
         return 0;
@@ -309,13 +308,7 @@ static wchar_t* ECOCALLMETHOD CEcoTestC1_816BDCCA_TestWString(IEcoTestC1Ptr_t me
 
     if (inOut != 0) {
         wchar_t* oldVal = *inOut;
-        wchar_t* combined = TestC1_PrefixedWString(pIMem, "INOUT", (oldVal != 0) ? oldVal : emptyWStr);
-        /*
-         * Игнорируем входное in для INOUT, т.к. префикс уже несет смысловую
-         * нагрузку. Тестируется лишь корректность чтения старого значения и
-         * записи нового.
-         */
-        (void)in;
+        wchar_t* combined = TestC1_PrefixedWString(pIMem, (oldVal != 0) ? oldVal : emptyWStr, in);
         if (oldVal != 0) {
             pIMem->pVTbl->Free(pIMem, oldVal);
         }
@@ -326,7 +319,7 @@ static wchar_t* ECOCALLMETHOD CEcoTestC1_816BDCCA_TestWString(IEcoTestC1Ptr_t me
         *out = TestC1_DupWString(pIMem, outWStr);
     }
 
-    return TestC1_PrefixedWString(pIMem, "RESULT", (in != 0) ? in : emptyWStr);
+    return TestC1_PrefixedWString(pIMem, resultWStr, (in != 0) ? in : emptyWStr);
 }
 
 /* ===== UGUID ===== */
@@ -376,9 +369,9 @@ static UGUID* ECOCALLMETHOD CEcoTestC1_816BDCCA_TestUGUID(IEcoTestC1Ptr_t me, co
 
 /* ===== Интерфейс ===== */
 
-static int16_t ECOCALLMETHOD CEcoTestC1_816BDCCA_TestInterface(IEcoTestC1Ptr_t me, IEcoUnknown* in, IEcoUnknown** inOut, IEcoUnknown** out) {
+static IEcoUnknown* ECOCALLMETHOD CEcoTestC1_816BDCCA_TestInterface(IEcoTestC1Ptr_t me, IEcoUnknown* in, IEcoUnknown** inOut, IEcoUnknown** out) {
     if (me == 0 || in == 0) {
-        return ERR_ECO_POINTER;
+        return 0;
     }
 
     /* Проверяем целостность счетчика ссылок in. */
@@ -398,7 +391,7 @@ static int16_t ECOCALLMETHOD CEcoTestC1_816BDCCA_TestInterface(IEcoTestC1Ptr_t m
         *out = in;
     }
 
-    return ERR_ECO_SUCCESES;
+    return in;
 }
 
 /* ===== VoidPtr ===== */
