@@ -6,8 +6,8 @@ import Eco.Core.Pointer;
 import Eco.Core.UGUID;
 
 class CEcoCalculatorJ {
-    private IEcoCalculatorX m_iCalcX;
-    private IEcoCalculatorY m_iCalcY;
+    private final IEcoCalculatorX m_iCalcX;
+    private final IEcoCalculatorY m_iCalcY;
     private int m_cRef;
 
     CEcoCalculatorJ() {
