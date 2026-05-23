@@ -10,6 +10,8 @@ JNIEXPORT jshort JNICALL Java_Eco_System_CEcoSystem_createCEcoSystem(JNIEnv* env
     jstring* jArgv = (jstring*)malloc(argc * sizeof(jstring));
     IEcoSystem1* pISys = 0;
     IEcoInterfaceBus1* pIBus = 0;
+    IEcoInterfaceBus1MemExt* pIMemExt = 0;
+    UGUID* rcid = &CID_EcoMemoryManager1;
     int16_t result = 0;
     int16_t i = 0;
 
@@ -44,6 +46,17 @@ JNIEXPORT jshort JNICALL Java_Eco_System_CEcoSystem_createCEcoSystem(JNIEnv* env
         return result;
     }
     #endif
+
+    result = pIBus->pVTbl->QueryInterface(pIBus, &IID_IEcoInterfaceBus1MemExt, (void**)&pIMemExt);
+    if (result == 0 && pIMemExt != 0) {
+        rcid = pIMemExt->pVTbl->get_Manager(pIMemExt);
+        pIMemExt->pVTbl->Release(pIMemExt);
+    }
+    result = pIBus->pVTbl->QueryComponent(pIBus, rcid, 0, &IID_IEcoMemoryAllocator1, (void**) &g_pIMem);
+    if (result != 0 || g_pIMem == 0) {
+        result = ERR_ECO_GET_MEMORY_ALLOCATOR;
+    }
+
     result = pIBus->pVTbl->QueryComponent(pIBus, &CID_EcoTypeLib1, 0, &IID_IEcoTypeLib1, &g_pITypeLib);
     if (result != 0) {
         pIBus->pVTbl->Release(pIBus);
@@ -61,11 +74,12 @@ JNIEXPORT void JNICALL Java_Eco_System_CEcoSystem_deleteCEcoSystem(JNIEnv* env, 
     for (index = 0; index < count; index++) {
         EcoDescCacheEntry* pDescCacheEntry = g_pIDescCacheList->pVTbl->Item(g_pIDescCacheList, index);
         pDescCacheEntry->pIDirectory->pVTbl->Release(pDescCacheEntry->pIDirectory);
-        free(pDescCacheEntry);
+        g_pIMem->pVTbl->Free(g_pIMem, pDescCacheEntry);
     }
 
     g_pIDescCacheList->pVTbl->Clear(g_pIDescCacheList);
     g_pIDescCacheList->pVTbl->Release(g_pIDescCacheList);
     g_pITypeLib->pVTbl->Release(g_pITypeLib);
+    g_pIMem->pVTbl->Release(g_pIMem);
     deleteCEcoSystem1_00000100((IEcoSystem1*)GetPointerToInterface(env, iSys));
 }

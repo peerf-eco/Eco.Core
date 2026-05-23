@@ -1,14 +1,14 @@
 package Eco.Core;
 
 public class IEcoUnknownNative implements IEcoUnknown {
-    protected long pInstance = 0;
+    protected int pInstance = 0;
 
     public boolean isNull() {
         return pInstance == 0;
     }
 
     @Override
-    public native short QueryInterface(UGUID riid, IEcoUnknownPtr pIUnk);
+    public native short QueryInterface(UGUID riid, Pointer<IEcoUnknown> pIUnk);
 
     @Override
     public native int AddRef();

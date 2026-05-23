@@ -138,11 +138,15 @@ UGUID GetUGUIDFromInterfaceJavaObject(JNIEnv* env, jobject obj) {
     return JavaObjectToUGUIDPtr(env, obj);
 }
 
-jobject GetInterfaceObjectFromIEcoUnknownPtrObject(JNIEnv* env, jobject pIUnk) {
-    jclass clazz = (*env)->GetObjectClass(env, pIUnk);
-    jfieldID field = (*env)->GetFieldID(env, clazz, "iUnk", "LEco/Core/IEcoUnknown;");
+jfieldID GetFieldFromPointer(JNIEnv* env, jobject obj) {
+    jclass clazz = (*env)->GetObjectClass(env, obj);
+    return (*env)->GetFieldID(env, clazz, "value", "Ljava/lang/Object;");
+}
+
+jobject GetObjectFromPointer(JNIEnv* env, jobject obj) {
+    jfieldID field = GetFieldFromPointer(env, obj);
     if (field == NULL) return NULL;
-    return (*env)->GetObjectField(env, pIUnk, field);
+    return (*env)->GetObjectField(env, obj, field);
 }
 
 IEcoInterfaceDescriptor1* GetInterfaceDescriptorByUGUID(IEcoTypeLib1* pITypeLib, const UGUID* riid) {
@@ -170,7 +174,7 @@ IEcoInterfaceDescriptor1* GetInterfaceDescriptorByUGUID(IEcoTypeLib1* pITypeLib,
         result = pIEntry->pVTbl->get_Descriptor(pIEntry, &pIDesc);
     }
 
-    pDescCacheEntry = (EcoDescCacheEntry*) malloc(sizeof(EcoDescCacheEntry));
+    pDescCacheEntry = (EcoDescCacheEntry*) g_pIMem->pVTbl->Alloc(g_pIMem, sizeof(EcoDescCacheEntry));
     pDescCacheEntry->riid = *riid;
     pDescCacheEntry->pIDirectory = pIDirectory;
     pDescCacheEntry->pIDesc = pIDesc;
@@ -197,10 +201,14 @@ IEcoInterfaceDescriptor1* GetInterfaceDescriptor(JNIEnv* env, jobject iUnk) {
 
 void JavaObjectToParam(JNIEnv* env, jobject obj, uint16_t typeTag, uint8_t flags, void** arg) {
     if (flags & ECO_PARAM_OUT) {
-        *arg = malloc(sizeof(void*));
+        *arg = g_pIMem->pVTbl->Alloc(g_pIMem, sizeof(void*));
         arg = *arg;
     }
-    *arg = malloc(ECO_TYPE_SIZE[typeTag]);
+    *arg = g_pIMem->pVTbl->Alloc(g_pIMem, ECO_TYPE_SIZE[typeTag]);
+    if (flags & ECO_PARAM_OUT) {
+        obj = GetObjectFromPointer(env, obj);
+        if (obj == NULL) return;
+    }
     if (ECO_TYPE_MAP[typeTag].isPrimitive) {
         jclass clazz = (*env)->GetObjectClass(env, obj);
         jfieldID field = (*env)->GetFieldID(env, clazz, "value", ECO_TYPE_MAP[typeTag].jniSignature);
@@ -225,21 +233,23 @@ void JavaObjectToParam(JNIEnv* env, jobject obj, uint16_t typeTag, uint8_t flags
             **(wchar_t**)arg = (*env)->GetCharField(env, obj, field);
         }
     } else if (typeTag == ECO_TYPE_ASTRING) {
-        const char* utf = (*env)->GetStringUTFChars(env, obj, 0);
+        const char_t* utf = (*env)->GetStringUTFChars(env, obj, 0);
+        uint32_t size = strlen(utf) + 1;
         if (utf == NULL) { **(char_t***)arg = NULL; return; }
-        **(char_t***)arg = (char_t*)utf;
+        **(char_t***)arg = g_pIMem->pVTbl->Alloc(g_pIMem, size);
+        g_pIMem->pVTbl->Copy(g_pIMem, **(char_t***)arg, utf, size);
+        (*env)->ReleaseStringUTFChars(env, obj, utf);
     } else if (typeTag == ECO_TYPE_WSTRING) {
-        const jchar* wide = (*env)->GetStringChars(env, obj, 0);
+        const wchar_t* wide = (*env)->GetStringChars(env, obj, 0);
+        uint32_t size = (wcslen(wide) + 1) * sizeof(wchar_t);
         if (wide == NULL) { **(wchar_t***)arg = NULL; return; }
-        **(wchar_t***)arg = (wchar_t*)wide;
+        **(wchar_t***)arg = g_pIMem->pVTbl->Alloc(g_pIMem, size);
+        g_pIMem->pVTbl->Copy(g_pIMem, **(wchar_t***)arg, wide, size);
+        (*env)->ReleaseStringChars(env, obj, wide);
     } else if (typeTag == ECO_TYPE_INTERFACE) {
-        if (flags & ECO_PARAM_OUT) {
-            obj = GetInterfaceObjectFromIEcoUnknownPtrObject(env, obj);
-            if (obj == NULL) { **(void***)arg = NULL; return; }
-        }
         **(void***)arg = GetPointerToInterface(env, obj);
     } else if (typeTag == ECO_TYPE_UGUID) {
-        **(UGUID***)arg = malloc(sizeof(UGUID));
+        **(UGUID***)arg = g_pIMem->pVTbl->Alloc(g_pIMem, sizeof(UGUID));
         ***(UGUID***)arg = JavaObjectToUGUIDPtr(env, obj);
     } else if (typeTag == ECO_TYPE_VOIDPTR) {
         jobject globalRef = (*env)->NewGlobalRef(env, obj);
@@ -247,44 +257,82 @@ void JavaObjectToParam(JNIEnv* env, jobject obj, uint16_t typeTag, uint8_t flags
     }
 }
 
-void ParamToJavaObject(JNIEnv* env, void* arg, uint16_t typeTag, jobject* obj) {
-    if (ECO_TYPE_MAP[typeTag].isPrimitive) {
-        jclass clazz = (*env)->GetObjectClass(env, *obj);
-        jfieldID field = (*env)->GetFieldID(env, clazz, "value", ECO_TYPE_MAP[typeTag].jniSignature);
-        if (field == NULL) return;
-        if (typeTag == ECO_TYPE_INT8 || typeTag == ECO_TYPE_UINT8) {
-            (*env)->SetByteField(env, *obj, field, **(jbyte**)arg);
-        } else if (typeTag == ECO_TYPE_INT16 || typeTag == ECO_TYPE_UINT16) {
-            (*env)->SetShortField(env, *obj, field, **(jshort**)arg);
-        } else if (typeTag == ECO_TYPE_INT32 || typeTag == ECO_TYPE_UINT32) {
-            (*env)->SetIntField(env, *obj, field, **(jint**)arg);
-        } else if (typeTag == ECO_TYPE_INT64 || typeTag == ECO_TYPE_UINT64) {
-            (*env)->SetLongField(env, *obj, field, **(jlong**)arg);
-        } else if (typeTag == ECO_TYPE_FLOAT) {
-            (*env)->SetFloatField(env, *obj, field, **(jfloat**)arg);
-        } else if (typeTag == ECO_TYPE_DOUBLE) {
-            (*env)->SetDoubleField(env, *obj, field, **(jdouble**)arg);
-        } else if (typeTag == ECO_TYPE_BOOLEAN) {
-            (*env)->SetBooleanField(env, *obj, field, **(jboolean**)arg);
-        } else if (typeTag == ECO_TYPE_CHAR) {
-            (*env)->SetCharField(env, *obj, field, **(char_t**)arg);
-        } else if (typeTag == ECO_TYPE_WCHAR) {
-            (*env)->SetCharField(env, *obj, field, **(wchar_t**)arg);
-        }
+jobject GetBoxedPrimitive(JNIEnv* env, void* value, uint16_t typeTag) {
+    EcoTypeMap* ecoType = 0;
+    jclass clazz;
+    jmethodID method;
+    char_t valueOfSig[64];
+    jvalue args[1];
+    jobject result;
+
+    if (typeTag >= sizeof(ECO_TYPE_MAP) / sizeof(ECO_TYPE_MAP[0])) {
+        return NULL;
+    }
+    ecoType = &ECO_TYPE_MAP[typeTag];
+    sprintf(valueOfSig, "(%s)L%s;", ecoType->jniSignature, ecoType->jniClassName);
+    clazz = (*env)->FindClass(env, ecoType->jniClassName);
+    if (clazz == NULL) return NULL;
+    method = (*env)->GetStaticMethodID(env, clazz, "valueOf", valueOfSig);
+
+    if (method == NULL) return NULL;
+    if (typeTag == ECO_TYPE_INT8 || typeTag == ECO_TYPE_UINT8) {
+        args[0].b = *(jbyte*)value;
+    } else if (typeTag == ECO_TYPE_INT16 || typeTag == ECO_TYPE_UINT16) {
+        args[0].s = *(jshort*)value;
+    } else if (typeTag == ECO_TYPE_INT32 || typeTag == ECO_TYPE_UINT32) {
+        args[0].i = *(jint*)value;
+    } else if (typeTag == ECO_TYPE_INT64 || typeTag == ECO_TYPE_UINT64) {
+        args[0].j = *(jlong*)value;
+    } else if (typeTag == ECO_TYPE_FLOAT) {
+        args[0].f = *(jfloat*)value;
+    } else if (typeTag == ECO_TYPE_DOUBLE) {
+        args[0].d = *(jdouble*)value;
+    } else if (typeTag == ECO_TYPE_BOOLEAN) {
+        args[0].z = *(jboolean*)value;
+    } else if (typeTag == ECO_TYPE_CHAR) {
+        args[0].c = *(char_t*)value;
+    } else if (typeTag == ECO_TYPE_WCHAR) {
+        args[0].c = *(wchar_t*)value;
+    }
+
+    result = (*env)->CallStaticObjectMethodA(env, clazz, method, args);
+    if ((*env)->ExceptionCheck(env)) return NULL;
+    return result;
+}
+
+void ParamToJavaObject(JNIEnv* env, void* arg, uint16_t typeTag, jobject objPtr) {
+    EcoTypeMap* ecoType = 0;
+    jobject obj;
+
+    if (typeTag >= sizeof(ECO_TYPE_MAP) / sizeof(ECO_TYPE_MAP[0])) {
+        return NULL;
+    }
+    ecoType = &ECO_TYPE_MAP[typeTag];
+
+    if (ecoType->isPrimitive) {
+        obj = GetBoxedPrimitive(env, *(void**)arg, typeTag);
     } else if (typeTag == ECO_TYPE_ASTRING) {
-        *obj = (*env)->NewStringUTF(env, **(char_t***)arg);
-        if ((*env)->ExceptionCheck(env)) { *obj = NULL; return; }
+        obj = (*env)->NewStringUTF(env, **(char_t***)arg);
+        if ((*env)->ExceptionCheck(env)) return;
     } else if (typeTag == ECO_TYPE_WSTRING) {
-        *obj = (*env)->NewString(env, **(jchar***)arg, (jsize)wcslen(**(wchar_t***)arg));
-        if ((*env)->ExceptionCheck(env)) { *obj = NULL; return; }
+        obj = (*env)->NewString(env, **(jchar***)arg, (jsize)wcslen(**(wchar_t***)arg));
+        if ((*env)->ExceptionCheck(env)) return;
     } else if (typeTag == ECO_TYPE_INTERFACE) {
-        jobject iUnk = GetInterfaceObjectFromIEcoUnknownPtrObject(env, *obj);
+        jobject iUnk = GetObjectFromPointer(env, objPtr);
         if (iUnk == NULL) return;
         SetPointerToInterface(env, iUnk, **(void***)arg);
+        return;
     } else if (typeTag == ECO_TYPE_UGUID) {
-        *obj = UGUIDPtrToJavaObject(env, **(UGUID***)arg);
+        obj = UGUIDPtrToJavaObject(env, **(UGUID***)arg);
     } else if (typeTag == ECO_TYPE_VOIDPTR) {
-        *obj = **(jobject**)arg;
+        obj = **(jobject**)arg;
+    }
+
+    if (obj == NULL) return;
+    {
+        jfieldID field = GetFieldFromPointer(env, objPtr);
+        if (field == NULL) return;
+        (*env)->SetObjectField(env, objPtr, field, obj);
     }
 }
 
@@ -295,39 +343,7 @@ jobject ResultToJavaObject(JNIEnv* env, void* result, uint16_t typeTag) {
     }
     ecoType = &ECO_TYPE_MAP[typeTag];
     if (ecoType->isPrimitive) {
-        jclass clazz;
-        jmethodID method;
-        char_t valueOfSig[64];
-        jvalue args[1];
-        sprintf(valueOfSig, "(%s)L%s;", ecoType->jniSignature, ecoType->jniClassName);
-        clazz = (*env)->FindClass(env, ecoType->jniClassName);
-        if (clazz == NULL) return NULL;
-        method = (*env)->GetStaticMethodID(env, clazz, "valueOf", valueOfSig);
-        if (method == NULL) return NULL;
-        if (typeTag == ECO_TYPE_INT8 || typeTag == ECO_TYPE_UINT8) {
-            args[0].b = *(jbyte*)result;
-        } else if (typeTag == ECO_TYPE_INT16 || typeTag == ECO_TYPE_UINT16) {
-            args[0].s = *(jshort*)result;
-        } else if (typeTag == ECO_TYPE_INT32 || typeTag == ECO_TYPE_UINT32) {
-            args[0].i = *(jint*)result;
-        } else if (typeTag == ECO_TYPE_INT64 || typeTag == ECO_TYPE_UINT64) {
-            args[0].j = *(jlong*)result;
-        } else if (typeTag == ECO_TYPE_FLOAT) {
-            args[0].f = *(jfloat*)result;
-        } else if (typeTag == ECO_TYPE_DOUBLE) {
-            args[0].d = *(jdouble*)result;
-        } else if (typeTag == ECO_TYPE_BOOLEAN) {
-            args[0].z = *(jboolean*)result;
-        } else if (typeTag == ECO_TYPE_CHAR) {
-            args[0].c = *(char_t*)result;
-        } else if (typeTag == ECO_TYPE_WCHAR) {
-            args[0].c = *(wchar_t*)result;
-        }
-        {
-            jobject boxed = (*env)->CallStaticObjectMethodA(env, clazz, method, args);
-            if ((*env)->ExceptionCheck(env)) return NULL;
-            return boxed;
-        }
+        return GetBoxedPrimitive(env, result, typeTag);
     } else if (typeTag == ECO_TYPE_ASTRING) {
         jstring s = (*env)->NewStringUTF(env, *(char_t**)result);
         if ((*env)->ExceptionCheck(env)) return NULL;
@@ -336,6 +352,18 @@ jobject ResultToJavaObject(JNIEnv* env, void* result, uint16_t typeTag) {
         jstring s = (*env)->NewString(env, *(jchar**)result, (jsize)wcslen(*(wchar_t**)result));
         if ((*env)->ExceptionCheck(env)) return NULL;
         return s;
+    } else if (typeTag == ECO_TYPE_INTERFACE) {
+        jclass clazz;
+        jmethodID method;
+        jobject obj;
+        clazz = (*env)->FindClass(env, "Eco/Core/IEcoUnknownNative");
+        if (clazz == NULL) return NULL;
+        method = (*env)->GetMethodID(env, clazz, "<init>", "()V");
+        if (method == NULL) return NULL;
+        obj = (*env)->NewObject(env, clazz, method);
+        if ((*env)->ExceptionCheck(env)) return NULL;
+        SetPointerToInterface(env, obj, *(void**)result);
+        return obj;
     } else if (typeTag == ECO_TYPE_UGUID) {
         return UGUIDPtrToJavaObject(env, *(UGUID**)result);
     } else if (typeTag == ECO_TYPE_VOIDPTR) {
@@ -352,9 +380,8 @@ JNIEXPORT jshort JNICALL Java_Eco_Core_IEcoUnknownNative_QueryInterface(JNIEnv* 
     jobject iUnk;
 
     if ((*env)->ExceptionCheck(env)) return -1;
-
     result = me->pVTbl->QueryInterface(me, &riid, &pv);
-    iUnk = GetInterfaceObjectFromIEcoUnknownPtrObject(env, pIUnkObj);
+    iUnk = GetObjectFromPointer(env, pIUnkObj);
     if (iUnk == NULL) return result;
     SetPointerToInterface(env, iUnk, pv);
     return result;
@@ -405,9 +432,9 @@ JNIEXPORT jobject JNICALL Java_Eco_Core_IEcoUnknownNative_GlobalDispatcher(JNIEn
     if (pIDesc == 0 || (*env)->ExceptionCheck(env)) return NULL;
 
     count = (*env)->GetArrayLength(env, args);
-    jArgs = (jobject*)malloc(sizeof(jobject) * count);
-    cArgs = (void**) malloc(sizeof(void*) * (count + 1));
-    ffiTypes = (ffi_type**) malloc(sizeof(ffi_type*) * (count + 1));
+    jArgs = (jobject*) g_pIMem->pVTbl->Alloc(g_pIMem, sizeof(jobject) * count);
+    cArgs = (void**) g_pIMem->pVTbl->Alloc(g_pIMem, sizeof(void*) * (count + 1));
+    ffiTypes = (ffi_type**) g_pIMem->pVTbl->Alloc(g_pIMem, sizeof(ffi_type*) * (count + 1));
 
     pIUnk = GetPointerToInterface(env, thisObj);
     pFunc = (*(void***)pIUnk)[VTblIdx];
@@ -447,7 +474,7 @@ JNIEXPORT jobject JNICALL Java_Eco_Core_IEcoUnknownNative_GlobalDispatcher(JNIEn
             flags = pIParam->pVTbl->get_Flags(pIParam);
             if (flags & ECO_PARAM_OUT) {
                 pIParam->pVTbl->get_Type(pIParam, &typeTag);
-                ParamToJavaObject(env, cArgs[index + 1], typeTag, &jArgs[index]);
+                ParamToJavaObject(env, cArgs[index + 1], typeTag, jArgs[index]);
             }
         }
     }
@@ -457,22 +484,22 @@ JNIEXPORT jobject JNICALL Java_Eco_Core_IEcoUnknownNative_GlobalDispatcher(JNIEn
         pIParam->pVTbl->get_Type(pIParam, &typeTag);
         flags = pIParam->pVTbl->get_Flags(pIParam);
         if ((flags & ECO_PARAM_OUT) == 0 && typeTag == ECO_TYPE_ASTRING) {
-            (*env)->ReleaseStringUTFChars(env, jArgs[index], *(char_t**)cArgs[index + 1]);
+            g_pIMem->pVTbl->Free(g_pIMem, *(char_t**)cArgs[index + 1]);
         }
         if ((flags & ECO_PARAM_OUT) == 0 && typeTag == ECO_TYPE_WSTRING) {
-            (*env)->ReleaseStringChars(env, jArgs[index], *(jchar**)cArgs[index + 1]);
+            g_pIMem->pVTbl->Free(g_pIMem, *(wchar_t**)cArgs[index + 1]);
         }
         if ((flags & ECO_PARAM_OUT) && typeTag == ECO_TYPE_UGUID) {
-            free(**(void***)cArgs[index + 1]);
+            g_pIMem->pVTbl->Free(g_pIMem, **(void***)cArgs[index + 1]);
         }
         if ((flags & ECO_PARAM_OUT) || typeTag == ECO_TYPE_UGUID) {
-            free(*(void**)cArgs[index + 1]);
+            g_pIMem->pVTbl->Free(g_pIMem, *(void**)cArgs[index + 1]);
         }
-        free(cArgs[index + 1]);
+        g_pIMem->pVTbl->Free(g_pIMem, cArgs[index + 1]);
     }
-    free(jArgs);
-    free(cArgs);
-    free(ffiTypes);
+    g_pIMem->pVTbl->Free(g_pIMem, jArgs);
+    g_pIMem->pVTbl->Free(g_pIMem, cArgs);
+    g_pIMem->pVTbl->Free(g_pIMem, ffiTypes);
 
     return result;
 }

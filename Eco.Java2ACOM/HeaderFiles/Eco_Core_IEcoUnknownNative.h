@@ -10,7 +10,7 @@ extern "C" {
 /*
  * Class:     Eco_Core_IEcoUnknownNative
  * Method:    QueryInterface
- * Signature: (LEco/Core/UGUID;LEco/Core/IEcoUnknownPtr;)S
+ * Signature: (LEco/Core/UGUID;LEco/Core/Pointer;)S
  */
 JNIEXPORT jshort JNICALL Java_Eco_Core_IEcoUnknownNative_QueryInterface
   (JNIEnv *, jobject, jobject, jobject);

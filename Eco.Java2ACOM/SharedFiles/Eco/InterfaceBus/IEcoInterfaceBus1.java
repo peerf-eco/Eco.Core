@@ -1,7 +1,7 @@
 package Eco.InterfaceBus;
 
 import Eco.Core.IEcoUnknown;
-import Eco.Core.IEcoUnknownPtr;
+import Eco.Core.Pointer;
 import Eco.Core.UGUID;
 import Eco.Annotations.EcoNative;
 
@@ -13,5 +13,5 @@ public interface IEcoInterfaceBus1 extends IEcoUnknown {
     short InitWith(Object heapStartAddress, int size);
     short RegisterComponent(UGUID rcid, IEcoUnknown iFactory);
     short UnRegisterComponent(UGUID rcid);
-    short QueryComponent(UGUID rcid, IEcoUnknown iUnkOuter, UGUID riid, IEcoUnknownPtr pIUnk);
+    short QueryComponent(UGUID rcid, IEcoUnknown iUnkOuter, UGUID riid, Pointer<IEcoUnknown> pIUnk);
 }

@@ -6,6 +6,6 @@ import Eco.Annotations.EcoNative;
 public interface IEcoConnectionPointContainer extends IEcoUnknown {
     UGUID IID = new UGUID((byte) 0x01, (byte) 0x10, new byte[]{0x00, 0x00, 0x00, 0x05, 0x00, 0x00, 0x00, 0x00, (byte) 0xC0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x46});
 
-    short EnumConnectionPoints(IEcoUnknownPtr pEnum);
-    short FindConnectionPoint(UGUID riid, IEcoUnknownPtr pCP);
+    short EnumConnectionPoints(Pointer<IEcoUnknown> pEnum);
+    short FindConnectionPoint(UGUID riid, Pointer<IEcoUnknown> pCP);
 }

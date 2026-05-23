@@ -2,7 +2,7 @@ package Eco.InterfaceBus;
 
 import Eco.Annotations.EcoNative;
 import Eco.Core.IEcoUnknown;
-import Eco.Core.IEcoUnknownPtr;
+import Eco.Core.Pointer;
 import Eco.Core.UGUID;
 
 @EcoNative
@@ -14,5 +14,5 @@ public interface IEcoInterfaceBus1FileExt extends IEcoUnknown {
     short set_SearchPath(String path);
     String get_SearchPath();
     short RegisterComponent(UGUID rcid, String filename);
-    short QueryComponent(String filename, UGUID rcid, IEcoUnknown iUnkOuter, UGUID riid, IEcoUnknownPtr pIUnk);
+    short QueryComponent(String filename, UGUID rcid, IEcoUnknown iUnkOuter, UGUID riid, Pointer<IEcoUnknown> pIUnk);
 }

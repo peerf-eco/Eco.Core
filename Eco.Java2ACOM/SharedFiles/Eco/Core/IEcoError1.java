@@ -10,5 +10,5 @@ public interface IEcoError1 extends IEcoUnknown {
     short get_ErrorMode();
     void set_LastError(short errCode);
     short get_LastError();
-    short get_Description(short errCode, String message, Short iSize);
+    short get_Description(short errCode, Pointer<String> message, Pointer<Short> iSize);
 }

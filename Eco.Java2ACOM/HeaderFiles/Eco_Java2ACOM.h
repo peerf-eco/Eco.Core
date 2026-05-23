@@ -3,9 +3,11 @@
 #include <jni.h>
 #include <ffi.h>
 #include "IEcoBase1.h"
+#include "IEcoMemoryAllocator1.h"
 #include "IEcoTypeLib1.h"
 #include "IEcoList1.h"
 
+IEcoMemoryAllocator1*  g_pIMem;
 IEcoTypeLib1* g_pITypeLib;
 IEcoList1* g_pIDescCacheList;
 
