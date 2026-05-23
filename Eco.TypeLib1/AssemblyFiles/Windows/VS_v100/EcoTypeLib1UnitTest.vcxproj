@@ -304,7 +304,7 @@
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <CompileAs>CompileAsC</CompileAs>
       <CallingConvention>StdCall</CallingConvention>
-      <AdditionalIncludeDirectories>..\..\..\UnitTestFiles\HeaderFiles;..\..\..\HeaderFiles;..\..\..\SharedFiles;$(ECO_FRAMEWORK)\Eco.Core1\SharedFiles;$(ECO_FRAMEWORK)\Eco.InterfaceBus1\SharedFiles;$(ECO_FRAMEWORK)\Eco.System1\SharedFiles;$(ECO_FRAMEWORK)\Eco.MemoryManager1\SharedFiles;$(ECO_FRAMEWORK)\Eco.FileSystemManagement1\SharedFiles;$(ECO_FRAMEWORK)\Eco.List1\SharedFiles;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..\UnitTestFiles\HeaderFiles;..\..\..\HeaderFiles;..\..\..\SharedFiles;$(ECO_FRAMEWORK)\Eco.Core1\SharedFiles;$(ECO_FRAMEWORK)\Eco.InterfaceBus1\SharedFiles;$(ECO_FRAMEWORK)\Eco.System1\SharedFiles;$(ECO_FRAMEWORK)\Eco.MemoryManager1\SharedFiles;$(ECO_FRAMEWORK)\Eco.FileSystemManagement1\SharedFiles;$(ECO_FRAMEWORK)\Eco.List1\SharedFiles;..\..\..\..\TestComponents\Eco.Test.C1\SharedFiles;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;ECO_WINDOWS;ECO_WIN32;ECO_X86_32;UGUID_UTILITY;ECO_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
@@ -349,6 +349,7 @@
     <ClInclude Include="..\..\..\UnitTestFiles\HeaderFiles\EcoTypeLib1Calculator.h" />
     <ClInclude Include="..\..\..\UnitTestFiles\HeaderFiles\EcoTypeLib1InterfaceBus1.h" />
     <ClInclude Include="..\..\..\UnitTestFiles\HeaderFiles\EcoTypeLib1List1.h" />
+    <ClInclude Include="..\..\..\UnitTestFiles\HeaderFiles\EcoTypeLib1TestC1.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\UnitTestFiles\SourceFiles\EcoTypeLib1.c" />
@@ -356,6 +357,7 @@
     <ClCompile Include="..\..\..\UnitTestFiles\SourceFiles\EcoTypeLib1Calculator.c" />
     <ClCompile Include="..\..\..\UnitTestFiles\SourceFiles\EcoTypeLib1InterfaceBus1.c" />
     <ClCompile Include="..\..\..\UnitTestFiles\SourceFiles\EcoTypeLib1List1.c" />
+    <ClCompile Include="..\..\..\UnitTestFiles\SourceFiles\EcoTypeLib1TestC1.c" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
