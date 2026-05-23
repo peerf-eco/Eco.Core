@@ -210,12 +210,12 @@ public class EcoTest implements EcoApp {
     }
 
     private short TestComponent() {
-        System.out.println("\n==== Test C ====");
+        System.out.println("\n==== Test Component ====");
 
         iTestC = new IEcoTest1Native();
         short result = iBus.QueryComponent(IdEcoTestC1.CID, new IEcoUnknownNative(), IEcoTest1.IID, new Pointer<>((iTestC)));
         if (result != 0) return result;
-        System.out.println("IEcoTestC1 QueryComponent: OK\n");
+        System.out.println("IEcoTest1 QueryComponent: OK\n");
 
         /* ==== TestInt8 ==== */
         byte int8_in = 12;
