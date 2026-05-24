@@ -75,7 +75,7 @@ ffi_type* GetFfiType(uint16_t typeTag) {
     return ECO_FFI_TYPES[typeTag];
 }
 
-EcoJavaProxy* CreateEcoJavaProxy(JNIEnv*, jobject, IEcoInterfaceDirectory1*, IEcoMemoryAllocator1*, IEcoTypeLib1*, const UGUID*, EcoJavaProxyGroup*);
+EcoJavaProxy* CreateEcoJavaProxy(JNIEnv*, jobject, IEcoInterfaceDirectory1*, IEcoMemoryAllocator1*, IEcoTypeLib1*, IEcoList1*, const UGUID*, EcoJavaProxyGroup*);
 
 JNIEnv* GetCurrentEnv(JavaVM* jvm) {
     JNIEnv* env = 0;
@@ -265,22 +265,57 @@ char_t* GenerateJniSignature(IEcoMethodDescriptor1* pIMethod, IEcoMemoryAllocato
     return result;
 }
 
-IEcoInterfaceDirectory1* GetInterfaceDirectoryByUGUID(IEcoTypeLib1* pITypeLib, IEcoMemoryAllocator1* pIMem, const UGUID* riid) {
+IEcoInterfaceDirectory1* GetInterfaceDirectoryByUGUID(IEcoList1* pDescCacheList, IEcoTypeLib1* pITypeLib, IEcoMemoryAllocator1* pIMem, const UGUID* riid) {
+    EcoDescCacheEntry* pDescCacheEntry = 0;
     IEcoInterfaceDirectory1* pIDirectory = 0;
+    IEcoInterfaceDirectoryEntry1* pIEntry = 0;
+    IEcoInterfaceDescriptor1* pIDesc = 0;
     char_t* fileName = 0;
+    uint32_t count = 0;
+    uint32_t index = 0;
     int16_t result = 0;
+
+    if (pDescCacheList != 0) {
+        count = pDescCacheList->pVTbl->Count(pDescCacheList);
+        for (index = 0; index < count; index++) {
+            pDescCacheEntry = (EcoDescCacheEntry*) pDescCacheList->pVTbl->Item(pDescCacheList, index);
+            if (IsEqualUGUID(&pDescCacheEntry->riid, riid)) {
+                pDescCacheEntry->pIDirectory->pVTbl->AddRef(pDescCacheEntry->pIDirectory);
+                return pDescCacheEntry->pIDirectory;
+            }
+        }
+    }
 
     fileName = UGUIDPtrToTypeLibFileName(riid, pIMem);
     result = pITypeLib->pVTbl->LoadFile(pITypeLib, fileName, &pIDirectory);
     if (result != 0) {
         char_t* rtPath = getenv("ECO_FRAMEWORK_RT");
-        char_t filePath[256] = "";
-        strcpy(filePath, rtPath);
-        strcat(filePath, "/");
-        strcat(filePath, fileName);
-        result = pITypeLib->pVTbl->LoadFile(pITypeLib, filePath, &pIDirectory);
+        if (rtPath != 0) {
+            char_t filePath[1024] = "";
+            strcpy(filePath, rtPath);
+            strcat(filePath, "/");
+            strcat(filePath, fileName);
+            result = pITypeLib->pVTbl->LoadFile(pITypeLib, filePath, &pIDirectory);
+        }
     }
     pIMem->pVTbl->Free(pIMem, fileName);
+
+    if (result != 0 || pIDirectory == 0) {
+        return 0;
+    }
+
+    if (pDescCacheList != 0) {
+        pDescCacheEntry = (EcoDescCacheEntry*) pIMem->pVTbl->Alloc(pIMem, sizeof(EcoDescCacheEntry));
+        pDescCacheEntry->riid = *riid;
+        pDescCacheEntry->pIDirectory = pIDirectory;
+        pDescCacheEntry->pIDesc = 0;
+        if (pIDirectory->pVTbl->GetEntryByIID(pIDirectory, riid, &pIEntry) == 0) {
+            pIEntry->pVTbl->get_Descriptor(pIEntry, &pIDesc);
+            pDescCacheEntry->pIDesc = pIDesc;
+        }
+        pDescCacheList->pVTbl->Add(pDescCacheList, pDescCacheEntry);
+        pIDirectory->pVTbl->AddRef(pIDirectory);
+    }
 
     return pIDirectory;
 }
@@ -523,9 +558,9 @@ void JavaObjectToParam(EcoJavaProxy* proxy, jobject obj, uint16_t typeTag, void*
         (*env)->ReleaseStringChars(env, obj, wide);
     } else if (typeTag == ECO_TYPE_INTERFACE) {
         UGUID riid = GetUGUIDFromInterfaceJavaObject(env, obj);
-        IEcoInterfaceDirectory1* pIDirectory = GetInterfaceDirectoryByUGUID(proxy->m_pITypeLib, proxy->m_pIMem, &riid);
+        IEcoInterfaceDirectory1* pIDirectory = GetInterfaceDirectoryByUGUID(proxy->m_pDescCacheList, proxy->m_pITypeLib, proxy->m_pIMem, &riid);
         if (pIDirectory == 0) { **(void***)arg = NULL; return; }
-        **(EcoJavaProxy***)arg = CreateEcoJavaProxy(env, obj, pIDirectory, proxy->m_pIMem, proxy->m_pITypeLib, &riid, 0);
+        **(EcoJavaProxy***)arg = CreateEcoJavaProxy(env, obj, pIDirectory, proxy->m_pIMem, proxy->m_pITypeLib, proxy->m_pDescCacheList, &riid, 0);
     } else if (typeTag == ECO_TYPE_UGUID) {
         **(UGUID***)arg = proxy->m_pIMem->pVTbl->Alloc(proxy->m_pIMem, sizeof(UGUID));
         ***(UGUID***)arg = JavaObjectToUGUIDPtr(env, obj);
@@ -577,9 +612,9 @@ void CallJavaMethod(EcoJavaProxy* proxy, jobject obj, jmethodID method, jvalue* 
             (*env)->ReleaseStringChars(env, retObj, wide);
         } else if (typeTag == ECO_TYPE_INTERFACE) {
             UGUID riid = GetUGUIDFromInterfaceJavaObject(env, retObj);
-            IEcoInterfaceDirectory1* pIDirectory = GetInterfaceDirectoryByUGUID(proxy->m_pITypeLib, proxy->m_pIMem, &riid);
+            IEcoInterfaceDirectory1* pIDirectory = GetInterfaceDirectoryByUGUID(proxy->m_pDescCacheList, proxy->m_pITypeLib, proxy->m_pIMem, &riid);
             if (pIDirectory == 0) return;
-            *(EcoJavaProxy**)ret = CreateEcoJavaProxy(env, retObj, pIDirectory, proxy->m_pIMem, proxy->m_pITypeLib, &riid, 0);
+            *(EcoJavaProxy**)ret = CreateEcoJavaProxy(env, retObj, pIDirectory, proxy->m_pIMem, proxy->m_pITypeLib, proxy->m_pDescCacheList, &riid, 0);
         } else if (typeTag == ECO_TYPE_UGUID) {
             *(UGUID**)ret = proxy->m_pIMem->pVTbl->Alloc(proxy->m_pIMem, sizeof(UGUID));
             **(UGUID**)ret = JavaObjectToUGUIDPtr(env, retObj);
@@ -636,12 +671,12 @@ static int16_t ECOCALLMETHOD EcoJavaProxy_IEcoUnknown_QueryInterface(IEcoUnknown
     obj = GetObjectFromPointer(env, obj);
     if (obj == NULL) { (*env)->PopLocalFrame(env, NULL); return ERR_ECO_FAIL; }
 
-    pIDirectory = GetInterfaceDirectoryByUGUID(proxy->m_pITypeLib, proxy->m_pIMem, riid);
+    pIDirectory = GetInterfaceDirectoryByUGUID(proxy->m_pDescCacheList, proxy->m_pITypeLib, proxy->m_pIMem, riid);
     if (pIDirectory == 0) {
         (*env)->PopLocalFrame(env, NULL);
         return ERR_ECO_NOINTERFACE;
     }
-    *(EcoJavaProxy**)ppv = CreateEcoJavaProxy(env, obj, pIDirectory, proxy->m_pIMem, proxy->m_pITypeLib, riid, proxy->m_group);
+    *(EcoJavaProxy**)ppv = CreateEcoJavaProxy(env, obj, pIDirectory, proxy->m_pIMem, proxy->m_pITypeLib, proxy->m_pDescCacheList, riid, proxy->m_group);
 
     (*env)->PopLocalFrame(env, NULL);
     return ERR_ECO_SUCCESES;
@@ -772,7 +807,7 @@ void EcoJavaProxy_GlobalDispatcher(ffi_cif* cif, void* ret, void** args, void* u
     (*env)->PopLocalFrame(env, NULL);
 }
 
-EcoJavaProxy* CreateEcoJavaProxy(JNIEnv* env, jobject obj, IEcoInterfaceDirectory1* pIDirectory, IEcoMemoryAllocator1* pIMem, IEcoTypeLib1* pITypeLib, const UGUID* riid, EcoJavaProxyGroup* group) {
+EcoJavaProxy* CreateEcoJavaProxy(JNIEnv* env, jobject obj, IEcoInterfaceDirectory1* pIDirectory, IEcoMemoryAllocator1* pIMem, IEcoTypeLib1* pITypeLib, IEcoList1* pDescCacheList, const UGUID* riid, EcoJavaProxyGroup* group) {
     IEcoInterfaceDirectoryEntry1* pIEntry = 0;
     IEcoInterfaceDescriptor1* pIDesc = 0;
     uint16_t mCount = 0;
@@ -788,6 +823,7 @@ EcoJavaProxy* CreateEcoJavaProxy(JNIEnv* env, jobject obj, IEcoInterfaceDirector
     proxy->m_cRef = 1;
     proxy->m_pIMem = pIMem;
     proxy->m_pITypeLib = pITypeLib;
+    proxy->m_pDescCacheList = pDescCacheList;
     proxy->m_pIDirectory = pIDirectory;
     proxy->m_pIDesc = pIDesc;
     (*env)->GetJavaVM(env, &proxy->m_jvm);
@@ -1167,12 +1203,12 @@ static int16_t ECOCALLMETHOD CEcoACOM2Java_3F41E2AA_QueryComponent(/*in*/ IEcoAC
     obj = GetObjectFromPointer(env, obj);
     if (obj == NULL) { (*env)->PopLocalFrame(env, NULL); return ERR_ECO_FAIL; }
 
-    pIDirectory = GetInterfaceDirectoryByUGUID(pCMe->m_pITypeLib, pCMe->m_pIMem, riid);
+    pIDirectory = GetInterfaceDirectoryByUGUID(pCMe->m_descCacheList, pCMe->m_pITypeLib, pCMe->m_pIMem, riid);
     if (pIDirectory == 0) {
         (*env)->PopLocalFrame(env, NULL);
         return ERR_ECO_NOINTERFACE;
     }
-    *(EcoJavaProxy**)ppv = CreateEcoJavaProxy(env, obj, pIDirectory, pCMe->m_pIMem, pCMe->m_pITypeLib, riid, 0);
+    *(EcoJavaProxy**)ppv = CreateEcoJavaProxy(env, obj, pIDirectory, pCMe->m_pIMem, pCMe->m_pITypeLib, pCMe->m_descCacheList, riid, 0);
     (*env)->PopLocalFrame(env, NULL);
 
     return ERR_ECO_SUCCESES;
@@ -1235,6 +1271,12 @@ static int16_t ECOCALLMETHOD initCEcoACOM2Java_3F41E2AA(/*in*/ CEcoACOM2Java_3F4
 
     result = pIBus->pVTbl->QueryComponent(pIBus, &CID_EcoList1, 0, &IID_IEcoList1, (void**) &pCMe->m_componentFactories);
     if (result != 0 || pCMe->m_componentFactories == 0) {
+        pIBus->pVTbl->Release(pIBus);
+        return result;
+    }
+
+    result = pIBus->pVTbl->QueryComponent(pIBus, &CID_EcoList1, 0, &IID_IEcoList1, (void**) &pCMe->m_descCacheList);
+    if (result != 0 || pCMe->m_descCacheList == 0) {
         pIBus->pVTbl->Release(pIBus);
         return result;
     }
@@ -1311,6 +1353,24 @@ static void ECOCALLMETHOD deleteCEcoACOM2Java_3F41E2AA(/* in */ CEcoACOM2Java_3F
         list->pVTbl->Clear(list);
         list->pVTbl->Release(list);
     }
+    if (pCMe->m_descCacheList != 0) {
+        IEcoList1* list = pCMe->m_descCacheList;
+        uint32_t count = list->pVTbl->Count(list);
+        uint32_t i = 0;
+        for (i = 0; i < count; i++) {
+            EcoDescCacheEntry* entry = (EcoDescCacheEntry*) list->pVTbl->Item(list, i);
+            if (entry != 0) {
+                if (entry->pIDirectory != 0) {
+                    entry->pIDirectory->pVTbl->Release(entry->pIDirectory);
+                }
+                if (pIMem != 0) {
+                    pIMem->pVTbl->Free(pIMem, entry);
+                }
+            }
+        }
+        list->pVTbl->Clear(list);
+        list->pVTbl->Release(list);
+    }
     if (pCMe->m_pITypeLib != 0) {
         pCMe->m_pITypeLib->pVTbl->Release(pCMe->m_pITypeLib);
     }
@@ -1342,14 +1402,15 @@ IEcoACOM2JavaVTbl g_xED2D1283E26348DCB9A889E10C8C3657VTbl_3F41E2AA = {
 /* Object Instance */
 CEcoACOM2Java_3F41E2AA g_xCEcoACOM2Java_3F41E2AA = {
     &g_xED2D1283E26348DCB9A889E10C8C3657VTbl_3F41E2AA,
-   
+
     initCEcoACOM2Java_3F41E2AA,
     createCEcoACOM2Java_3F41E2AA,
     deleteCEcoACOM2Java_3F41E2AA,
     1, /* m_cRef */
+    0, /* m_pIMem */
     0, /* m_pISys */
-    0, /* m_pISys */
-    0,  /* m_pITypeLib */
-    0,  /* m_jvm */
-    0  /* m_componentFactories */
+    0, /* m_pITypeLib */
+    0, /* m_jvm */
+    0, /* m_componentFactories */
+    0  /* m_descCacheList */
 };

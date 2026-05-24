@@ -60,9 +60,16 @@ typedef struct CEcoACOM2Java_3F41E2AA {
     IEcoTypeLib1* m_pITypeLib;
     JavaVM* m_jvm;
     IEcoList1* m_componentFactories;
+    IEcoList1* m_descCacheList;
 
 } CEcoACOM2Java_3F41E2AA;
 
+
+typedef struct EcoDescCacheEntry {
+    UGUID riid;
+    IEcoInterfaceDirectory1* pIDirectory;
+    IEcoInterfaceDescriptor1* pIDesc;
+} EcoDescCacheEntry;
 
 typedef struct MethodContext {
     struct EcoJavaProxy* proxy;
@@ -83,6 +90,7 @@ typedef struct EcoJavaProxy {
     uint32_t m_cRef;
     IEcoMemoryAllocator1* m_pIMem;
     IEcoTypeLib1* m_pITypeLib;
+    IEcoList1* m_pDescCacheList;
     IEcoInterfaceDirectory1* m_pIDirectory;
     IEcoInterfaceDescriptor1* m_pIDesc;
     JavaVM* m_jvm;
