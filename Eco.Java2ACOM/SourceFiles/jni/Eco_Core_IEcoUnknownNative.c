@@ -161,11 +161,13 @@ IEcoInterfaceDescriptor1* GetInterfaceDescriptorByUGUID(IEcoTypeLib1* pITypeLib,
     result = pITypeLib->pVTbl->LoadFile(pITypeLib, fileName, &pIDirectory);
     if (result != 0) {
         char_t* rtPath = getenv("ECO_FRAMEWORK_RT");
-        char_t filePath[256] = "";
-        strcpy(filePath, rtPath);
-        strcat(filePath, "/");
-        strcat(filePath, fileName);
-        result = pITypeLib->pVTbl->LoadFile(pITypeLib, filePath, &pIDirectory);
+        if (rtPath != 0) {
+            char_t filePath[1024] = "";
+            strcpy(filePath, rtPath);
+            strcat(filePath, "/");
+            strcat(filePath, fileName);
+            result = pITypeLib->pVTbl->LoadFile(pITypeLib, filePath, &pIDirectory);
+        }
     }
     free(fileName);
 
@@ -399,9 +401,13 @@ JNIEXPORT jshort JNICALL Java_Eco_Core_IEcoUnknownNative_QueryInterface(JNIEnv* 
 
     if ((*env)->ExceptionCheck(env)) return -1;
     result = me->pVTbl->QueryInterface(me, &riid, &pv);
+    if (result != 0) {
+        return result;
+    }
     iUnk = GetObjectFromPointer(env, pIUnkObj);
     if (iUnk == NULL) return result;
     SetPointerToInterface(env, iUnk, pv);
+
     return result;
 }
 

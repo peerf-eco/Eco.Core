@@ -115,25 +115,32 @@ jobject UGUIDPtrToJavaObject(JNIEnv* env, const UGUID* uguid) {
     }
 }
 
-char_t* UGUIDPtrToTypeLibFileName(const UGUID* uguid) {
-    char_t result[256] = "";
+char_t* UGUIDPtrToTypeLibFileName(const UGUID* uguid, IEcoMemoryAllocator1* pIMem) {
+    char_t fileName[512] = "";
+    char_t* result = 0;
+    uint32_t size = 0;
     byte_t i;
+
     for (i = 0; i < uguid->Length; i++) {
         byte_t b = uguid->Data[i] >> 4;
         if (b < 10) {
-            result[i * 2] = b + '0';
+            fileName[i * 2] = b + '0';
         } else {
-            result[i * 2] = (b - 10) + 'A';
+            fileName[i * 2] = (b - 10) + 'A';
         }
         b = uguid->Data[i] & 0xF;
         if (b < 10) {
-            result[i * 2 + 1] = b + '0';
+            fileName[i * 2 + 1] = b + '0';
         } else {
-            result[i * 2 + 1] = (b - 10) + 'A';
+            fileName[i * 2 + 1] = (b - 10) + 'A';
         }
     }
-    strcat(result, ".etl");
-    return _strdup(result);
+    strcat(fileName, ".etl");
+
+    size = strlen(fileName) + 1;
+    result = pIMem->pVTbl->Alloc(pIMem, size);
+    pIMem->pVTbl->Copy(pIMem, result, fileName, size);
+    return result;
 }
 
 UGUID JavaObjectToUGUIDPtr(JNIEnv* env, jobject obj) {
@@ -217,7 +224,7 @@ void AddClassPath(JNIEnv* env, char_t* classpath) {
 }
 
 char_t* GenerateJniSignature(IEcoMethodDescriptor1* pIMethod, IEcoMemoryAllocator1* pIMem) {
-    char_t sig[256] = "(";
+    char_t sig[1024] = "(";
     uint8_t count = pIMethod->pVTbl->get_ParamCount(pIMethod);
     IEcoParamDescriptor1* pIParam = 0;
     uint16_t typeTag = 0;
@@ -248,12 +255,12 @@ char_t* GenerateJniSignature(IEcoMethodDescriptor1* pIMethod, IEcoMemoryAllocato
     return result;
 }
 
-IEcoInterfaceDirectory1* GetInterfaceDirectoryByUGUID(IEcoTypeLib1* pITypeLib, const UGUID* riid) {
+IEcoInterfaceDirectory1* GetInterfaceDirectoryByUGUID(IEcoTypeLib1* pITypeLib, IEcoMemoryAllocator1* pIMem, const UGUID* riid) {
     IEcoInterfaceDirectory1* pIDirectory = 0;
     char_t* fileName = 0;
     int16_t result = 0;
 
-    fileName = UGUIDPtrToTypeLibFileName(riid);
+    fileName = UGUIDPtrToTypeLibFileName(riid, pIMem);
     result = pITypeLib->pVTbl->LoadFile(pITypeLib, fileName, &pIDirectory);
     if (result != 0) {
         char_t* rtPath = getenv("ECO_FRAMEWORK_RT");
@@ -263,7 +270,7 @@ IEcoInterfaceDirectory1* GetInterfaceDirectoryByUGUID(IEcoTypeLib1* pITypeLib, c
         strcat(filePath, fileName);
         result = pITypeLib->pVTbl->LoadFile(pITypeLib, filePath, &pIDirectory);
     }
-    free(fileName);
+    pIMem->pVTbl->Free(pIMem, fileName);
 
     return pIDirectory;
 }
@@ -506,13 +513,13 @@ void JavaObjectToParam(EcoJavaProxy* proxy, jobject obj, uint16_t typeTag, void*
         (*env)->ReleaseStringChars(env, obj, wide);
     } else if (typeTag == ECO_TYPE_INTERFACE) {
         UGUID riid = GetUGUIDFromInterfaceJavaObject(env, obj);
-        IEcoInterfaceDirectory1* pIDirectory = GetInterfaceDirectoryByUGUID(proxy->m_pITypeLib, &riid);
+        IEcoInterfaceDirectory1* pIDirectory = GetInterfaceDirectoryByUGUID(proxy->m_pITypeLib, proxy->m_pIMem, &riid);
+        if (pIDirectory == 0) { **(void***)arg = NULL; return; }
         **(EcoJavaProxy***)arg = CreateEcoJavaProxy(env, obj, pIDirectory, proxy->m_pIMem, proxy->m_pITypeLib, &riid, 0);
     } else if (typeTag == ECO_TYPE_UGUID) {
         **(UGUID***)arg = proxy->m_pIMem->pVTbl->Alloc(proxy->m_pIMem, sizeof(UGUID));
         ***(UGUID***)arg = JavaObjectToUGUIDPtr(env, obj);
     } else if (typeTag == ECO_TYPE_VOIDPTR) {
-        // **(jobject**)arg = obj;
         jclass clazz = (*env)->GetObjectClass(env, obj);
         jfieldID field = (*env)->GetFieldID(env, clazz, "value", "I");
         if (field == NULL) return;
@@ -560,7 +567,8 @@ void CallJavaMethod(EcoJavaProxy* proxy, jobject obj, jmethodID method, jvalue* 
             (*env)->ReleaseStringChars(env, retObj, wide);
         } else if (typeTag == ECO_TYPE_INTERFACE) {
             UGUID riid = GetUGUIDFromInterfaceJavaObject(env, retObj);
-            IEcoInterfaceDirectory1* pIDirectory = GetInterfaceDirectoryByUGUID(proxy->m_pITypeLib, &riid);
+            IEcoInterfaceDirectory1* pIDirectory = GetInterfaceDirectoryByUGUID(proxy->m_pITypeLib, proxy->m_pIMem, &riid);
+            if (pIDirectory == 0) return;
             *(EcoJavaProxy**)ret = CreateEcoJavaProxy(env, retObj, pIDirectory, proxy->m_pIMem, proxy->m_pITypeLib, &riid, 0);
         } else if (typeTag == ECO_TYPE_UGUID) {
             *(UGUID**)ret = proxy->m_pIMem->pVTbl->Alloc(proxy->m_pIMem, sizeof(UGUID));
@@ -568,14 +576,10 @@ void CallJavaMethod(EcoJavaProxy* proxy, jobject obj, jmethodID method, jvalue* 
         } else if (typeTag == ECO_TYPE_VOIDPTR) {
             jclass clazz = (*env)->GetObjectClass(env, retObj);
             jfieldID field = (*env)->GetFieldID(env, clazz, "value", "I");
-            if (field == NULL) {
-                *(jobject*)ret = retObj;
-                return;
-            }
+            if (field == NULL) return;
             *(void**)ret = (*env)->GetIntField(env, retObj, field);
         }
     }
-    (*env)->ExceptionCheck(env);
 }
 
 
@@ -619,7 +623,10 @@ static int16_t ECOCALLMETHOD EcoJavaProxy_IEcoUnknown_QueryInterface(IEcoUnknown
     obj = GetObjectFromPointer(env, obj);
     if (obj == NULL) return ERR_ECO_FAIL;
 
-    pIDirectory = GetInterfaceDirectoryByUGUID(proxy->m_pITypeLib, riid);
+    pIDirectory = GetInterfaceDirectoryByUGUID(proxy->m_pITypeLib, proxy->m_pIMem, riid);
+    if (pIDirectory == 0) {
+        return ERR_ECO_NOINTERFACE;
+    }
     *(EcoJavaProxy**)ppv = CreateEcoJavaProxy(env, obj, pIDirectory, proxy->m_pIMem, proxy->m_pITypeLib, riid, proxy->m_group);
 
     return ERR_ECO_SUCCESES;
@@ -947,6 +954,9 @@ static int16_t ECOCALLMETHOD CEcoACOM2Java_3F41E2AA_CreateJavaVM(/*in*/ IEcoACOM
     }
     pCMe->m_pIMem->pVTbl->Free(pCMe->m_pIMem, vm_args.options);
 
+    if (pCMe->m_jvm == 0) {
+        return ERR_ECO_FAIL;
+    }
     return (int16_t) result;
 }
 
@@ -1118,7 +1128,10 @@ static int16_t ECOCALLMETHOD CEcoACOM2Java_3F41E2AA_QueryComponent(/*in*/ IEcoAC
     obj = GetObjectFromPointer(env, obj);
     if (obj == NULL) return ERR_ECO_FAIL;
 
-    pIDirectory = GetInterfaceDirectoryByUGUID(pCMe->m_pITypeLib, riid);
+    pIDirectory = GetInterfaceDirectoryByUGUID(pCMe->m_pITypeLib, pCMe->m_pIMem, riid);
+    if (pIDirectory == 0) {
+        return ERR_ECO_NOINTERFACE;
+    }
     *(EcoJavaProxy**)ppv = CreateEcoJavaProxy(env, obj, pIDirectory, pCMe->m_pIMem, pCMe->m_pITypeLib, riid, 0);
 
     return ERR_ECO_SUCCESES;
@@ -1169,10 +1182,6 @@ static int16_t ECOCALLMETHOD initCEcoACOM2Java_3F41E2AA(/*in*/ CEcoACOM2Java_3F4
     /* Check */
     if (result != 0 || pCMe->m_pIMem == 0) {
         result = ERR_ECO_GET_MEMORY_ALLOCATOR;
-    }
-
-    if (me == 0) {
-        return ERR_ECO_POINTER;
     }
 
     result = pIBus->pVTbl->QueryComponent(pIBus, &CID_EcoTypeLib1, 0, &IID_IEcoTypeLib1, (void**) &pCMe->m_pITypeLib);
