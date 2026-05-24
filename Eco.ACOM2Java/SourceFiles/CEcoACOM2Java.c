@@ -216,18 +216,19 @@ void AddClassPath(JNIEnv* env, char_t* classpath) {
     (*env)->ExceptionCheck(env);
 }
 
-char_t* GenerateJniSignature(IEcoMethodDescriptor1* pIMethod) {
+char_t* GenerateJniSignature(IEcoMethodDescriptor1* pIMethod, IEcoMemoryAllocator1* pIMem) {
     char_t sig[256] = "(";
     uint8_t count = pIMethod->pVTbl->get_ParamCount(pIMethod);
     IEcoParamDescriptor1* pIParam = 0;
     uint16_t typeTag = 0;
     uint8_t index = 0;
     uint8_t flags = 0;
-    int16_t result = 0;
+    uint32_t size = 0;
+    char_t* result = 0;
 
     for (index = 0; index < count; index++) {
-        result = pIMethod->pVTbl->GetParamAtIndex(pIMethod, index, &pIParam);
-        result = pIParam->pVTbl->get_Type(pIParam, &typeTag);
+        pIMethod->pVTbl->GetParamAtIndex(pIMethod, index, &pIParam);
+        pIParam->pVTbl->get_Type(pIParam, &typeTag);
         flags = pIParam->pVTbl->get_Flags(pIParam);
         if (flags & ECO_PARAM_OUT) {
             sprintf(sig + strlen(sig), "LEco/Core/Pointer;");
@@ -237,11 +238,14 @@ char_t* GenerateJniSignature(IEcoMethodDescriptor1* pIMethod) {
     }
     strcat(sig, ")");
 
-    result = pIMethod->pVTbl->get_Result(pIMethod, &pIParam);
-    result = pIParam->pVTbl->get_Type(pIParam, &typeTag);
+    pIMethod->pVTbl->get_Result(pIMethod, &pIParam);
+    pIParam->pVTbl->get_Type(pIParam, &typeTag);
     strcat(sig, ECO_TYPE_MAP[typeTag].jniSignature);
 
-    return _strdup(sig);
+    size = strlen(sig) + 1;
+    result = pIMem->pVTbl->Alloc(pIMem, size);
+    pIMem->pVTbl->Copy(pIMem, result, sig, size);
+    return result;
 }
 
 IEcoInterfaceDirectory1* GetInterfaceDirectoryByUGUID(IEcoTypeLib1* pITypeLib, const UGUID* riid) {
@@ -543,9 +547,17 @@ void CallJavaMethod(EcoJavaProxy* proxy, jobject obj, jmethodID method, jvalue* 
         jobject retObj = (*env)->CallObjectMethodA(env, obj, method, jArgs);
         if ((*env)->ExceptionCheck(env) || retObj == 0) return;
         if (typeTag == ECO_TYPE_ASTRING) {
-            *(char_t**)ret = (*env)->GetStringUTFChars(env, retObj, 0);
+            const char_t* utf = (*env)->GetStringUTFChars(env, retObj, 0);
+            uint32_t size = strlen(utf) + 1;
+            *(char_t**)ret = proxy->m_pIMem->pVTbl->Alloc(proxy->m_pIMem, size);
+            proxy->m_pIMem->pVTbl->Copy(proxy->m_pIMem, *(char_t**)ret, utf, size);
+            (*env)->ReleaseStringUTFChars(env, retObj, utf);
         } else if (typeTag == ECO_TYPE_WSTRING) {
-            *(wchar_t**)ret = (*env)->GetStringChars(env, retObj, 0);
+            const wchar_t* wide = (*env)->GetStringChars(env, retObj, 0);
+            uint32_t size = (wcslen(wide) + 1) * sizeof(wchar_t);
+            *(wchar_t**)ret = proxy->m_pIMem->pVTbl->Alloc(proxy->m_pIMem, size);
+            proxy->m_pIMem->pVTbl->Copy(proxy->m_pIMem, *(wchar_t**)ret, wide, size);
+            (*env)->ReleaseStringChars(env, retObj, wide);
         } else if (typeTag == ECO_TYPE_INTERFACE) {
             UGUID riid = GetUGUIDFromInterfaceJavaObject(env, retObj);
             IEcoInterfaceDirectory1* pIDirectory = GetInterfaceDirectoryByUGUID(proxy->m_pITypeLib, &riid);
@@ -554,10 +566,12 @@ void CallJavaMethod(EcoJavaProxy* proxy, jobject obj, jmethodID method, jvalue* 
             *(UGUID**)ret = proxy->m_pIMem->pVTbl->Alloc(proxy->m_pIMem, sizeof(UGUID));
             **(UGUID**)ret = JavaObjectToUGUIDPtr(env, retObj);
         } else if (typeTag == ECO_TYPE_VOIDPTR) {
-            // *(jobject*)ret = retObj;
             jclass clazz = (*env)->GetObjectClass(env, retObj);
             jfieldID field = (*env)->GetFieldID(env, clazz, "value", "I");
-            if (field == NULL) return;
+            if (field == NULL) {
+                *(jobject*)ret = retObj;
+                return;
+            }
             *(void**)ret = (*env)->GetIntField(env, retObj, field);
         }
     }
@@ -648,6 +662,8 @@ static uint32_t ECOCALLMETHOD EcoJavaProxy_IEcoUnknown_Release(IEcoUnknownPtr_t 
         EcoJavaProxyGroup* group = proxy->m_group;
         for (; index < count; index++) {
             ffi_closure_free(proxy->m_methods[index].closure);
+            proxy->m_pIMem->pVTbl->Free(proxy->m_pIMem, proxy->m_methods[index].jniSig);
+            proxy->m_pIMem->pVTbl->Free(proxy->m_pIMem, proxy->m_methods[index].argTypes);
         }
         (*env)->DeleteGlobalRef(env, proxy->m_obj);
 
@@ -668,6 +684,7 @@ static uint32_t ECOCALLMETHOD EcoJavaProxy_IEcoUnknown_Release(IEcoUnknownPtr_t 
         }
 
         proxy->m_pIDirectory->pVTbl->Release(proxy->m_pIDirectory);
+        proxy->m_pIMem->pVTbl->Free(proxy->m_pIMem, proxy->m_methods);
         proxy->m_pIMem->pVTbl->Free(proxy->m_pIMem, proxy->m_pVTbl);
         proxy->m_pIMem->pVTbl->Free(proxy->m_pIMem, proxy);
     }
@@ -769,7 +786,6 @@ EcoJavaProxy* CreateEcoJavaProxy(JNIEnv* env, jobject obj, IEcoInterfaceDirector
         uint8_t flags = 0;
         uint8_t pCount = 0;
         uint8_t pIndex = 0;
-        ffi_type** argTypes = 0;
         ffi_type* retType = 0;
 
         result = pIDesc->pVTbl->get_MethodAtIndex(pIDesc, mIndex, &pIMethod);
@@ -777,16 +793,16 @@ EcoJavaProxy* CreateEcoJavaProxy(JNIEnv* env, jobject obj, IEcoInterfaceDirector
         ctx->methodIndex = mIndex;
         ctx->methodDesc = pIMethod;
         pCount = pIMethod->pVTbl->get_ParamCount(pIMethod);
-        argTypes = (ffi_type**) pIMem->pVTbl->Alloc(pIMem, sizeof(ffi_type*) * (pCount + 1));
-        argTypes[0] = &ffi_type_pointer;
+        ctx->argTypes = (ffi_type**) pIMem->pVTbl->Alloc(pIMem, sizeof(ffi_type*) * (pCount + 1));
+        ctx->argTypes[0] = &ffi_type_pointer;
         for (pIndex = 0; pIndex < pCount; pIndex++) {
             result = pIMethod->pVTbl->GetParamAtIndex(pIMethod, pIndex, &pIParam);
             result = pIParam->pVTbl->get_Type(pIParam, &typeTag);
             flags = pIParam->pVTbl->get_Flags(pIParam);
             if (flags & ECO_PARAM_OUT) {
-                argTypes[pIndex + 1] = &ffi_type_pointer;
+                ctx->argTypes[pIndex + 1] = &ffi_type_pointer;
             } else if (flags & ECO_PARAM_IN) {
-                argTypes[pIndex + 1] = GetFfiType(typeTag);
+                ctx->argTypes[pIndex + 1] = GetFfiType(typeTag);
             }
         }
         result = pIMethod->pVTbl->get_Result(pIMethod, &pIParam);
@@ -794,11 +810,11 @@ EcoJavaProxy* CreateEcoJavaProxy(JNIEnv* env, jobject obj, IEcoInterfaceDirector
         retType = GetFfiType(typeTag);
 
         ctx->closure = ffi_closure_alloc(sizeof(ffi_closure), &proxy->m_pVTbl[mIndex + 3]);
-        ffi_prep_cif(&ctx->cif, FFI_STDCALL, pCount + 1, retType, argTypes);
+        ffi_prep_cif(&ctx->cif, FFI_STDCALL, pCount + 1, retType, ctx->argTypes);
         ffi_prep_closure_loc(ctx->closure, &ctx->cif, EcoJavaProxy_GlobalDispatcher, ctx, proxy->m_pVTbl[mIndex + 3]);
 
         result = pIMethod->pVTbl->get_Name(pIMethod, &ctx->jniName);
-        ctx->jniSig = GenerateJniSignature(pIMethod);
+        ctx->jniSig = GenerateJniSignature(pIMethod, pIMem);
     }
 
     return proxy;

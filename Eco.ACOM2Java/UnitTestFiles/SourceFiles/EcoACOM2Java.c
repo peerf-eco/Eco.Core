@@ -133,7 +133,6 @@ int16_t TestCalculator(IEcoACOM2Java* pIEcoACOM2Java) {
     return result;
 }
 
-/* Длина широкой строки без зависимости от <wchar.h>. */
 static uint32_t TestComponent_WStrLen(const wchar_t* s) {
     uint32_t n = 0;
     if (s == 0) return 0;
@@ -141,22 +140,10 @@ static uint32_t TestComponent_WStrLen(const wchar_t* s) {
     return n;
 }
 
-/* Сравнение широких строк. */
 static int TestComponent_WStrEq(const wchar_t* a, const wchar_t* b) {
     if (a == 0 || b == 0) return a == b;
     while (*a != 0 && *a == *b) { a++; b++; }
     return *a == *b;
-}
-
-/* Сравнение UGUID по содержимому. */
-static int TestComponent_UGUIDEq(const UGUID* a, const UGUID* b) {
-    uint8_t i;
-    if (a == 0 || b == 0) return a == b;
-    if (a->Preamble != b->Preamble || a->Length != b->Length) return 0;
-    for (i = 0; i < a->Length; i++) {
-        if (a->Data[i] != b->Data[i]) return 0;
-    }
-    return 1;
 }
 
 int16_t TestComponent(IEcoACOM2Java* pIEcoACOM2Java, IEcoMemoryAllocator1* pIMem) {
@@ -410,7 +397,7 @@ int16_t TestComponent(IEcoACOM2Java* pIEcoACOM2Java, IEcoMemoryAllocator1* pIMem
     {
         char_t* in    = "IN";
         char_t  inOutBuf[] = "INOUT";
-        char_t* inOut = inOutBuf;  /* INOUT-память на стеке: исходное значение */
+        char_t* inOut = inOutBuf;
         char_t* out   = 0;
         char_t* res   = pITest->pVTbl->TestAString(pITest, in, &inOut, &out);
         printf("%s\n", res != 0 ? res : "(null)");
@@ -425,10 +412,9 @@ int16_t TestComponent(IEcoACOM2Java* pIEcoACOM2Java, IEcoMemoryAllocator1* pIMem
             printf("TestAString: Fail\n\n");
             result = ERR_ECO_FAIL;
         }
-        /* Освобождаем строки, выделенные мостом через IEcoMemoryAllocator1. */
         if (inOut != 0 && inOut != inOutBuf) pIMem->pVTbl->Free(pIMem, inOut);
         if (out != 0) pIMem->pVTbl->Free(pIMem, out);
-        /* res получается через GetStringUTFChars в мосте, ответственность за освобождение остается на мосте. */
+        if (res != 0) pIMem->pVTbl->Free(pIMem, res);
     }
 
     /* ==== TestWString ==== */
@@ -464,6 +450,7 @@ int16_t TestComponent(IEcoACOM2Java* pIEcoACOM2Java, IEcoMemoryAllocator1* pIMem
         }
         if (inOut != 0 && inOut != inOutBuf) pIMem->pVTbl->Free(pIMem, inOut);
         if (out != 0) pIMem->pVTbl->Free(pIMem, out);
+        if (res != 0) pIMem->pVTbl->Free(pIMem, res);
     }
 
     /* ==== TestUGUID ==== */
@@ -479,19 +466,16 @@ int16_t TestComponent(IEcoACOM2Java* pIEcoACOM2Java, IEcoMemoryAllocator1* pIMem
         printf("inOut first byte = 0x%02X (expected 0x00)\n", inOut != 0 ? (unsigned)inOut->Data[0] : 0u);
         printf("out first byte   = 0x%02X (expected 0x11)\n", out   != 0 ? (unsigned)out->Data[0]   : 0u);
         if (res != 0 && inOut != 0 && out != 0 &&
-            TestComponent_UGUIDEq(res,   &expectRes) &&
-            TestComponent_UGUIDEq(inOut, &inUg)      &&
-            TestComponent_UGUIDEq(out,   &expectOut)) {
+            IsEqualUGUID(res,   &expectRes) &&
+            IsEqualUGUID(inOut, &inUg)      &&
+            IsEqualUGUID(out,   &expectOut)) {
             printf("TestUGUID: OK\n\n");
         } else {
             printf("TestUGUID: Fail\n\n");
             result = ERR_ECO_FAIL;
         }
-        /* res и out выделены мостом через pIMem (см. JavaObjectToParam). */
         if (res != 0) pIMem->pVTbl->Free(pIMem, res);
         if (out != 0) pIMem->pVTbl->Free(pIMem, out);
-        /* inOut указывает на тот же буфер, что и наш inOutBuf, если мост перезаписывает его на месте;
-         * если же мост подменил указатель — освобождаем подменённый. */
         if (inOut != 0 && inOut != &inOutBuf) pIMem->pVTbl->Free(pIMem, inOut);
     }
 
@@ -522,8 +506,6 @@ int16_t TestComponent(IEcoACOM2Java* pIEcoACOM2Java, IEcoMemoryAllocator1* pIMem
 
     /* ==== TestVoidPtr ==== */
     {
-        /* В качестве in мост ожидает указатель, который Java сторона получит как Object.
-         * Используем int*, чтобы по адресу можно было сравнить идентичность. */
         int marker = 12345;
         void* in    = &marker;
         void* inOut = 0;
@@ -554,8 +536,9 @@ int16_t TestComponent(IEcoACOM2Java* pIEcoACOM2Java, IEcoMemoryAllocator1* pIMem
         }
     }
 
-    /* pITest уже освобожден внутри теста TestInterface (orig.Release), повторно
-     * освобождать не нужно. */
+    if (pITest != 0) {
+        pITest->pVTbl->Release(pITest);
+    }
     return result;
 }
 

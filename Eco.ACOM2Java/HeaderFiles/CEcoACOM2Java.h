@@ -68,6 +68,7 @@ typedef struct MethodContext {
     struct EcoJavaProxy* proxy;
     uint16_t methodIndex;
     IEcoMethodDescriptor1* methodDesc;
+    ffi_type** argTypes;
     ffi_closure* closure;
     ffi_cif cif;
     char* jniName;

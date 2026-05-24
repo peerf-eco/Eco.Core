@@ -236,15 +236,23 @@ void JavaObjectToParam(JNIEnv* env, jobject obj, uint16_t typeTag, uint8_t flags
         const char_t* utf = (*env)->GetStringUTFChars(env, obj, 0);
         uint32_t size = strlen(utf) + 1;
         if (utf == NULL) { **(char_t***)arg = NULL; return; }
-        **(char_t***)arg = g_pIMem->pVTbl->Alloc(g_pIMem, size);
-        g_pIMem->pVTbl->Copy(g_pIMem, **(char_t***)arg, utf, size);
+        if (size == 1) {
+            **(char_t***)arg = 0;
+        } else {
+            **(char_t***)arg = g_pIMem->pVTbl->Alloc(g_pIMem, size);
+            g_pIMem->pVTbl->Copy(g_pIMem, **(char_t***)arg, utf, size);
+        }
         (*env)->ReleaseStringUTFChars(env, obj, utf);
     } else if (typeTag == ECO_TYPE_WSTRING) {
         const wchar_t* wide = (*env)->GetStringChars(env, obj, 0);
         uint32_t size = (wcslen(wide) + 1) * sizeof(wchar_t);
         if (wide == NULL) { **(wchar_t***)arg = NULL; return; }
-        **(wchar_t***)arg = g_pIMem->pVTbl->Alloc(g_pIMem, size);
-        g_pIMem->pVTbl->Copy(g_pIMem, **(wchar_t***)arg, wide, size);
+        if (size == sizeof(wchar_t)) {
+            **(wchar_t***)arg = 0;
+        } else {
+            **(wchar_t***)arg = g_pIMem->pVTbl->Alloc(g_pIMem, size);
+            g_pIMem->pVTbl->Copy(g_pIMem, **(wchar_t***)arg, wide, size);
+        }
         (*env)->ReleaseStringChars(env, obj, wide);
     } else if (typeTag == ECO_TYPE_INTERFACE) {
         **(void***)arg = GetPointerToInterface(env, obj);
@@ -346,10 +354,16 @@ jobject ResultToJavaObject(JNIEnv* env, void* result, uint16_t typeTag) {
         return GetBoxedPrimitive(env, result, typeTag);
     } else if (typeTag == ECO_TYPE_ASTRING) {
         jstring s = (*env)->NewStringUTF(env, *(char_t**)result);
+        if (*(char_t**)result != 0) {
+            g_pIMem->pVTbl->Free(g_pIMem, *(char_t**)result);
+        }
         if ((*env)->ExceptionCheck(env)) return NULL;
         return s;
     } else if (typeTag == ECO_TYPE_WSTRING) {
-        jstring s = (*env)->NewString(env, *(jchar**)result, (jsize)wcslen(*(wchar_t**)result));
+        jstring s = (*env)->NewString(env, *(wchar_t**)result, (jsize)wcslen(*(wchar_t**)result));
+        if (*(wchar_t**)result != 0) {
+            g_pIMem->pVTbl->Free(g_pIMem, *(wchar_t**)result);
+        }
         if ((*env)->ExceptionCheck(env)) return NULL;
         return s;
     } else if (typeTag == ECO_TYPE_INTERFACE) {
@@ -365,7 +379,11 @@ jobject ResultToJavaObject(JNIEnv* env, void* result, uint16_t typeTag) {
         SetPointerToInterface(env, obj, *(void**)result);
         return obj;
     } else if (typeTag == ECO_TYPE_UGUID) {
-        return UGUIDPtrToJavaObject(env, *(UGUID**)result);
+        jobject obj = UGUIDPtrToJavaObject(env, *(UGUID**)result);
+        if (*(UGUID**)result != 0) {
+            g_pIMem->pVTbl->Free(g_pIMem, *(UGUID**)result);
+        }
+        return obj;
     } else if (typeTag == ECO_TYPE_VOIDPTR) {
         return *(jobject*)result;
     }
@@ -483,11 +501,19 @@ JNIEXPORT jobject JNICALL Java_Eco_Core_IEcoUnknownNative_GlobalDispatcher(JNIEn
         pIMethod->pVTbl->GetParamAtIndex(pIMethod, index, &pIParam);
         pIParam->pVTbl->get_Type(pIParam, &typeTag);
         flags = pIParam->pVTbl->get_Flags(pIParam);
-        if ((flags & ECO_PARAM_OUT) == 0 && typeTag == ECO_TYPE_ASTRING) {
-            g_pIMem->pVTbl->Free(g_pIMem, *(char_t**)cArgs[index + 1]);
+        if (typeTag == ECO_TYPE_ASTRING) {
+            if ((flags & ECO_PARAM_OUT) && **(char_t***)cArgs[index + 1] != 0) {
+                g_pIMem->pVTbl->Free(g_pIMem, **(char_t***)cArgs[index + 1]);
+            } else if ((flags & ECO_PARAM_OUT) == 0 && *(char_t**)cArgs[index + 1] != 0) {
+                g_pIMem->pVTbl->Free(g_pIMem, *(char_t**)cArgs[index + 1]);
+            }
         }
-        if ((flags & ECO_PARAM_OUT) == 0 && typeTag == ECO_TYPE_WSTRING) {
-            g_pIMem->pVTbl->Free(g_pIMem, *(wchar_t**)cArgs[index + 1]);
+        if (typeTag == ECO_TYPE_WSTRING) {
+            if ((flags & ECO_PARAM_OUT) && **(wchar_t***)cArgs[index + 1] != 0) {
+                g_pIMem->pVTbl->Free(g_pIMem, **(wchar_t***)cArgs[index + 1]);
+            } else if ((flags & ECO_PARAM_OUT) == 0 && *(wchar_t**)cArgs[index + 1] != 0) {
+                g_pIMem->pVTbl->Free(g_pIMem, *(wchar_t**)cArgs[index + 1]);
+            }
         }
         if ((flags & ECO_PARAM_OUT) && typeTag == ECO_TYPE_UGUID) {
             g_pIMem->pVTbl->Free(g_pIMem, **(void***)cArgs[index + 1]);
