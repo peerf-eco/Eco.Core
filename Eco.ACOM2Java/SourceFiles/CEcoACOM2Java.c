@@ -616,29 +616,34 @@ static int16_t ECOCALLMETHOD EcoJavaProxy_IEcoUnknown_QueryInterface(IEcoUnknown
         }
     }
 
+    if ((*env)->PushLocalFrame(env, 8) != 0) return ERR_ECO_FAIL;
+
     obj = CreatePointerToObject(env, NULL);
-    if (obj == NULL) return ERR_ECO_FAIL;
+    if (obj == NULL) { (*env)->PopLocalFrame(env, NULL); return ERR_ECO_FAIL; }
 
     clazz = (*env)->GetObjectClass(env, proxy->m_obj);
     method = (*env)->GetMethodID(env, clazz, "QueryInterface", "(LEco/Core/UGUID;LEco/Core/Pointer;)S");
-    if (method == 0) return ERR_ECO_FAIL;
+    if (method == 0) { (*env)->PopLocalFrame(env, NULL); return ERR_ECO_FAIL; }
 
     result = (*env)->CallShortMethod(env, proxy->m_obj, method, UGUIDPtrToJavaObject(env, riid), obj);
-    if ((*env)->ExceptionCheck(env)) return ERR_ECO_FAIL;
+    if ((*env)->ExceptionCheck(env)) { (*env)->PopLocalFrame(env, NULL); return ERR_ECO_FAIL; }
     if (result != 0) {
         *(EcoJavaProxy**)ppv = 0;
+        (*env)->PopLocalFrame(env, NULL);
         return result;
     }
 
     obj = GetObjectFromPointer(env, obj);
-    if (obj == NULL) return ERR_ECO_FAIL;
+    if (obj == NULL) { (*env)->PopLocalFrame(env, NULL); return ERR_ECO_FAIL; }
 
     pIDirectory = GetInterfaceDirectoryByUGUID(proxy->m_pITypeLib, proxy->m_pIMem, riid);
     if (pIDirectory == 0) {
+        (*env)->PopLocalFrame(env, NULL);
         return ERR_ECO_NOINTERFACE;
     }
     *(EcoJavaProxy**)ppv = CreateEcoJavaProxy(env, obj, pIDirectory, proxy->m_pIMem, proxy->m_pITypeLib, riid, proxy->m_group);
 
+    (*env)->PopLocalFrame(env, NULL);
     return ERR_ECO_SUCCESES;
 }
 
@@ -647,16 +652,19 @@ static uint32_t ECOCALLMETHOD EcoJavaProxy_IEcoUnknown_AddRef(IEcoUnknownPtr_t m
     JNIEnv* env = GetCurrentEnv(proxy->m_jvm);
     jclass clazz;
     jmethodID method;
-    uint32_t result;
+    uint32_t result = (uint32_t)-1;
 
     if (env == 0) return ERR_ECO_FAIL;
+    if ((*env)->PushLocalFrame(env, 4) != 0) return ERR_ECO_FAIL;
 
     clazz = (*env)->GetObjectClass(env, proxy->m_obj);
     method = (*env)->GetMethodID(env, clazz, "AddRef", "()I");
-    if (method == 0) return (uint32_t)-1;
-    result = (uint32_t) (*env)->CallIntMethod(env, proxy->m_obj, method);
-    (*env)->ExceptionCheck(env);
-    ++proxy->m_cRef;
+    if (method != 0) {
+        result = (uint32_t) (*env)->CallIntMethod(env, proxy->m_obj, method);
+        (*env)->ExceptionCheck(env);
+        ++proxy->m_cRef;
+    }
+    (*env)->PopLocalFrame(env, NULL);
     return result;
 }
 
@@ -665,13 +673,17 @@ static uint32_t ECOCALLMETHOD EcoJavaProxy_IEcoUnknown_Release(IEcoUnknownPtr_t 
     JNIEnv* env = GetCurrentEnv(proxy->m_jvm);
     jclass clazz;
     jmethodID method;
-    uint32_t result;
+    uint32_t result = (uint32_t)-1;
 
     if (env == 0) return ERR_ECO_FAIL;
+    if ((*env)->PushLocalFrame(env, 4) != 0) return ERR_ECO_FAIL;
 
     clazz = (*env)->GetObjectClass(env, proxy->m_obj);
     method = (*env)->GetMethodID(env, clazz, "Release", "()I");
-    if (method == 0) return (uint32_t)-1;
+    if (method == 0) {
+        (*env)->PopLocalFrame(env, NULL);
+        return (uint32_t)-1;
+    }
     result = (uint32_t) (*env)->CallIntMethod(env, proxy->m_obj, method);
     (*env)->ExceptionCheck(env);
     if (--proxy->m_cRef == 0) {
@@ -706,6 +718,7 @@ static uint32_t ECOCALLMETHOD EcoJavaProxy_IEcoUnknown_Release(IEcoUnknownPtr_t 
         proxy->m_pIMem->pVTbl->Free(proxy->m_pIMem, proxy->m_pVTbl);
         proxy->m_pIMem->pVTbl->Free(proxy->m_pIMem, proxy);
     }
+    (*env)->PopLocalFrame(env, NULL);
     return result;
 }
 
@@ -722,6 +735,7 @@ void EcoJavaProxy_GlobalDispatcher(ffi_cif* cif, void* ret, void** args, void* u
     uint8_t index = 0;
 
     if (env == 0) return;
+    if ((*env)->PushLocalFrame(env, 64) != 0) return;
 
     jArgs = (jvalue*) proxy->m_pIMem->pVTbl->Alloc(proxy->m_pIMem, sizeof(jvalue) * count);
 
@@ -730,6 +744,7 @@ void EcoJavaProxy_GlobalDispatcher(ffi_cif* cif, void* ret, void** args, void* u
         ctx->methodId = (*env)->GetMethodID(env, clazz, ctx->jniName, ctx->jniSig);
         if (ctx->methodId == 0) {
             proxy->m_pIMem->pVTbl->Free(proxy->m_pIMem, jArgs);
+            (*env)->PopLocalFrame(env, NULL);
             return;
         }
     }
@@ -754,6 +769,7 @@ void EcoJavaProxy_GlobalDispatcher(ffi_cif* cif, void* ret, void** args, void* u
         }
     }
     proxy->m_pIMem->pVTbl->Free(proxy->m_pIMem, jArgs);
+    (*env)->PopLocalFrame(env, NULL);
 }
 
 EcoJavaProxy* CreateEcoJavaProxy(JNIEnv* env, jobject obj, IEcoInterfaceDirectory1* pIDirectory, IEcoMemoryAllocator1* pIMem, IEcoTypeLib1* pITypeLib, const UGUID* riid, EcoJavaProxyGroup* group) {
@@ -1000,25 +1016,30 @@ static int16_t ECOCALLMETHOD CEcoACOM2Java_3F41E2AA_RegisterComponent(/*in*/ IEc
     if (env == 0) {
         return ERR_ECO_FAIL;
     }
+    if ((*env)->PushLocalFrame(env, 8) != 0) {
+        return ERR_ECO_FAIL;
+    }
     AddClassPath(env, classpath);
 
     clazz = (*env)->FindClass(env, factoryClassname);
     if (clazz == 0) {
+        (*env)->PopLocalFrame(env, NULL);
         return ERR_ECO_COMPONENT_NOTFOUND;
     }
 
     method = (*env)->GetMethodID(env, clazz, "<init>", "()V");
     if (method == 0) {
+        (*env)->PopLocalFrame(env, NULL);
         return ERR_ECO_FAIL;
     }
     localObj = (*env)->NewObject(env, clazz, method);
     if (localObj == 0) {
+        (*env)->PopLocalFrame(env, NULL);
         return ERR_ECO_FAIL;
     }
 
     obj = (jobject*) pCMe->m_pIMem->pVTbl->Alloc(pCMe->m_pIMem, sizeof(jobject));
     *obj = (*env)->NewGlobalRef(env, localObj);
-    (*env)->DeleteLocalRef(env, localObj);
 
     rcidCopy = (UGUID*) pCMe->m_pIMem->pVTbl->Alloc(pCMe->m_pIMem, sizeof(UGUID));
     pCMe->m_pIMem->pVTbl->Copy(pCMe->m_pIMem, rcidCopy, (void*)rcid, sizeof(UGUID));
@@ -1026,6 +1047,7 @@ static int16_t ECOCALLMETHOD CEcoACOM2Java_3F41E2AA_RegisterComponent(/*in*/ IEc
     pCMe->m_componentFactories->pVTbl->Add(pCMe->m_componentFactories, rcidCopy);
     pCMe->m_componentFactories->pVTbl->Add(pCMe->m_componentFactories, obj);
 
+    (*env)->PopLocalFrame(env, NULL);
     return ERR_ECO_SUCCESES;
 }
 
@@ -1124,27 +1146,34 @@ static int16_t ECOCALLMETHOD CEcoACOM2Java_3F41E2AA_QueryComponent(/*in*/ IEcoAC
         return ERR_ECO_COMPONENT_NOTFOUND;
     }
 
+    if ((*env)->PushLocalFrame(env, 8) != 0) {
+        return ERR_ECO_FAIL;
+    }
+
     obj = CreatePointerToObject(env, 0);
-    if (obj == NULL) return ERR_ECO_FAIL;
+    if (obj == NULL) { (*env)->PopLocalFrame(env, NULL); return ERR_ECO_FAIL; }
 
     factoryObj = *(jobject*)(pCMe->m_componentFactories->pVTbl->Item(pCMe->m_componentFactories, index + 1));
     clazz = (*env)->GetObjectClass(env, factoryObj);
     method = (*env)->GetMethodID(env, clazz, "Alloc", "(LEco/Core/IEcoUnknown;LEco/Core/IEcoUnknown;LEco/Core/UGUID;LEco/Core/Pointer;)S");
-    if (method == 0) return ERR_ECO_FAIL;
+    if (method == 0) { (*env)->PopLocalFrame(env, NULL); return ERR_ECO_FAIL; }
     result = (*env)->CallShortMethod(env, factoryObj, method, 0, 0, UGUIDPtrToJavaObject(env, riid), obj);
-    if ((*env)->ExceptionCheck(env)) return ERR_ECO_FAIL;
+    if ((*env)->ExceptionCheck(env)) { (*env)->PopLocalFrame(env, NULL); return ERR_ECO_FAIL; }
     if (result != 0) {
+        (*env)->PopLocalFrame(env, NULL);
         return result;
     }
 
     obj = GetObjectFromPointer(env, obj);
-    if (obj == NULL) return ERR_ECO_FAIL;
+    if (obj == NULL) { (*env)->PopLocalFrame(env, NULL); return ERR_ECO_FAIL; }
 
     pIDirectory = GetInterfaceDirectoryByUGUID(pCMe->m_pITypeLib, pCMe->m_pIMem, riid);
     if (pIDirectory == 0) {
+        (*env)->PopLocalFrame(env, NULL);
         return ERR_ECO_NOINTERFACE;
     }
     *(EcoJavaProxy**)ppv = CreateEcoJavaProxy(env, obj, pIDirectory, pCMe->m_pIMem, pCMe->m_pITypeLib, riid, 0);
+    (*env)->PopLocalFrame(env, NULL);
 
     return ERR_ECO_SUCCESES;
 }

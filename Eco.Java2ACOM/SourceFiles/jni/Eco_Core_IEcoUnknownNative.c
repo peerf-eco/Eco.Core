@@ -422,7 +422,7 @@ JNIEXPORT jint JNICALL Java_Eco_Core_IEcoUnknownNative_Release(JNIEnv* env, jobj
 }
 
 JNIEXPORT jobject JNICALL Java_Eco_Core_IEcoUnknownNative_GlobalDispatcher(JNIEnv* env, jobject thisObj, jint VTblIdx, jobjectArray args) {
-    IEcoInterfaceDescriptor1* pIDesc = GetInterfaceDescriptor(env, thisObj);
+    IEcoInterfaceDescriptor1* pIDesc = 0;
     IEcoMethodDescriptor1* pIMethod = 0;
     IEcoParamDescriptor1* pIParam = 0;
     uint8_t count = 0;
@@ -453,7 +453,14 @@ JNIEXPORT jobject JNICALL Java_Eco_Core_IEcoUnknownNative_GlobalDispatcher(JNIEn
     ffi_type** ffiTypes;
     ffi_type* retType = 0;
 
-    if (pIDesc == 0 || (*env)->ExceptionCheck(env)) return NULL;
+    if ((*env)->PushLocalFrame(env, 64) != 0) {
+        return NULL;
+    }
+
+    pIDesc = GetInterfaceDescriptor(env, thisObj);
+    if (pIDesc == 0 || (*env)->ExceptionCheck(env)) {
+        return (jobject)(*env)->PopLocalFrame(env, NULL);
+    }
 
     count = (*env)->GetArrayLength(env, args);
     jArgs = (jobject*) g_pIMem->pVTbl->Alloc(g_pIMem, sizeof(jobject) * count);
@@ -533,5 +540,5 @@ JNIEXPORT jobject JNICALL Java_Eco_Core_IEcoUnknownNative_GlobalDispatcher(JNIEn
     g_pIMem->pVTbl->Free(g_pIMem, cArgs);
     g_pIMem->pVTbl->Free(g_pIMem, ffiTypes);
 
-    return result;
+    return (jobject)(*env)->PopLocalFrame(env, result);
 }
