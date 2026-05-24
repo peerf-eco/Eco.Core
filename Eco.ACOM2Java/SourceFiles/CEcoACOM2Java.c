@@ -646,6 +646,7 @@ static uint32_t ECOCALLMETHOD EcoJavaProxy_IEcoUnknown_AddRef(IEcoUnknownPtr_t m
     if (method == 0) return (uint32_t)-1;
     result = (uint32_t) (*env)->CallIntMethod(env, proxy->m_obj, method);
     (*env)->ExceptionCheck(env);
+    ++proxy->m_cRef;
     return result;
 }
 
@@ -663,7 +664,7 @@ static uint32_t ECOCALLMETHOD EcoJavaProxy_IEcoUnknown_Release(IEcoUnknownPtr_t 
     if (method == 0) return (uint32_t)-1;
     result = (uint32_t) (*env)->CallIntMethod(env, proxy->m_obj, method);
     (*env)->ExceptionCheck(env);
-    if (result == 0) {
+    if (--proxy->m_cRef == 0) {
         uint16_t count = proxy->m_pIDesc->pVTbl->get_MethodCount(proxy->m_pIDesc);
         uint16_t index = 0;
         EcoJavaProxyGroup* group = proxy->m_group;
@@ -758,6 +759,7 @@ EcoJavaProxy* CreateEcoJavaProxy(JNIEnv* env, jobject obj, IEcoInterfaceDirector
     mCount = pIDesc->pVTbl->get_MethodCount(pIDesc);
 
     proxy->m_pVTbl = (void**) pIMem->pVTbl->Alloc(pIMem, sizeof(void*) * (mCount + 3));
+    proxy->m_cRef = 1;
     proxy->m_pIMem = pIMem;
     proxy->m_pITypeLib = pITypeLib;
     proxy->m_pIDirectory = pIDirectory;
@@ -1238,38 +1240,44 @@ static int16_t ECOCALLMETHOD createCEcoACOM2Java_3F41E2AA(/* in */ CEcoACOM2Java
 static void ECOCALLMETHOD deleteCEcoACOM2Java_3F41E2AA(/* in */ CEcoACOM2Java_3F41E2AAPtr_t pCMe) {
     IEcoMemoryAllocator1* pIMem = 0;
 
-    if (pCMe != 0 ) {
-        pIMem = pCMe->m_pIMem;
-        if (pCMe->m_componentFactories != 0) {
-            IEcoList1* list = pCMe->m_componentFactories;
-            JNIEnv* env = GetCurrentEnv(pCMe->m_jvm);
-            uint32_t count = list->pVTbl->Count(list);
-            uint32_t i = 0;
-            for (i = 0; i < count; i += 2) {
-                void* rcidCopy  = list->pVTbl->Item(list, i);
-                void* objHolder = list->pVTbl->Item(list, i + 1);
-                if (objHolder != 0) {
-                    if (env != 0) {
-                        (*env)->DeleteGlobalRef(env, *(jobject*)objHolder);
-                    }
+    if (pCMe == 0) {
+        return;
+    }
+    pIMem = pCMe->m_pIMem;
+
+    if (pCMe->m_componentFactories != 0) {
+        IEcoList1* list = pCMe->m_componentFactories;
+        JNIEnv* env = GetCurrentEnv(pCMe->m_jvm);
+        uint32_t count = list->pVTbl->Count(list);
+        uint32_t i = 0;
+        for (i = 0; i < count; i += 2) {
+            void* rcidCopy  = list->pVTbl->Item(list, i);
+            void* objHolder = list->pVTbl->Item(list, i + 1);
+            if (objHolder != 0) {
+                if (env != 0) {
+                    (*env)->DeleteGlobalRef(env, *(jobject*)objHolder);
+                }
+                if (pIMem != 0) {
                     pIMem->pVTbl->Free(pIMem, objHolder);
                 }
-                if (rcidCopy != 0) {
-                    pIMem->pVTbl->Free(pIMem, rcidCopy);
-                }
             }
-            list->pVTbl->Clear(list);
-            list->pVTbl->Release(list);
+            if (rcidCopy != 0 && pIMem != 0) {
+                pIMem->pVTbl->Free(pIMem, rcidCopy);
+            }
         }
-        if (pCMe->m_pITypeLib != 0) {
-            pCMe->m_pITypeLib->pVTbl->Release(pCMe->m_pITypeLib);
-        }
-        if (pCMe->m_jvm != 0) {
-            (*pCMe->m_jvm)->DestroyJavaVM(pCMe->m_jvm);
-        }
-        if ( pCMe->m_pISys != 0 ) {
-            pCMe->m_pISys->pVTbl->Release(pCMe->m_pISys);
-        }
+        list->pVTbl->Clear(list);
+        list->pVTbl->Release(list);
+    }
+    if (pCMe->m_pITypeLib != 0) {
+        pCMe->m_pITypeLib->pVTbl->Release(pCMe->m_pITypeLib);
+    }
+    if (pCMe->m_jvm != 0) {
+        (*pCMe->m_jvm)->DestroyJavaVM(pCMe->m_jvm);
+    }
+    if (pCMe->m_pISys != 0) {
+        pCMe->m_pISys->pVTbl->Release(pCMe->m_pISys);
+    }
+    if (pIMem != 0) {
         pIMem->pVTbl->Free(pIMem, pCMe);
         pIMem->pVTbl->Release(pIMem);
     }

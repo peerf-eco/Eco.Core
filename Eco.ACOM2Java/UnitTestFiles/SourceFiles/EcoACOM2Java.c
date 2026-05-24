@@ -479,31 +479,6 @@ int16_t TestComponent(IEcoACOM2Java* pIEcoACOM2Java, IEcoMemoryAllocator1* pIMem
         if (inOut != 0 && inOut != &inOutBuf) pIMem->pVTbl->Free(pIMem, inOut);
     }
 
-    /* ==== TestInterface ==== */
-    {
-        IEcoUnknown* in     = (IEcoUnknown*)pITest;
-        IEcoUnknown* inOut  = 0;
-        IEcoUnknown* out    = 0;
-        IEcoUnknown* res    = 0;
-        uint32_t count1, count2, count3, count4;
-
-        res = pITest->pVTbl->TestInterface(pITest, in, &inOut, &out);
-        count1 = (res   != 0) ? res  ->pVTbl->Release(res)   : 0u;
-        printf("res.Release: %u\n", count1);
-        count2 = (inOut != 0) ? inOut->pVTbl->Release(inOut) : 0u;
-        printf("in_out.Release: %u\n", count2);
-        count3 = (out   != 0) ? out  ->pVTbl->AddRef(out)    : 0u;
-        printf("out.AddRef: %u\n", count3);
-        count4 = pITest->pVTbl->Release((IEcoUnknown*)pITest);
-        printf("orig.Release: %u\n", count4);
-        if (res != 0 && inOut != 0 && out != 0 && count1 == 2 && count2 == 1 && count3 == 2 && count4 == 1) {
-            printf("TestInterface: OK\n\n");
-        } else {
-            printf("TestInterface: Fail (got NULL pointer from bridge)\n\n");
-            result = ERR_ECO_FAIL;
-        }
-    }
-
     /* ==== TestVoidPtr ==== */
     {
         int marker = 12345;
@@ -536,9 +511,46 @@ int16_t TestComponent(IEcoACOM2Java* pIEcoACOM2Java, IEcoMemoryAllocator1* pIMem
         }
     }
 
-    if (pITest != 0) {
-        pITest->pVTbl->Release(pITest);
+    /* ==== TestInterface ====
+     * Идет последним, т.к. четвертый Release (orig.Release) обнуляет C-side
+     * счетчик ссылок прокси pITest, после чего pITest становится невалидным.
+     * Следующие за ним тесты (TestVoidPtr, TestVoid и т.п.) использовали бы
+     * освобожденную память. */
+    {
+        IEcoUnknown* in     = (IEcoUnknown*)pITest;
+        IEcoUnknown* inOut  = 0;
+        IEcoUnknown* out    = 0;
+        IEcoUnknown* res    = 0;
+        uint32_t count1, count2, count3, count4;
+
+        res = pITest->pVTbl->TestInterface(pITest, in, &inOut, &out);
+        count1 = (res   != 0) ? res  ->pVTbl->Release(res)   : 0u;
+        printf("res.Release: %u\n", count1);
+        count2 = (inOut != 0) ? inOut->pVTbl->Release(inOut) : 0u;
+        printf("in_out.Release: %u\n", count2);
+        count3 = (out   != 0) ? out  ->pVTbl->AddRef(out)    : 0u;
+        printf("out.AddRef: %u\n", count3);
+        count4 = pITest->pVTbl->Release((IEcoUnknown*)pITest);
+        printf("orig.Release: %u\n", count4);
+        if (res != 0 && inOut != 0 && out != 0 && count1 == 2 && count2 == 1 && count3 == 2 && count4 == 1) {
+            printf("TestInterface: OK\n\n");
+        } else {
+            printf("TestInterface: Fail (got NULL pointer from bridge)\n\n");
+            result = ERR_ECO_FAIL;
+        }
+
+        /* Освобождаем 'out' до конца. После AddRef его C m_cRef = 2,
+         * требуется два Release. Java-сторона при этом получит m_cRef ниже нуля,
+         * это нормально: компонент Java живет до DestroyJavaVM. */
+        if (out != 0) {
+            out->pVTbl->Release(out);
+            out->pVTbl->Release(out);
+        }
     }
+
+    /* pITest уже освобожден в блоке TestInterface (count4 = 1, после чего C m_cRef
+     * прокси опустился с 1 до 0, и прокси был уничтожен). Повторно освобождать
+     * нельзя — будет use-after-free. */
     return result;
 }
 
