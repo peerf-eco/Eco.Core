@@ -636,6 +636,8 @@ int16_t EcoMain(IEcoUnknown* pIUnk) {
 
     result = TestComponent(pIEcoACOM2Java, pIMem);
 
+    printf("Result code: %hd\n", result); fflush(stdout);
+
 Release:
 
     /* Free the interface for working with the interface bus */
