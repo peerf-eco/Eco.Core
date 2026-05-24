@@ -54,15 +54,26 @@ JNIEXPORT jshort JNICALL Java_Eco_System_CEcoSystem_createCEcoSystem(JNIEnv* env
     }
     result = pIBus->pVTbl->QueryComponent(pIBus, rcid, 0, &IID_IEcoMemoryAllocator1, (void**) &g_pIMem);
     if (result != 0 || g_pIMem == 0) {
-        result = ERR_ECO_GET_MEMORY_ALLOCATOR;
+        pIBus->pVTbl->Release(pIBus);
+        return ERR_ECO_GET_MEMORY_ALLOCATOR;
     }
 
     result = pIBus->pVTbl->QueryComponent(pIBus, &CID_EcoTypeLib1, 0, &IID_IEcoTypeLib1, &g_pITypeLib);
     if (result != 0) {
+        g_pIMem->pVTbl->Release(g_pIMem);
+        g_pIMem = 0;
         pIBus->pVTbl->Release(pIBus);
         return result;
     }
     result = pIBus->pVTbl->QueryComponent(pIBus, &CID_EcoList1, 0, &IID_IEcoList1, &g_pIDescCacheList);
+    if (result != 0) {
+        g_pITypeLib->pVTbl->Release(g_pITypeLib);
+        g_pITypeLib = 0;
+        g_pIMem->pVTbl->Release(g_pIMem);
+        g_pIMem = 0;
+        pIBus->pVTbl->Release(pIBus);
+        return result;
+    }
     pIBus->pVTbl->Release(pIBus);
     return result;
 }
