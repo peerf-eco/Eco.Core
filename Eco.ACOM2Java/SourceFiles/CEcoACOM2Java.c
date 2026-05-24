@@ -188,39 +188,49 @@ void AddClassPath(JNIEnv* env, char_t* classpath) {
     jobject loaderObj;
     jstring pathStr;
 
+    if ((*env)->PushLocalFrame(env, 16) != 0) {
+        return;
+    }
+
     clazz = (*env)->FindClass(env, "java/io/File");
-    if (clazz == 0) return;
+    if (clazz == 0) goto Сleanup;
     method = (*env)->GetMethodID(env, clazz, "<init>", "(Ljava/lang/String;)V");
-    if (method == 0) return;
+    if (method == 0) goto Сleanup;
     pathStr = (*env)->NewStringUTF(env, classpath);
-    if (pathStr == 0) return;
+    if (pathStr == 0) goto Сleanup;
     fileObj = (*env)->NewObject(env, clazz, method, pathStr);
-    if ((*env)->ExceptionCheck(env) || fileObj == 0) return;
+    if ((*env)->ExceptionCheck(env) || fileObj == 0) goto Сleanup;
 
     method = (*env)->GetMethodID(env, clazz, "toURI", "()Ljava/net/URI;");
-    if (method == 0) return;
+    if (method == 0) goto Сleanup;
     fileObj = (*env)->CallObjectMethod(env, fileObj, method);
-    if ((*env)->ExceptionCheck(env) || fileObj == 0) return;
+    if ((*env)->ExceptionCheck(env) || fileObj == 0) goto Сleanup;
 
     clazz = (*env)->GetObjectClass(env, fileObj);
     method = (*env)->GetMethodID(env, clazz, "toURL", "()Ljava/net/URL;");
-    if (method == 0) return;
+    if (method == 0) goto Сleanup;
     fileObj = (*env)->CallObjectMethod(env, fileObj, method);
-    if ((*env)->ExceptionCheck(env) || fileObj == 0) return;
+    if ((*env)->ExceptionCheck(env) || fileObj == 0) goto Сleanup;
 
     clazz = (*env)->FindClass(env, "java/lang/ClassLoader");
-    if (clazz == 0) return;
+    if (clazz == 0) goto Сleanup;
     method = (*env)->GetStaticMethodID(env, clazz, "getSystemClassLoader", "()Ljava/lang/ClassLoader;");
-    if (method == 0) return;
+    if (method == 0) goto Сleanup;
     loaderObj = (*env)->CallStaticObjectMethod(env, clazz, method);
-    if ((*env)->ExceptionCheck(env) || loaderObj == 0) return;
+    if ((*env)->ExceptionCheck(env) || loaderObj == 0) goto Сleanup;
 
     clazz = (*env)->FindClass(env, "java/net/URLClassLoader");
-    if (clazz == 0) return;
+    if (clazz == 0) goto Сleanup;
     method = (*env)->GetMethodID(env, clazz, "addURL", "(Ljava/net/URL;)V");
-    if (method == 0) return;
+    if (method == 0) goto Сleanup;
     (*env)->CallVoidMethod(env, loaderObj, method, fileObj);
     (*env)->ExceptionCheck(env);
+
+Сleanup:
+    if ((*env)->ExceptionCheck(env)) {
+        (*env)->ExceptionClear(env);
+    }
+    (*env)->PopLocalFrame(env, NULL);
 }
 
 char_t* GenerateJniSignature(IEcoMethodDescriptor1* pIMethod, IEcoMemoryAllocator1* pIMem) {
@@ -1156,13 +1166,12 @@ static int16_t ECOCALLMETHOD CEcoACOM2Java_3F41E2AA_QueryComponent(/*in*/ IEcoAC
 static int16_t ECOCALLMETHOD initCEcoACOM2Java_3F41E2AA(/*in*/ CEcoACOM2Java_3F41E2AAPtr_t me, /* in */ IEcoUnknownPtr_t pIUnkSystem) {
     CEcoACOM2Java_3F41E2AA* pCMe = (CEcoACOM2Java_3F41E2AA*)me;
     IEcoInterfaceBus1* pIBus = 0;
-
     IEcoInterfaceBus1MemExt* pIMemExt = 0;
     int16_t result = ERR_ECO_POINTER;
     UGUID* rcid = (UGUID*)&CID_EcoMemoryManager1;
 
     /* Pointer Validation */
-    if (me == 0 ) {
+    if (me == 0) {
         return result;
     }
 
@@ -1171,6 +1180,9 @@ static int16_t ECOCALLMETHOD initCEcoACOM2Java_3F41E2AA(/*in*/ CEcoACOM2Java_3F4
 
     /* Getting the interface for working with the interface bus */
     result = pCMe->m_pISys->pVTbl->QueryInterface(pCMe->m_pISys, &IID_IEcoInterfaceBus1, (void **)&pIBus);
+    if (result != 0 || pIBus == 0) {
+        return result;
+    }
 
     /* Getting the component ID for working with memory */
     result = pIBus->pVTbl->QueryInterface(pIBus, &IID_IEcoInterfaceBus1MemExt, (void**)&pIMemExt);
@@ -1181,18 +1193,20 @@ static int16_t ECOCALLMETHOD initCEcoACOM2Java_3F41E2AA(/*in*/ CEcoACOM2Java_3F4
 
     /* Getting the memory allocator interface */
     result = pIBus->pVTbl->QueryComponent(pIBus, rcid, 0, &IID_IEcoMemoryAllocator1, (void**) &pCMe->m_pIMem);
-    /* Check */
     if (result != 0 || pCMe->m_pIMem == 0) {
-        result = ERR_ECO_GET_MEMORY_ALLOCATOR;
+        pIBus->pVTbl->Release(pIBus);
+        return ERR_ECO_GET_MEMORY_ALLOCATOR;
     }
 
     result = pIBus->pVTbl->QueryComponent(pIBus, &CID_EcoTypeLib1, 0, &IID_IEcoTypeLib1, (void**) &pCMe->m_pITypeLib);
     if (result != 0 || pCMe->m_pITypeLib == 0) {
+        pIBus->pVTbl->Release(pIBus);
         return result;
     }
 
     result = pIBus->pVTbl->QueryComponent(pIBus, &CID_EcoList1, 0, &IID_IEcoList1, (void**) &pCMe->m_componentFactories);
     if (result != 0 || pCMe->m_componentFactories == 0) {
+        pIBus->pVTbl->Release(pIBus);
         return result;
     }
 
