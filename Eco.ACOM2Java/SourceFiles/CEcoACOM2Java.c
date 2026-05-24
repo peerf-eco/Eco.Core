@@ -565,8 +565,12 @@ void JavaObjectToParam(EcoJavaProxy* proxy, jobject obj, uint16_t typeTag, void*
     } else if (typeTag == ECO_TYPE_INTERFACE) {
         UGUID riid = GetUGUIDFromInterfaceJavaObject(env, obj);
         IEcoInterfaceDirectory1* pIDirectory = GetInterfaceDirectoryByUGUID(proxy->m_pDescCacheList, proxy->m_pITypeLib, proxy->m_pIMem, &riid);
+        EcoJavaProxyGroup* group = 0;
         if (pIDirectory == 0) { **(void***)arg = NULL; return; }
-        **(EcoJavaProxy***)arg = CreateEcoJavaProxy(env, obj, pIDirectory, proxy->m_pIMem, proxy->m_pITypeLib, proxy->m_pDescCacheList, &riid, 0);
+        if ((*env)->IsSameObject(env, obj, proxy->m_obj)) {
+            group = proxy->m_group;
+        }
+        **(EcoJavaProxy***)arg = CreateEcoJavaProxy(env, obj, pIDirectory, proxy->m_pIMem, proxy->m_pITypeLib, proxy->m_pDescCacheList, &riid, group);
     } else if (typeTag == ECO_TYPE_UGUID) {
         **(UGUID***)arg = proxy->m_pIMem->pVTbl->Alloc(proxy->m_pIMem, sizeof(UGUID));
         ***(UGUID***)arg = JavaObjectToUGUIDPtr(env, obj);
@@ -619,8 +623,12 @@ void CallJavaMethod(EcoJavaProxy* proxy, jobject obj, jmethodID method, jvalue* 
         } else if (typeTag == ECO_TYPE_INTERFACE) {
             UGUID riid = GetUGUIDFromInterfaceJavaObject(env, retObj);
             IEcoInterfaceDirectory1* pIDirectory = GetInterfaceDirectoryByUGUID(proxy->m_pDescCacheList, proxy->m_pITypeLib, proxy->m_pIMem, &riid);
+            EcoJavaProxyGroup* group = 0;
             if (pIDirectory == 0) return;
-            *(EcoJavaProxy**)ret = CreateEcoJavaProxy(env, retObj, pIDirectory, proxy->m_pIMem, proxy->m_pITypeLib, proxy->m_pDescCacheList, &riid, 0);
+            if ((*env)->IsSameObject(env, retObj, proxy->m_obj)) {
+                group = proxy->m_group;
+            }
+            *(EcoJavaProxy**)ret = CreateEcoJavaProxy(env, retObj, pIDirectory, proxy->m_pIMem, proxy->m_pITypeLib, proxy->m_pDescCacheList, &riid, group);
         } else if (typeTag == ECO_TYPE_UGUID) {
             *(UGUID**)ret = proxy->m_pIMem->pVTbl->Alloc(proxy->m_pIMem, sizeof(UGUID));
             **(UGUID**)ret = JavaObjectToUGUIDPtr(env, retObj);
