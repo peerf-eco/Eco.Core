@@ -381,6 +381,10 @@ def _resolve_parent(ptr: Any, offset: int, parent: type) -> Any:
 
     void_ptr = cast(ptr, Ptr[Void])
     parent_addr = void_ptr.value - offset  # type: ignore
+
+    instance = ALIVE.get(parent_addr)
+    if instance is not None:
+        return instance
     return cast(parent_addr, Ptr[parent]).obj
 
 
