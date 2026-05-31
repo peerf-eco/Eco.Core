@@ -128,7 +128,7 @@ exclude = '^(tests|examples)/'
 
 [tool.pytest.ini_options]
 minversion = "7.0"
-addopts = "-q --strict-markers --tb=short --cache-clear --color=yes"
+addopts = "-q --strict-markers --tb=short --cache-clear --color=yes -m 'not benchmark'"
 testpaths = ["tests"]
 python_files = ["test_*.py", "*_test.py"]
 python_classes = ["Test*"]
@@ -136,6 +136,7 @@ python_functions = ["test_*"]
 markers = [
     "unit: fast isolated tests",
     "integration: requires external resources",
+    "benchmark: load/performance measurement",
 ]
 filterwarnings = [
     "ignore::RuntimeWarning",

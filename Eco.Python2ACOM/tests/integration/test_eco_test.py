@@ -707,7 +707,7 @@ class TestEcoTestQueryInterface:
         assert out.value
 
         queried = cast(out, Ptr[IEcoTest])
-        # The queried pointer must be usable as an `IEcoTest`.
+        # The queried pointer must be usable as an `IEcoTest`
         assert queried.obj.Addition(2, 3) == 5
 
         # Balance the refcount bump from QueryInterface

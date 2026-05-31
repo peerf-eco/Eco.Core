@@ -71,7 +71,7 @@ class EcoVariant:
     value: EcoValue
 
 
-# Comparator callback: `(a, b) -> <0 | 0 | >0`, stdcall calling convention.
+# Comparator callback: `(a, b) -> <0 | 0 | >0`, stdcall calling convention
 EcoCompareFunc = Func[Int32, [Int32, Int32]]
 
 
