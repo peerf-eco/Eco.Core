@@ -21,6 +21,7 @@
 #include "IEcoInterfaceBus1.h"
 #include "IEcoInterfaceBus1MemExt.h"
 #include "CEcoTest.h"
+#include <windows.h>
 
 /*
  *
@@ -635,6 +636,27 @@ static int32_t ECOCALLMETHOD CEcoTest_StringLength(/* in */ IEcoTestPtr_t me, /*
 }
 
 /*
+ * <сводка>
+ *   Функция SleepMs
+ * </сводка>
+ *
+ * <описание>
+ *   Блокирует вызывающий поток на ms миллисекунд
+ * </описание>
+ */
+static int16_t ECOCALLMETHOD CEcoTest_SleepMs(/* in */ IEcoTestPtr_t me, /* in */ uint32_t milliseconds) {
+    CEcoTest* pCMe = (CEcoTest*)me;
+
+    /* Проверка указателя */
+    if (me == 0) {
+        return ERR_ECO_POINTER;
+    }
+
+    Sleep(milliseconds);
+    return ERR_ECO_SUCCESES;
+}
+
+/*
  *
  * <сводка>
  *   Функция Init
@@ -686,7 +708,8 @@ IEcoTestVTbl g_xABCDEF1234567890ABCDEF1234567890VTblA = {
     CEcoTest_GetVariantTag,
     CEcoTest_GetVariantValue,
     CEcoTest_SortArrayWith,
-    CEcoTest_StringLength
+    CEcoTest_StringLength,
+    CEcoTest_SleepMs
 };
 
 /*

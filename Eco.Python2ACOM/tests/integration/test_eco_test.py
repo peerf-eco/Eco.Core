@@ -29,9 +29,12 @@ Test Classes:
     TestEcoTestQueryInterface: Tests for `QueryInterface` (IID dispatch, refcount behavior).
     TestEcoTestCallback: Tests for `SortArrayWith` (user-supplied comparator callback).
     TestEcoTestStringParam: Tests for `StringLength` (C string as in-parameter).
+    TestEcoTestSleep: Tests for `SleepMs` (blocking call, return code + elapsed time).
 """
 
 import math
+import threading
+from time import perf_counter
 
 import pytest
 
@@ -808,3 +811,49 @@ class TestEcoTestStringParam:
         """`StringLength` returns the number of bytes before the NULL terminator."""
         result = eco_test.obj.StringLength(string)
         assert result == expected
+
+
+@pytest.mark.integration
+class TestEcoTestSleep:
+    """Tests for `SleepMs` — a blocking call that releases the GIL."""
+
+    # Allowed deviation below / above the requested duration
+    UNDERSHOOT_MS = 100
+    OVERSHOOT_MS = 100
+
+    # Concurrency check constants
+    CONCURRENT_MS = 1000
+    THREADS = 4
+
+    # Overlapping batch must finish below this fraction of the serial total
+    OVERLAP_RATIO = 0.3
+
+    @pytest.mark.parametrize("milliseconds", [500, 1000, 2000], ids=["500ms", "1s", "2s"])
+    def test_sleep_blocks(self, eco_test: Ptr[IEcoTest], milliseconds: int) -> None:
+        """Verifies `SleepMs` blocks the caller for no less than the requested duration."""
+        start = perf_counter()
+        result = eco_test.obj.SleepMs(milliseconds)
+        elapsed_ms = (perf_counter() - start) * 1000.0
+
+        assert elapsed_ms >= milliseconds - self.UNDERSHOOT_MS
+        assert elapsed_ms < milliseconds + self.OVERSHOOT_MS
+        assert result == EcoErrorCode.SUCCESS
+
+    def test_concurrent_sleeps_overlap(self, eco_test: Ptr[IEcoTest]) -> None:
+        """Verifies concurrent `SleepMs` calls overlap because the call releases the GIL."""
+
+        def worker() -> None:
+            result = eco_test.obj.SleepMs(self.CONCURRENT_MS)
+            assert result == EcoErrorCode.SUCCESS
+
+        threads = [threading.Thread(target=worker) for _ in range(self.THREADS)]
+        start = perf_counter()
+        for thread in threads:
+            thread.start()
+        for thread in threads:
+            thread.join()
+        elapsed_ms = (perf_counter() - start) * 1000.0
+
+        serial_ms = self.CONCURRENT_MS * self.THREADS
+        print(serial_ms * self.OVERLAP_RATIO, elapsed_ms)
+        assert elapsed_ms < serial_ms * self.OVERLAP_RATIO

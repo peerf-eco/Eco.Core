@@ -1,6 +1,7 @@
 """Shared definitions and Python implementation for the `Eco.Test` integration tests."""
 
 import functools
+from time import sleep
 
 from eco_python2acom.decorators.interface import interface
 from eco_python2acom.decorators.layout import model, union
@@ -169,7 +170,11 @@ class IEcoTest(IEcoUnknown):
         ...
 
     def StringLength(self, string: CString) -> Int32:
-        """Return the length of a C string passed as a parameter (like `strlen`)."""
+        """Return the length of a C string passed as a parameter."""
+        ...
+
+    def SleepMs(self, milliseconds: UInt32) -> Int16:
+        """Block the calling thread for `milliseconds`."""
         ...
 
 
@@ -332,6 +337,11 @@ class EcoTest:
         def StringLength(self, string: CString) -> Int32:
             """Return the length of a C string passed as a parameter."""
             return len(string) if string else 0
+
+        def SleepMs(self, milliseconds: UInt32) -> Int16:
+            """Block the calling thread for `milliseconds`."""
+            sleep(milliseconds / 1000.0)
+            return EcoErrorCode.SUCCESS
 
 
 @factory(component=EcoTest)

@@ -115,6 +115,9 @@ typedef struct IEcoTestVTbl {
     /* IEcoTest - string parameter */
     int32_t (ECOCALLMETHOD *StringLength)(/* in */ IEcoTestPtr_t me, /* in */ const char_t* str);
 
+    /* IEcoTest - blocking call */
+    int16_t (ECOCALLMETHOD *SleepMs)(/* in */ IEcoTestPtr_t me, /* in */ uint32_t milliseconds);
+
 } IEcoTestVTbl, *IEcoTestVTblPtr;
 
 interface IEcoTest {
