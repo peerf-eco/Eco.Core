@@ -29,6 +29,8 @@ classes.
   `MemoryManager`, `FileSystemManagement` in a single context manager.
 - **Loader** — `EcoLibLoader` resolves library files in user
   directories and pulls out their factory export.
+- **Concurrency-ready** — calls dispatch into the interpreter holding the GIL,
+  so a Python component can be driven from multiple threads or `asyncio`.
 
 ## Architecture
 
@@ -79,15 +81,19 @@ Topical entry points:
 
 ## Examples
 
-Runnable scenarios live under [`examples/`](examples/), split into client and
-server flows:
+Runnable scenarios live under [`examples/`](examples/), each split into a
+server side (the component, authored with the decorators) and a client side
+(a host that boots `EcoSystem` and drives the component). Run any of them as a
+module, e.g. `python -m examples.client.pattern.main`.
 
-**Client side** ([`examples/client/calculator/`](examples/client/calculator/)) — a host program that
-boots `EcoSystem`, queries components by CID through the interface bus and
-calls their methods from Python as if they were regular native components.
+| Example | Demonstrates |
+|---|---|
+| [`calculator/`](examples/server/calculator/) | The four ACOM composition models — standalone, aggregation, containment, outer aggregator |
+| [`pattern/`](examples/server/pattern/) | Returning a string from a Python component via `IEcoMemoryAllocator1` (the minimal `Eco.NewProject` template) |
+| [`points/`](examples/server/points/) | Connection points — a container exposing two outgoing interfaces, `FindConnectionPoint` / `EnumConnectionPoints`, and multiple sinks (trace + animated chart) |
+| [`concurrency/`](examples/server/concurrency/) | A shared-state component driven from threads and `asyncio` — racy vs lock-guarded increments, and overlapping blocking calls through the bridge |
 
-**Server side** ([`examples/server/calculator/`](examples/server/calculator/))
-— four calculator components illustrating the main ACOM composition models:
+The `calculator` server splits across four files:
 
 | File | Demonstrates |
 |---|---|
@@ -95,6 +101,32 @@ calls their methods from Python as if they were regular native components.
 | `inner.py` | Aggregatable component (`IEcoCalculatorX`-only) with a non-delegating `IEcoUnknown` |
 | `inclusion.py` | Containment — owns an included `IEcoCalculatorX`, delegates arithmetic to it |
 | `outer.py` | Outer aggregator that wraps an inner aggregatable calculator |
+
+## Testing
+
+The suite lives under [`tests/`](tests/) and is split by `pytest` marker:
+
+| Marker | Location | Scope |
+|---|---|---|
+| `unit` | [`tests/unit/`](tests/unit/) | Fast, isolated tests of decorators, type primitives and runtime helpers |
+| `integration` | [`tests/integration/`](tests/integration/) | End-to-end checks against the live runtime and the `Eco.Test` component, run against both the native and the bridge-hosted back-end |
+
+```bash
+pytest              # unit + integration (benchmark excluded)
+pytest -m unit      # fast unit tests only
+```
+
+## Benchmark
+
+A micro-benchmark under [`tests/integration/test_benchmark.py`](tests/integration/test_benchmark.py)
+measures the cost of a single ACOM call from a Python host — once into the
+native `dll` (Python -> C) and once into a Python component through the
+bridge (Python -> C -> Python) — reporting throughput, latency percentiles and
+heap growth. Run it explicitly:
+
+```bash
+pytest -m benchmark
+```
 
 ## See also
 
