@@ -39,7 +39,7 @@ class EcoBinarySearchConnectionPoint:
     container: Ptr[IEcoConnectionPointContainer]
     piid: Ptr[UGUID]
     next_cookie: UInt32
-    sink_list: Ptr[IEcoList1]
+    sinks: Ptr[IEcoList1]
 
     def __eco_new__(
         self,
@@ -58,7 +58,7 @@ class EcoBinarySearchConnectionPoint:
             0 on success, error code otherwise.
         """
         self.system = Ptr[IEcoSystem1]()
-        self.sink_list = Ptr[IEcoList1]()
+        self.sinks = Ptr[IEcoList1]()
         self.container = Ptr[IEcoConnectionPointContainer]()
         self.piid = Ptr[UGUID]()
         self.next_cookie = 0
@@ -73,22 +73,22 @@ class EcoBinarySearchConnectionPoint:
 
         self.container = container
         self.piid = riid
-        result = AcquireList(self.system, pointer(self.sink_list))
-        if result != 0 or not bool(self.sink_list):
+        result = AcquireList(self.system, pointer(self.sinks))
+        if result != 0 or not bool(self.sinks):
             return result
         return EcoErrorCode.SUCCESS
 
     def __eco_del__(self) -> Void:
         """Cleanup phase — release every attached sink and drop cached references."""
-        if bool(self.sink_list):
-            for idx in range(self.sink_list.obj.Count()):
-                slot_ptr = self.sink_list.obj.Item(idx)
+        if bool(self.sinks):
+            for idx in range(self.sinks.obj.Count()):
+                slot_ptr = self.sinks.obj.Item(idx)
                 if bool(slot_ptr):
                     slot = cast(slot_ptr, Ptr[EcoConnectionData])
                     slot.obj.ptr.obj.Release()
                     ALIVE.pop(slot_ptr.value, None)
-            self.sink_list.obj.Clear()
-            self.sink_list.obj.Release()
+            self.sinks.obj.Clear()
+            self.sinks.obj.Release()
 
         self.next_cookie = 0
         if bool(self.system):
@@ -155,7 +155,7 @@ class EcoBinarySearchConnectionPoint:
             data.ptr = cast(events_ptr, Ptr[IEcoUnknown])
             data.cookie = self.next_cookie
             ALIVE[addressof(data)] = data
-            self.sink_list.obj.Add(pointer(data, Void))
+            self.sinks.obj.Add(pointer(data, Void))
 
             cookie.obj = UInt32(self.next_cookie)
             return EcoErrorCode.SUCCESS
@@ -169,13 +169,13 @@ class EcoBinarySearchConnectionPoint:
             Returns:
                 0 on success, error code otherwise.
             """
-            for idx in range(self.sink_list.obj.Count()):
-                slot_ptr = self.sink_list.obj.Item(idx)
+            for idx in range(self.sinks.obj.Count()):
+                slot_ptr = self.sinks.obj.Item(idx)
                 if not bool(slot_ptr):
                     continue
                 slot = cast(slot_ptr, Ptr[EcoConnectionData])
                 if slot.obj.cookie == cookie:
-                    self.sink_list.obj.RemoveAt(idx)
+                    self.sinks.obj.RemoveAt(idx)
                     slot.obj.ptr.obj.Release()
                     ALIVE.pop(slot_ptr.value, None)
                     return EcoErrorCode.SUCCESS
@@ -195,7 +195,7 @@ class EcoBinarySearchConnectionPoint:
                 return EcoErrorCode.POINTER
 
             new_enum = EcoBinarySearchEnumConnections()
-            result = new_enum.__eco_new__(cast(self.system, Ptr[IEcoUnknown]), self.sink_list)
+            result = new_enum.__eco_new__(cast(self.system, Ptr[IEcoUnknown]), self.sinks)
             if result != 0:
                 return result
             ALIVE[addressof(new_enum)] = new_enum

@@ -1,1 +1,1 @@
-"""Client points example — sink that listens to events."""
+"""Client points example — sinks that listens to events."""

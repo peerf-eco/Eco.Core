@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "eco-python2acom"
-version = "0.14.0"
+version = "0.15.0"
 description = "Python bridge for ACOM component technology (EcoOS)"
 authors = ["Sergei Vdovenkov <sivdovenkov.it@gmail.com>"]
 readme = "README.md"
