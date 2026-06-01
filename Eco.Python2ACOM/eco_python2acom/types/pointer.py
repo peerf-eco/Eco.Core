@@ -6,7 +6,7 @@ This module provides the `Ptr[T]` generic type for type-safe pointer operations.
 from ctypes import POINTER
 from typing import TYPE_CHECKING, Any, Generic, Optional, TypeVar
 
-from eco_python2acom.types.core import TYPE_NAMES, CPointer, Void, VoidPtr
+from eco_python2acom.types.core import TYPE_NAMES, Void, VoidPtr
 from eco_python2acom.types.utils import addressof, byref, cast, memmove, offsetof, sizeof
 
 U = TypeVar("U")
@@ -299,16 +299,16 @@ else:
         pass
 
 
-def pointer(obj: U, target: Optional[type] = None, shift: bool = False) -> CPointer:
+def pointer(obj: U, target: Optional[type[T]] = None, shift: bool = False) -> "Ptr[T]":
     """Create a pointer to an EcoOS object.
 
     Args:
         obj: The EcoOS object.
-        target: Result type (`Ptr[target]`). Defaults to `type(obj)`.
+        target: Result type (`Ptr[T]`). Defaults to `type(obj)`.
         shift: If True, add `offsetof(obj, target)` before casting.
 
     Returns:
-        An EcoOS pointer to the object.
+        An EcoOS pointer (`Ptr[T]`) to the object.
     """
     if target is None:
         target = type(obj)

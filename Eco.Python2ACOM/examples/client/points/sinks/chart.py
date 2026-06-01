@@ -1,10 +1,14 @@
-"""Client-side sink for `IEcoBinarySearchEvents`.
+"""Client-side chart sink for the binary-search events interface.
 
-Each callback renders a single line, so the running search produces
-a live trace in the terminal.
+`EcoBinarySearchChartSink` implements one outgoing view:
+    - `Events` (`IEcoBinarySearchEvents`) — the search drawn as a vertical
+      ASCII bar chart, with the shrinking `[left, right]` window animated
+      in-place (`OnStart` / `OnStep` / `OnFinal`).
 """
 
 from time import sleep
+
+from rich.panel import Panel
 
 from eco_python2acom.decorators.server.component import component
 from eco_python2acom.decorators.server.view import view
@@ -22,33 +26,98 @@ from examples.server.points.interfaces import (
     IID_IEcoBinarySearchEvents,
 )
 
-SLEEP_SECONDS = 2.5
+# Delay in seconds between steps
+DELAY = 2.0
+
+# Chart dimensions
+HEIGHT = 8
+
+# Column width in characters
+WIDTH = 4
+
+# Eighth-block glyphs for smooth bar tops, from empty to full
+BLOCKS = " ▁▂▃▄▅▆▇█"
+
+# Sub-row shades per value step
+SHADES = len(BLOCKS) - 1
 
 
-def print_array(array: Ptr[Int32], length: Int32, highlight: Int32 = -1) -> str:
-    """Render the array as a coloured single-line string for the trace.
+def style(idx: Int32, left: Int32, right: Int32, mid: Int32, found: Int32) -> str:
+    """Pick the colour for column `idx` from its role in the current step."""
+    if idx == found:
+        return "bold green"
+    if idx == mid:
+        return "bold yellow"
+    if left <= idx <= right:
+        return "cyan"
+    return "grey50"
+
+
+def render(
+    array: Ptr[Int32],
+    length: Int32,
+    left: Int32 = 0,
+    right: Int32 = -1,
+    mid: Int32 = -1,
+    found: Int32 = -1,
+) -> Panel:
+    """Render the array as a smooth vertical bar chart inside a bordered panel.
 
     Args:
         array: Pointer to the first element.
         length: Number of elements to render.
-        highlight: Optional index drawn in green.
+        left: Current left bound (inclusive).
+        right: Current right bound (inclusive).
+        mid: Index probed this step, drawn in yellow.
+        found: Resolved index, drawn in green.
 
     Returns:
-        A rendered array string.
+        A `Panel` wrapping the multi-line chart.
     """
-    parts = []
+    if right < 0:
+        right = length - 1
+
+    values = [array[idx] for idx in range(length)]
+    peak = max(values) if values else 1
+    shades = [round(value / peak * HEIGHT * SHADES) for value in values]
+
+    def cell(idx: int, glyph: str) -> str:
+        color = style(idx, left, right, mid, found)
+        return f"[{color}]{glyph:^{WIDTH}}[/{color}]"
+
+    rows = []
+    for level in range(HEIGHT, 0, -1):
+        cells = []
+        for idx in range(length):
+            remaining = shades[idx] - (level - 1) * SHADES
+            glyph = BLOCKS[min(SHADES, max(0, remaining))]
+            cells.append(cell(idx, glyph))
+        rows.append("".join(cells))
+
+    rows.append("".join(cell(idx, str(values[idx])) for idx in range(length)))
+
+    markers = []
     for idx in range(length):
-        value = array[idx]
-        if idx == highlight:
-            parts.append(f"[bold green]{value}[/bold green]")
+        if idx == found:
+            markers.append(cell(idx, "▲"))
+        elif idx == mid:
+            markers.append(cell(idx, "▲"))
+        elif idx == left == right:
+            markers.append(cell(idx, "▮"))
+        elif idx == left:
+            markers.append(cell(idx, "L"))
+        elif idx == right:
+            markers.append(cell(idx, "R"))
         else:
-            parts.append(f"[cyan]{value}[/cyan]")
-    return "[" + ", ".join(parts) + "]"
+            markers.append(" " * WIDTH)
+    rows.append("".join(markers))
+
+    return Panel.fit("\n".join(rows), border_style="blue", padding=(1, 2))
 
 
 @component()
-class EcoBinarySearchSink:
-    """Client sink that prints `OnStart`/`OnStep`/`OnFinal` events as they arrive."""
+class EcoBinarySearchChartSink:
+    """Client sink that animates `OnStart`/`OnStep`/`OnFinal` as a bar chart."""
 
     cookie: UInt32
 
@@ -128,31 +197,30 @@ class EcoBinarySearchSink:
 
     @view
     class Events(IEcoBinarySearchEvents):
-        """`IEcoBinarySearchEvents` view — three coloured trace messages."""
+        """`IEcoBinarySearchEvents` view — the search drawn as an animated chart."""
 
         def OnStart(self, array: Ptr[Int32], length: Int32) -> Int16:
-            """Print the initial array before the search begins."""
-            sleep(SLEEP_SECONDS)
-            console.info(f"[OnStart]  array = {print_array(array, length)}")
+            """Open the live region and draw the initial bar chart."""
+            sleep(DELAY)
+            console.live(render(array, length), start=True)
             return EcoErrorCode.SUCCESS
 
-        def OnStep(self, left: Int32, right: Int32, mid: Int32, value: Int32) -> Int16:
-            """Print one probe step (current bounds, mid index, value at mid)."""
-            sleep(SLEEP_SECONDS)
-            console.print(
-                f"  [OnStep]   [dim]left = {left:<3}  right = {right:<3}  mid = {mid:<3}[/dim]  "
-                f"value = [yellow]{value}[/yellow]"
-            )
+        def OnStep(
+            self,
+            array: Ptr[Int32],
+            length: Int32,
+            left: Int32,
+            right: Int32,
+            mid: Int32,
+            value: Int32,
+        ) -> Int16:
+            """Update the live region with the current window and probed index."""
+            sleep(DELAY)
+            console.live(render(array, length, left=left, right=right, mid=mid))
             return EcoErrorCode.SUCCESS
 
         def OnFinal(self, array: Ptr[Int32], length: Int32, index: Int32) -> Int16:
-            """Print the final array with the resolved index highlighted."""
-            sleep(SLEEP_SECONDS)
-            if index >= 0:
-                console.success(
-                    f"[OnFinal]  found at index [bold green]{index}[/bold green] "
-                    f"---> {print_array(array, length, highlight=index)}"
-                )
-            else:
-                console.error(f"[OnFinal]  not found ---> {print_array(array, length)}")
+            """Draw the final chart, then close the live region."""
+            sleep(DELAY)
+            console.live(render(array, length, found=index), stop=True)
             return EcoErrorCode.SUCCESS

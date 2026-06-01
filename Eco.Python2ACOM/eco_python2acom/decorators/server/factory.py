@@ -30,10 +30,7 @@ def _make_factory_init(
         vtbls_installer(self)
         self.refs = 1
         for field_name, value in metadata.items():
-            try:
-                setattr(self, field_name, value)
-            except TypeError as err:
-                raise TypeError(f"Cannot assign default {value!r} to field '{field_name}'") from err
+            setattr(self, field_name, value)
 
     return __init__
 

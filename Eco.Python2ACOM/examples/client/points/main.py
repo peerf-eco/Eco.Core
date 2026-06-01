@@ -1,12 +1,14 @@
-"""Binary-search trace example via ACOM connection points.
+"""Binary-search connection-point example (many-to-many).
 
 The host:
     1. Boots `EcoSystem` and reaches the Python bridge through the bus.
     2. Registers `Eco.BinarySearch` (server-side example) with the bridge.
     3. Queries `IEcoBinarySearch`.
-    4. Creates an `EcoBinarySearchSink` and attaches it.
-    5. Runs `BinarySearch` and observes the live coloured trace produced by
-       the sink's `OnStart` / `OnStep` / `OnFinal` callbacks.
+    4. Creates two sinks — `EcoBinarySearchTraceSink`, which subscribes to both
+       outgoing interfaces (events + stats), and `EcoBinarySearchChartSink`,
+       which subscribes only to events — and attaches them.
+    5. Runs `BinarySearch` once; events flow to both sinks, the final stats flow
+       only to the trace sink (many points -> many sinks).
 """
 
 import sys
@@ -20,11 +22,13 @@ from eco_python2acom.types.core import Int32, Void
 from eco_python2acom.types.pointer import Ptr
 from eco_python2acom.types.utils import byref, cast
 from examples.client.console import console
-from examples.client.points.sink import EcoBinarySearchSink
+from examples.client.points.sinks.chart import EcoBinarySearchChartSink
+from examples.client.points.sinks.trace import EcoBinarySearchTraceSink
 from examples.server.points.interfaces import (
     IEcoBinarySearch,
     IID_IEcoBinarySearch,
     IID_IEcoBinarySearchEvents,
+    IID_IEcoBinarySearchStats,
 )
 from examples.server.points.search import CID_EcoBinarySearch
 
@@ -36,7 +40,8 @@ def main() -> int:
     console.header("Eco BinarySearch Example")
     console.info(f"CID:                    {CID_EcoBinarySearch}")
     console.info(f"IEcoBinarySearch:       {IID_IEcoBinarySearch}")
-    console.info(f"IEcoBinarySearchEvents: {IID_IEcoBinarySearchEvents}\n")
+    console.info(f"IEcoBinarySearchEvents: {IID_IEcoBinarySearchEvents}")
+    console.info(f"IEcoBinarySearchStats:  {IID_IEcoBinarySearchStats}\n")
 
     try:
         console.info("Initializing EcoSystem...")
@@ -71,16 +76,22 @@ def main() -> int:
             search = cast(search_ptr, Ptr[IEcoBinarySearch])
             console.success(f"Got {search}\n")
 
-            # ---------------------------- Sink ----------------------------
-            sink = EcoBinarySearchSink()
-            sink.__eco_new__()
-            result = sink.Advise(search)
-            if result != 0:
-                console.error(f"Advise failed (code = {result})")
-                search.obj.Release()
-                bridge.obj.Release()
-                return -5
-            console.success(f"Advise -> cookie = {sink.cookie}")
+            # ---------------------------- Sinks ---------------------------
+            trace_sink = EcoBinarySearchTraceSink()
+            trace_sink.__eco_new__()
+            chart_sink = EcoBinarySearchChartSink()
+            chart_sink.__eco_new__()
+
+            for label, sink in (("chart", chart_sink), ("trace", trace_sink)):
+                result = sink.Advise(search)
+                if result != 0:
+                    console.error(f"Advise ({label}) failed (code = {result})")
+                    trace_sink.Unadvise(search)
+                    chart_sink.Unadvise(search)
+                    search.obj.Release()
+                    bridge.obj.Release()
+                    return -5
+                console.success(f"Advise ({label}) sink attached")
 
             # --------------------------- Search ---------------------------
             data = Array[Int32, 10](1, 3, 5, 7, 9, 11, 13, 15, 17, 19)
@@ -90,8 +101,9 @@ def main() -> int:
             console.info(f"Binary search returned index = <{found}>")
 
             # -------------------------- Cleanup ---------------------------
-            sink.Unadvise(search)
-            console.success("Unadvised sink\n")
+            trace_sink.Unadvise(search)
+            chart_sink.Unadvise(search)
+            console.success("Unadvised both sinks\n")
             search.obj.Release()
             bridge.obj.UnRegisterComponent(byref(CID_EcoBinarySearch))
             bridge.obj.Release()

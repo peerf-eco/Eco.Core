@@ -118,7 +118,7 @@ class TestModelLayout:
     """Verifies byte layout, size, and field offsets."""
 
     def test_mixed_field_layout_offsets(self) -> None:
-        """Field offsets follow ctypes natural alignment rules."""
+        """Field offsets follow C natural alignment rules."""
 
         @model
         class Mixed:

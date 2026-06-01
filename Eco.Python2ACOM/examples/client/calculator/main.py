@@ -1,4 +1,14 @@
-"""Calculator example with interfaces (`IEcoCalculatorX` + `IEcoCalculatorY`)."""
+"""Calculator example — calling a C component from Python.
+
+The host:
+    1. Boots `EcoSystem` and obtains the interface bus.
+    2. Queries the `Eco.Calculator` component directly from the bus and
+       resolves its `IEcoCalculatorX` interface.
+    3. Calls `Addition` and `Subtraction` through `IEcoCalculatorX`.
+    4. Navigates to `IEcoCalculatorY` via `QueryInterface` on the same
+       object and calls `Multiplication` and `Division`.
+    5. Releases both interface pointers in reverse order.
+"""
 
 import sys
 
@@ -7,13 +17,13 @@ from eco_python2acom.types.core import Void
 from eco_python2acom.types.guid import UGUID
 from eco_python2acom.types.pointer import Ptr
 from eco_python2acom.types.utils import byref, cast
-from examples.client.calculator.interfaces import (
+from examples.client.console import console
+from examples.server.calculator.interfaces import (
     IEcoCalculatorX,
     IEcoCalculatorY,
     IID_IEcoCalculatorX,
     IID_IEcoCalculatorY,
 )
-from examples.client.console import console
 
 
 def show(name: str, a: int, oper: str, b: int, result: int) -> None:
@@ -47,6 +57,7 @@ def main() -> int:
         with EcoSystem(lib_dir="data") as eco:
             console.success("EcoSystem initialized\n")
 
+            # ----------------------- IEcoCalculatorX ----------------------
             ppv_x = Ptr[Void]()
             result = eco.bus.obj.QueryComponent(
                 byref(CID_EcoCalculator), None, byref(IID_IEcoCalculatorX), byref(ppv_x)
@@ -63,6 +74,7 @@ def main() -> int:
             show("Subtraction", 50, "-", 30, result)
             console.print()
 
+            # ----------------------- IEcoCalculatorY ----------------------
             ppv_y = Ptr[Void]()
             result = calc_x.obj.QueryInterface(byref(IID_IEcoCalculatorY), byref(ppv_y))
             if result != 0 or not bool(ppv_y):
@@ -78,6 +90,7 @@ def main() -> int:
             show("Division", 100, "/", 10, result)
             console.print()
 
+            # -------------------------- Cleanup ---------------------------
             calc_y.obj.Release()
             console.success(f"Released {calc_y}")
             calc_x.obj.Release()

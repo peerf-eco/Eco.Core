@@ -79,7 +79,7 @@ class EcoCalculatorOuter:
         bridge = cast(bridge_ptr, Ptr[IEcoACOM2Python])
 
         # Pass *ourselves* as the outer so the inner's delegating triple loops
-        # back through our `QueryInterface` / `AddRef` / `Release`.
+        # back through our `QueryInterface` / `AddRef` / `Release`
         outer_self = pointer(self, IEcoUnknown)
 
         inner_ptr = Ptr[Void]()
