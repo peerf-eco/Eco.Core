@@ -30,26 +30,30 @@
 #include "CEcoTypeLib1DirectoryEntry.h"
 #include "CEcoTypeLib1Directory.h"
 
+/* Resolved at compile time to 4 on 32-bit and 8 on 64-bit targets. */
+#define ECO_PTR_SIZE (sizeof(void*))
+
 const uint32_t ECO_TYPE_SIZE[] = {
-    0, /* ECO_TYPE_UNDEFINED */
-    1, /* ECO_TYPE_INT8 */
-    2, /* ECO_TYPE_INT16 */
-    4, /* ECO_TYPE_INT32 */
-    8, /* ECO_TYPE_INT64 */
-    1, /* ECO_TYPE_UINT8 */
-    2, /* ECO_TYPE_UINT16 */
-    4, /* ECO_TYPE_UINT32 */
-    8, /* ECO_TYPE_UINT64 */
-    4, /* ECO_TYPE_FLOAT */
-    8, /* ECO_TYPE_DOUBLE */
-    1, /* ECO_TYPE_BOOLEAN */
-    1, /* ECO_TYPE_CHAR */
-    2, /* ECO_TYPE_WCHAR */
-    1, /* ECO_TYPE_ASTRING */
-    2, /* ECO_TYPE_WSTRING */
-    8, /* ECO_TYPE_INTERFACE */
-    8, /* ECO_TYPE_VOIDPTR */
-    0  /* ECO_TYPE_VOID */
+    0,             /* ECO_TYPE_UNDEFINED */
+    1,             /* ECO_TYPE_INT8 */
+    2,             /* ECO_TYPE_INT16 */
+    4,             /* ECO_TYPE_INT32 */
+    8,             /* ECO_TYPE_INT64 */
+    1,             /* ECO_TYPE_UINT8 */
+    2,             /* ECO_TYPE_UINT16 */
+    4,             /* ECO_TYPE_UINT32 */
+    8,             /* ECO_TYPE_UINT64 */
+    4,             /* ECO_TYPE_FLOAT */
+    8,             /* ECO_TYPE_DOUBLE */
+    1,             /* ECO_TYPE_BOOLEAN */
+    1,             /* ECO_TYPE_CHAR */
+    2,             /* ECO_TYPE_WCHAR */
+    1,             /* ECO_TYPE_ASTRING — size of one ASCII code unit */
+    2,             /* ECO_TYPE_WSTRING — size of one wide code unit */
+    ECO_PTR_SIZE,  /* ECO_TYPE_INTERFACE — IEcoUnknown* */
+    ECO_PTR_SIZE,  /* ECO_TYPE_UGUID — UGUID* */
+    ECO_PTR_SIZE,  /* ECO_TYPE_VOIDPTR — void* */
+    0              /* ECO_TYPE_VOID */
 };
 
 extern CEcoTypeLib1Parameter_01434A0B g_xCEcoTypeLib1Parameter_01434A0B;

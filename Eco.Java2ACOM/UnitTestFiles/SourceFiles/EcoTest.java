@@ -20,15 +20,15 @@ public class EcoTest implements EcoApp {
 
     @Override
     public void EcoMain(IEcoUnknown iUnk) {
-        int result = TestJNI(iUnk);
+        short result = TestJNI(iUnk);
         System.out.println("result code = " + result + "\n");
         result = TestJava();
         System.out.println("result code = " + result + "\n");
     }
 
-    private int TestJNI(IEcoUnknown iUnk) {
+    private short TestJNI(IEcoUnknown iUnk) {
         System.out.println("==== JNI test ====");
-        int result = InitJNI(iUnk);
+        short result = InitJNI(iUnk);
         if (result == 0) {
             TestInterfaces();
         }
@@ -36,7 +36,7 @@ public class EcoTest implements EcoApp {
         return result;
     }
 
-    private int InitJNI(IEcoUnknown iUnk) {
+    private short InitJNI(IEcoUnknown iUnk) {
         iSys = new IEcoSystem1Native();
         iBus = new IEcoInterfaceBus1Native();
         iMem = new IEcoMemoryAllocator1Native();
@@ -44,7 +44,7 @@ public class EcoTest implements EcoApp {
         iCalcX = new IEcoCalculatorXNative();
         iCalcY = new IEcoCalculatorYNative();
 
-        int result = iUnk.QueryInterface(IEcoSystem1.GID_x86_32, new IEcoUnknownPtr(iSys));
+        short result = iUnk.QueryInterface(IEcoSystem1.GID_x86_32, new IEcoUnknownPtr(iSys));
         if (result != 0) return result;
 
         result = iSys.QueryInterface(IEcoInterfaceBus1.IID, new IEcoUnknownPtr(iBus));
@@ -72,9 +72,9 @@ public class EcoTest implements EcoApp {
         if (!iSys.isNull()) iSys.Release();
     }
 
-    private int TestJava() {
+    private short TestJava() {
         System.out.println("==== Java test ====");
-        int result = InitJava();
+        short result = InitJava();
         if (result == 0) {
             TestInterfaces();
         }
@@ -82,12 +82,12 @@ public class EcoTest implements EcoApp {
         return result;
     }
 
-    private int InitJava() {
+    private short InitJava() {
         iCalcX = null;
         iCalcY = null;
 
         IEcoUnknownPtr pICalcX = new IEcoUnknownPtr();
-        int result = new CEcoCalculatorJ().create(pICalcX);
+        short result = new CEcoCalculatorJ().create(pICalcX);
         if (result != 0) return result;
         iCalcX = (IEcoCalculatorX) pICalcX.iUnk;
 
@@ -105,9 +105,9 @@ public class EcoTest implements EcoApp {
     }
 
     private void TestInterfaces() {
-        System.out.println("9 + 10 = " + iCalcX.Addition(9, 10));
-        System.out.println("67 - 13 = " + iCalcX.Subtraction(67, 13));
-        System.out.println("6 * 8 = " + iCalcY.Multiplication(6, 8));
-        System.out.println("42 / 7 = " + iCalcY.Division(42, 7));
+        System.out.println("9 + 10 = " + iCalcX.Addition((short) 9, (short) 10));
+        System.out.println("67 - 13 = " + iCalcX.Subtraction((short) 67, (short) 13));
+        System.out.println("6 * 8 = " + iCalcY.Multiplication((short) 6, (short) 8));
+        System.out.println("42 / 7 = " + iCalcY.Division((short) 42, (short) 7));
     }
 }

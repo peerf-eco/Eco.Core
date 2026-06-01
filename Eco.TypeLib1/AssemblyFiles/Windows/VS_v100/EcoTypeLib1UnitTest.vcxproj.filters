@@ -26,5 +26,19 @@
     <ClCompile Include="..\..\..\UnitTestFiles\SourceFiles\EcoTypeLib1.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\UnitTestFiles\SourceFiles\EcoTypeLib1Common.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\UnitTestFiles\SourceFiles\EcoTypeLib1Calculator.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\..\UnitTestFiles\HeaderFiles\EcoTypeLib1Common.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\UnitTestFiles\HeaderFiles\EcoTypeLib1Calculator.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

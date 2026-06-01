@@ -118,7 +118,7 @@ class TestModelLayout:
     """Verifies byte layout, size, and field offsets."""
 
     def test_mixed_field_layout_offsets(self) -> None:
-        """Field offsets follow ctypes natural alignment rules."""
+        """Field offsets follow C natural alignment rules."""
 
         @model
         class Mixed:
@@ -532,7 +532,7 @@ class TestModelBodyValidation:
                 return int(self.value) ** 2
 
         instance = Model()
-        instance.value = Int32(10)
+        instance.value = 10
         assert instance.doubled() == 20
         assert Model.zero().value == 0
         assert Model.identity(5) == 5

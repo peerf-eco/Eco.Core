@@ -1,11 +1,14 @@
 """Unit tests for `eco_python2acom.types.pointer` module.
 
 This module tests the generic `Ptr[T]` smart pointer type including `Ptr[Void]`,
-typed pointers, NULL handling, equality, and caching.
+typed pointers, indexing (pointer arithmetic), `Ptr[Ptr[T]]` double pointers,
+NULL handling, equality, and caching.
 
 Test Classes:
     TestPtrVoid: Tests for `Ptr[Void]` behavior.
     TestPtrTyped: Tests for typed pointers like `Ptr[Int32]`.
+    TestPtrIndexing: Tests for `ptr[i]` pointer arithmetic.
+    TestPtrDouble: Tests for `Ptr[Ptr[T]]` double pointers.
     TestPtrNull: Tests for NULL pointer behavior.
     TestPtrRepr: Tests for `__repr__` output.
     TestPtrEquality: Tests for `__eq__` (address-based).
@@ -15,6 +18,7 @@ Test Classes:
 
 import pytest
 
+from eco_python2acom.types.array import Array
 from eco_python2acom.types.core import Int32, UInt8, Void
 from eco_python2acom.types.pointer import Ptr
 
@@ -76,10 +80,22 @@ class TestPtrTyped:
         with pytest.raises(ValueError, match="pointer access"):
             _ = Ptr[Int32]().obj
 
-    def test_no_value_attribute(self) -> None:
-        """Verifies typed pointer has no `.value`."""
+    def test_value_returns_raw_address(self) -> None:
+        """Verifies typed pointer exposes `.value` as the raw address."""
         ptr = Ptr[Int32](42)
-        assert not hasattr(ptr, "value")
+        assert ptr.value is not None
+        assert isinstance(ptr.value, int)
+
+    def test_value_is_none_for_null(self) -> None:
+        """Verifies typed NULL pointer reports `.value == None`."""
+        ptr = Ptr[Int32]()
+        assert ptr.value is None
+
+    def test_value_setter_reaims_pointer(self) -> None:
+        """Verifies `.value =` writes the raw address into the pointer's storage."""
+        ptr = Ptr[Int32]()
+        ptr.value = 0xDEADBEEF
+        assert ptr.value == 0xDEADBEEF
 
     def test_bool_null_is_false(self) -> None:
         """Verifies NULL `Ptr[Int32]` is false."""
@@ -102,16 +118,89 @@ class TestPtrTyped:
         ptr = Ptr[Int32](42)
         assert ptr.obj.value == 42
 
-    def test_modify_obj(self) -> None:
-        """Verifies `.obj` value can be modified."""
+    def test_modify_obj_with_wrapper(self) -> None:
+        """Verifies `.obj = wrapper` writes the wrapped value through the pointer."""
         ptr = Ptr[Int32](10)
         ptr.obj = Int32(99)
         assert ptr.obj.value == 99
+
+    def test_modify_obj_with_plain_python_value(self) -> None:
+        """Verifies `.obj = plain` writes via the inner scalar's `.value` setter."""
+        ptr = Ptr[Int32](10)
+        ptr.obj = 77
+        assert ptr.obj.value == 77
+
+    def test_modify_obj_is_independent_copy(self) -> None:
+        """Verifies `.obj =` copies bytes by value."""
+        src = Int32(50)
+        ptr = Ptr[Int32](10)
+        ptr.obj = src
+        src.value = 999
+        assert ptr.obj.value == 50
 
     def test_invalid_value_raises(self) -> None:
         """Verifies unconvertible value raises `ValueError`."""
         with pytest.raises(ValueError, match="not initialize"):
             Ptr[Int32]("not_an_int")
+
+
+@pytest.mark.unit
+class TestPtrIndexing:
+    """Tests for `ptr[i]` pointer arithmetic on typed pointers.
+
+    Verifies index read/write for pointers backed by an `Array`.
+    """
+
+    def test_read_first_element(self) -> None:
+        """Verifies `ptr[0]` reads the same value as `.obj`."""
+        arr = Array[Int32, 4](10, 20, 30, 40)
+        ptr: Ptr[Int32] = Ptr[Int32]()
+        ptr.value = arr.value
+        assert ptr[0] == 10
+        assert ptr[0] == ptr.obj.value
+
+    def test_read_nth_element(self) -> None:
+        """Verifies `ptr[i]` reads the `i`-th element of the backing memory."""
+        arr = Array[Int32, 4](10, 20, 30, 40)
+        ptr: Ptr[Int32] = Ptr[Int32]()
+        ptr.value = arr.value
+        assert ptr[2] == 30
+        assert ptr[3] == 40
+
+    def test_write_element(self) -> None:
+        """Verifies `ptr[i] = value` writes through to the backing memory."""
+        arr = Array[Int32, 4](10, 20, 30, 40)
+        ptr: Ptr[Int32] = Ptr[Int32]()
+        ptr.value = arr.value
+        ptr[1] = Int32(99)
+        assert arr[1] == 99
+
+
+@pytest.mark.unit
+class TestPtrDouble:
+    """Tests for `Ptr[Ptr[T]]` double pointers.
+
+    Verifies that double-pointer types compose recursively and the inner
+    pointer is accessible through `.obj`.
+    """
+
+    def test_double_pointer_type_composes(self) -> None:
+        """Verifies `Ptr[Ptr[Int32]]` is a valid pointer type."""
+        DoublePtr = Ptr[Ptr[Int32]]
+        assert DoublePtr is not None
+
+    def test_null_double_pointer(self) -> None:
+        """Verifies a default-constructed double pointer is NULL."""
+        dpp: Ptr[Ptr[Int32]] = Ptr[Ptr[Int32]]()
+        assert not bool(dpp)
+        assert dpp.value is None
+
+    def test_double_pointer_dereferences_to_inner_pointer(self) -> None:
+        """Verifies `.obj` on a `Ptr[Ptr[T]]` yields the inner `Ptr[T]`."""
+        inner = Ptr[Int32](42)
+        dpp = Ptr[Ptr[Int32]](inner)
+        assert dpp.obj.value == inner.value
+        assert dpp.obj.obj.value == 42
 
 
 @pytest.mark.unit

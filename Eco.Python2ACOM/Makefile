@@ -37,6 +37,7 @@ test: ## Run tests
 	$(POETRY) run pytest
 
 test-cov: ## Run tests with coverage
+	rm -rf $(ALLURE_RESULTS)
 	$(POETRY) run pytest --cov=$(PACKAGE) --cov-report=term-missing --alluredir=$(ALLURE_RESULTS)
 
 style: format lint ## Run all style checks (format, lint)
@@ -61,7 +62,7 @@ clean: ## Clean cache files and temporary directories
 build: clean ## Build library for publishing
 	$(POETRY) build
 
-report: test-cov
+report: test-cov ## Generate and open the Allure report
 	allure generate $(ALLURE_RESULTS) -o $(ALLURE_REPORT) --clean
 	allure open $(ALLURE_REPORT)
 

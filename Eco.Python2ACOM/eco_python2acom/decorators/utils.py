@@ -8,10 +8,10 @@ from collections.abc import Callable
 from types import FrameType, NoneType, UnionType
 from typing import Any, ClassVar, Optional, Union, get_args, get_origin, get_type_hints
 
-from eco_python2acom.types.core import CData, CLayout, CStructure, Int16
+from eco_python2acom.types.core import CData, CLayout, CPointer, CStructure
 from eco_python2acom.types.function import Func
-from eco_python2acom.types.pointer import Ptr
-from eco_python2acom.types.utils import pointer
+from eco_python2acom.types.pointer import Ptr, pointer
+from eco_python2acom.types.utils import cast
 
 # -----------------------------------------------------------------------------
 # Type validation and normalization
@@ -130,7 +130,7 @@ def _declared_slots(cls: type) -> list[tuple[str, type, list[type], list[str]]]:
             continue
 
         hints = get_type_hints(value)
-        return_type = _validate(_normalize(hints.pop("return", Int16)))
+        return_type = _validate(_normalize(hints.pop("return")))
         param_names, param_types = [], []
 
         params = iter(inspect.signature(value).parameters.values())
@@ -223,7 +223,7 @@ def _install_dispatchers(cls: type, methods: list[tuple[str, type]]) -> None:
     for field_name, _ in methods:
         method_name = field_name.removeprefix("_func_")
         param_names = method_params.get(field_name, [])
-        return_type = method_returns.get(field_name)
+        return_type = method_returns.get(field_name, NoneType)
         original = cls.__dict__.get(method_name)
         docstring = getattr(original, "__doc__", None) if callable(original) else None
 
@@ -231,14 +231,14 @@ def _install_dispatchers(cls: type, methods: list[tuple[str, type]]) -> None:
             field_name: str,
             method_name: str,
             param_names: list[str],
-            return_type: Optional[type] = None,
+            return_type: type,
             docstring: Optional[str] = None,
         ) -> Callable[..., Any]:
             """Create a dispatcher closure for a specific method."""
 
             def dispatch(self, *args: Any, **kwargs: Any) -> Any:
                 func_ptr = getattr(self.vtbl.obj, field_name)
-                self_ptr = pointer(self)
+                self_ptr: Ptr[Any] = pointer(self)
                 if kwargs:
                     full_args = list(args)
                     for idx, param_name in enumerate(param_names):
@@ -254,8 +254,10 @@ def _install_dispatchers(cls: type, methods: list[tuple[str, type]]) -> None:
                 else:
                     result = func_ptr(self_ptr, *args)
 
-                if return_type is not None and result is not None:
-                    return return_type(result)
+                # Python callbacks return typed pointers via `Ptr[Void]` substitution
+                # Re-wrap the `Ptr[Void]` into the declared `Ptr[T]` here so callers see the typed pointer
+                if issubclass(return_type, CPointer):
+                    return cast(result, return_type)
                 return result
 
             dispatch.__name__ = method_name
@@ -361,7 +363,7 @@ def _build_namespace(cls: type, extra: Optional[dict[str, Any]] = None) -> dict[
         extra: Additional attributes to add to namespace.
 
     Returns:
-        Namespace dict ready for the native ctypes metaclass.
+        Namespace dict ready for the native metaclass.
     """
     namespace: dict[str, Any] = {
         "__module__": cls.__module__,

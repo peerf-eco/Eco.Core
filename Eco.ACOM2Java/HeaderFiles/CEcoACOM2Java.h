@@ -26,6 +26,9 @@
 #include "IEcoList1.h"
 #include "IEcoCalculatorX.h"
 #include "IEcoCalculatorY.h"
+#include "IEcoTypeLib1.h"
+#include "IdEcoTypeLib1.h"
+#include "ffi_cdecl.h"
 #include <jni.h>
 
 typedef struct CEcoACOM2Java_3F41E2AA* CEcoACOM2Java_3F41E2AAPtr_t;
@@ -54,6 +57,7 @@ typedef struct CEcoACOM2Java_3F41E2AA {
     IEcoSystem1* m_pISys;
 
     /* Instance data */
+    IEcoTypeLib1* m_pITypeLib;
     JavaVM* m_jvm;
     JNIEnv* m_env;
     IEcoList1* m_components;
@@ -61,17 +65,35 @@ typedef struct CEcoACOM2Java_3F41E2AA {
 } CEcoACOM2Java_3F41E2AA;
 
 
-typedef struct EcoJavaProxy {
+typedef struct MethodContext {
+    struct EcoJavaProxy* proxy;
+    uint16_t methodIndex;
+    IEcoMethodDescriptor1* methodDesc;
+    ffi_closure* closure;
+    ffi_cif cif;
+    char* jniName;
+    char* jniSig;
+    jmethodID methodId;
+} MethodContext;
 
-    void* pVTbl;
+typedef struct EcoJavaProxy {
+    void** m_pVTbl;
     uint32_t m_cRef;
     IEcoMemoryAllocator1* m_pIMem;
+    IEcoTypeLib1* m_pITypeLib;
+    IEcoInterfaceDescriptor1* m_pIDesc;
     JNIEnv* m_env;
     jobject m_obj;
-
+    MethodContext* m_methods;
 } EcoJavaProxy;
 
-static jobject getUGUIDObj(JNIEnv* env, const UGUID* uguid);
+typedef struct EcoTypeMap {
+    bool_t isPrimitive;
+    const char_t* jniSignature;
+    const char_t* jniClassName;
+} EcoTypeMap;
+
+static jobject UGUIDPtrToJavaObject(JNIEnv* env, const UGUID* uguid);
 static int16_t createProxyForInterface(JNIEnv* env, const UGUID* riid, jobject obj, IEcoMemoryAllocator1* pIMem, voidptr_t* ppv);
 
 #endif /* __C_ECOACOM2JAVA_H__ */

@@ -2,7 +2,7 @@
 #include "Eco_Java2ACOM.h"
 #include "CEcoSystem1.h"
 
-JNIEXPORT jint JNICALL Java_Eco_System_CEcoSystem_createCEcoSystem(JNIEnv* env, jclass thisClass, jobjectArray args, jobject iSys) {
+JNIEXPORT jshort JNICALL Java_Eco_System_CEcoSystem_createCEcoSystem(JNIEnv* env, jclass thisClass, jobjectArray args, jobject iSys) {
     int16_t argc = (*env)->GetArrayLength(env, args);
     char_t** argv = (char_t**)malloc(argc * sizeof(char_t*));
     IEcoSystem1* pISys = 0;

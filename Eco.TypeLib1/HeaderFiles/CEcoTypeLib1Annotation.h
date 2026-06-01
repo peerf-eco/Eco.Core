@@ -33,11 +33,11 @@ typedef struct CEcoTypeLib1Annotation_01434A0B {
     IEcoAnnotationDescriptor1VTbl* m_pVTblIAnnotation;
 
     /* Инициализация экземпляра */
-    int16_t (ECOCALLMETHOD *Init)(/*in*/ CEcoTypeLib1Annotation_01434A0BPtr_t pCMe, /* in */ IEcoUnknownPtr_t pIUnkSystem);
+    int16_t (ECOCALLMETHOD *Init)(/* in */ CEcoTypeLib1Annotation_01434A0BPtr_t pCMe, /* in */ IEcoUnknownPtr_t pIUnkSystem);
     /* Создание экземпляра */
-    int16_t (ECOCALLMETHOD *Create)(/*in*/ CEcoTypeLib1Annotation_01434A0BPtr_t pCMe, /* in */ IEcoUnknownPtr_t pIUnkSystem, /* in */ IEcoUnknownPtr_t pIUnkOuter);
+    int16_t (ECOCALLMETHOD *Create)(/* in */ CEcoTypeLib1Annotation_01434A0BPtr_t pCMe, /* in */ IEcoUnknownPtr_t pIUnkSystem, /* in */ IEcoUnknownPtr_t pIUnkOuter);
     /* Удаление */
-    void (ECOCALLMETHOD *Delete)(/*in*/ CEcoTypeLib1Annotation_01434A0BPtr_t pCMe);
+    void (ECOCALLMETHOD *Delete)(/* in */ CEcoTypeLib1Annotation_01434A0BPtr_t pCMe);
 
     /* Счетчик ссылок */
     uint32_t m_cRef;

@@ -5,9 +5,10 @@ This module provides the `Func[R, [A, B, ...]]` generic type for type-safe
 """
 
 from ctypes import WINFUNCTYPE
-from typing import TYPE_CHECKING, Generic, ParamSpec, TypeVar
+from typing import TYPE_CHECKING, Generic, Optional, ParamSpec, TypeVar
 
-from eco_python2acom.types.core import TYPE_NAMES, Void
+from eco_python2acom.types.core import TYPE_NAMES, CPointer, Void
+from eco_python2acom.types.pointer import Ptr
 from eco_python2acom.types.utils import addressof
 
 R = TypeVar("R")
@@ -30,6 +31,15 @@ if TYPE_CHECKING:
 
         _restype_: type[R]
         _argtypes_: tuple[type, ...]
+
+        @property
+        def value(self) -> Optional[int]:
+            """Read raw function address.
+
+            Returns:
+                Integer address or `None` for NULL.
+            """
+            ...
 
 else:
 
@@ -95,7 +105,14 @@ else:
             argtypes_name = ", ".join(_type_label(arg) for arg in argtypes)
             display_name = f"Func[{restype_name}, [{argtypes_name}]]"
 
-            # Create function type
+            # Restype substitution for Python callbacks:
+            #   - `Void` => `None`;
+            #   - `Ptr[T]` => `Ptr[Void]`;
+            if restype is Void:
+                restype = None
+            elif issubclass(restype, CPointer):
+                restype = Ptr[Void]
+
             try:
                 func_type = WINFUNCTYPE(restype, *argtypes)
             except TypeError as err:
@@ -109,11 +126,16 @@ else:
                 _restype_ = func_type._restype_
                 _argtypes_ = func_type._argtypes_
 
+                @property
+                def value(self) -> "Optional[int]":
+                    """Read raw function address."""
+                    return addressof(self) if bool(self) else None
+
                 def __repr__(self) -> str:
                     """String representation with signature and address."""
                     if not bool(self):
                         return f"<{display_name} NULL>"
-                    return f"<{display_name} 0x{addressof(self):X}>"
+                    return f"<{display_name} 0x{self.value or 0:X}>"
 
             SmartFunc.__name__ = display_name
             SmartFunc.__qualname__ = display_name

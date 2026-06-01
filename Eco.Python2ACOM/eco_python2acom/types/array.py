@@ -95,6 +95,15 @@ if TYPE_CHECKING:
             """
             ...
 
+        @property
+        def value(self) -> int:
+            """Read raw array address (`(T*)arr`).
+
+            Returns:
+                Address of the array's first element.
+            """
+            ...
+
         def __bytes__(self) -> bytes:
             """Convert array to bytes.
 
@@ -176,11 +185,16 @@ else:
                 _element_type_ = element_type
                 _size_ = size
 
+                @property
+                def value(self) -> int:
+                    """Read raw array address (`(T*)arr`)."""
+                    return addressof(self)
+
                 def __repr__(self) -> str:
                     """String representation with type and address."""
                     if not bool(self):
                         return f"<Array[{type_name}, {self._size_}] NULL>"
-                    return f"<Array[{type_name}, {self._size_}] 0x{addressof(self):X}>"
+                    return f"<Array[{type_name}, {self._size_}] 0x{self.value:X}>"
 
                 def __iter__(self):
                     """Iterate over array elements."""
@@ -214,9 +228,9 @@ else:
             from eco_python2acom.types.core import Int32
 
             arr = Array[Int32, 4](10, 20, 30, 40)
-            print(arr[0].value)   # 10
+            print(arr[0])   # 10
             print(bytes(arr))     # raw 16-byte representation
-            arr[-1] = Int32(10)
+            arr[-1] = 10
             ```
         """
 

@@ -95,17 +95,17 @@ typedef struct IEcoTestVTbl {
     /* IEcoTest - unions by value and by pointer */
     int16_t (ECOCALLMETHOD *PackInt)(/* in */ IEcoTestPtr_t me, /* in */ int32_t value, /* out */ EcoValue* outValue);
     int16_t (ECOCALLMETHOD *PackDouble)(/* in */ IEcoTestPtr_t me, /* in */ double_t value, /* out */ EcoValue* outValue);
-    int32_t (ECOCALLMETHOD *UnpackInt)(/* in */ IEcoTestPtr_t me, /* in */ EcoValue value);
-    double_t (ECOCALLMETHOD *UnpackDouble)(/* in */ IEcoTestPtr_t me, /* in */ EcoValue value);
-    int32_t (ECOCALLMETHOD *ReinterpretAsInt)(/* in */ IEcoTestPtr_t me, /* in */ EcoValue value);
+    int32_t (ECOCALLMETHOD *UnpackInt)(/* in */ IEcoTestPtr_t me, /* in */ EcoValue* value);
+    double_t (ECOCALLMETHOD *UnpackDouble)(/* in */ IEcoTestPtr_t me, /* in */ EcoValue* value);
+    int32_t (ECOCALLMETHOD *ReinterpretAsInt)(/* in */ IEcoTestPtr_t me, /* in */ EcoValue* value);
 
     /* IEcoTest - nested structures and arrays of structures */
-    int16_t (ECOCALLMETHOD *MakeRect)(/* in */ IEcoTestPtr_t me, /* in */ EcoPoint topLeft, /* in */ EcoPoint bottomRight, /* out */ EcoRect* outRect);
+    int16_t (ECOCALLMETHOD *MakeRect)(/* in */ IEcoTestPtr_t me, /* in */ EcoPoint* topLeft, /* in */ EcoPoint* bottomRight, /* out */ EcoRect* outRect);
     int32_t (ECOCALLMETHOD *RectArea)(/* in */ IEcoTestPtr_t me, /* in */ EcoRect* rect);
     int16_t (ECOCALLMETHOD *SumPoints)(/* in */ IEcoTestPtr_t me, /* in */ EcoPoint* points, /* in */ uint32_t size, /* out */ EcoPoint* outSum);
 
     /* IEcoTest - tagged variants (model containing a union) */
-    int16_t (ECOCALLMETHOD *MakeVariant)(/* in */ IEcoTestPtr_t me, /* in */ int32_t tag, /* in */ EcoValue value, /* out */ EcoVariant* outVariant);
+    int16_t (ECOCALLMETHOD *MakeVariant)(/* in */ IEcoTestPtr_t me, /* in */ int32_t tag, /* in */ EcoValue* value, /* out */ EcoVariant* outVariant);
     int32_t (ECOCALLMETHOD *GetVariantTag)(/* in */ IEcoTestPtr_t me, /* in */ EcoVariant* variant);
     int16_t (ECOCALLMETHOD *GetVariantValue)(/* in */ IEcoTestPtr_t me, /* in */ EcoVariant* variant, /* out */ EcoValue* outValue);
 
@@ -114,6 +114,9 @@ typedef struct IEcoTestVTbl {
 
     /* IEcoTest - string parameter */
     int32_t (ECOCALLMETHOD *StringLength)(/* in */ IEcoTestPtr_t me, /* in */ const char_t* str);
+
+    /* IEcoTest - blocking call */
+    int16_t (ECOCALLMETHOD *SleepMs)(/* in */ IEcoTestPtr_t me, /* in */ uint32_t milliseconds);
 
 } IEcoTestVTbl, *IEcoTestVTblPtr;
 

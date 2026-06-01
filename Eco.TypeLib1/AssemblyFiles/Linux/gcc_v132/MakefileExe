@@ -70,6 +70,7 @@ OUT_NAME = EcoTypeLib1
 # --- Compilation Flags ---
 # Includes
 INC =  \
+-I ..$(SLASH)..$(SLASH)..$(SLASH)UnitTestFiles$(SLASH)HeaderFiles \
 -I ..$(SLASH)..$(SLASH)..$(SLASH)SharedFiles$(SLASH) \
 -I ..$(SLASH)..$(SLASH)..$(SLASH)HeaderFiles$(SLASH) \
 -I ..$(SLASH)..$(SLASH)..$(SLASH)HeaderFiles$(SLASH)$(ARCH) \
@@ -99,7 +100,9 @@ OC = $(TOOL)objcopy
 
 # --- Source Files ---
 SRC_C = ..$(SLASH)..$(SLASH)..$(SLASH)SourceFiles$(SLASH)$(ARCH)$(SLASH)EcoHead.c \
-        ..$(SLASH)..$(SLASH)..$(SLASH)SourceFiles$(SLASH)$(ARCH)$(SLASH)EcoTypeLib1.c
+        ..$(SLASH)..$(SLASH)..$(SLASH)UnitTestFiles$(SLASH)SourceFiles$(SLASH)EcoTypeLib1.c \
+        ..$(SLASH)..$(SLASH)..$(SLASH)UnitTestFiles$(SLASH)SourceFiles$(SLASH)EcoTypeLib1Common.c \
+        ..$(SLASH)..$(SLASH)..$(SLASH)UnitTestFiles$(SLASH)SourceFiles$(SLASH)EcoTypeLib1Calculator.c
 SRC_S = ..$(SLASH)..$(SLASH)..$(SLASH)SourceFiles$(SLASH)$(ARCH)$(SLASH)EcoEntry.S
 
 OBJ = $(SRC_C:.c=.o)

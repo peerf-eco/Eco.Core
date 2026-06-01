@@ -1,55 +1,95 @@
-# Project Structure
+# Eco.ACOM2Python
 
-This document describes the organization of folders and files within the project repository.
+C-side bridge that lets EcoOS components call Python implementations.
+
+[![C99](https://img.shields.io/badge/C-C99-A8B9CC?logo=c&logoColor=white)](#)
+[![MSVC](https://img.shields.io/badge/build-MSVC-5C2D91?logo=visualstudio&logoColor=white)](#)
+[![CPython](https://img.shields.io/badge/embeds-CPython-3776AB?logo=python&logoColor=white)](https://docs.python.org/3/extending/embedding.html)
 
 ## Overview
 
-The project is organized using a strict folder naming convention, where each folder contains files of a specific type and purpose. All folder names use `PascalCase` styling and end with the `Files` suffix.
+`Eco.ACOM2Python` is a native `EcoOS` component that embeds the `CPython`
+interpreter and exposes a small interface (`IEcoACOM2Python`) for registering,
+unregistering, and instantiating Python-implemented ACOM components from C.
 
+When a native caller asks the interface bus for a component whose CID was
+registered with this bridge, the bridge:
+
+1. Looks up the corresponding Python module previously imported via
+   `RegisterComponent`.
+2. Pulls the Python-side factory (a `ctypes`-backed object exposing
+   `IEcoComponentFactory`).
+3. Forwards `Alloc` to that factory, returning the new instance to the
+   native caller as a regular `IEcoUnknown` pointer.
+
+From the native side it looks like just another `EcoOS` component — vtables,
+`AddRef` / `Release`, `QueryInterface`. The Python details (interpreter
+lifecycle, GIL, module import) are hidden inside the bridge.
+
+## Features
+
+- Hosts an embedded `CPython` interpreter inside the EcoOS process.
+- Imports Python source files by path and looks up
+  `get_component_factory()` — the export produced by the
+  `eco_python2acom` `@factory` decorator.
+- Keeps an `IEcoList1`-backed registry of `(CID, factory, module)` triples
+  so factories survive `RegisterComponent` and are released cleanly on
+  `UnRegisterComponent` / component destruction.
+- Provides a small set of operations through `IEcoACOM2Python`:
+  `RegisterComponent`, `UnRegisterComponent`, `QueryComponent`.
+
+## Architecture
+
+![Architecture](DesignFiles/server-flow.png)
+
+## Build & Run (Windows, MSVC + CPython)
+
+### Prerequisites
+
+| Tool            | Notes                                                                                                                       |
+|-----------------|-----------------------------------------------------------------------------------------------------------------------------|
+| `Visual Studio` | Use 2017 or newer; the toolset version is not pinned in the `.vcxproj`, so whichever **Build Tools** you have installed will be picked up. |
+| `Python 3.x`    | Install from [python.org](https://www.python.org/downloads/). Pick the architecture (32-bit or 64-bit) that matches the `Platform` you intend to build (`Win32` ↔ 32-bit Python, `x64` ↔ 64-bit Python). For `Debug` configurations also tick **Download debug binaries** in the installer. |
+
+### Environment variables (user scope)
+
+| Variable           | Used by         | Notes                                                                                |
+|--------------------|-----------------|--------------------------------------------------------------------------------------|
+| `PYTHON_HOME`      | build & runtime | Path to `Python` installation (3.6 or newer).                                        |
+| `ECO_FRAMEWORK`    | build           | Eco component sources (interfaces and per-component build outputs).                  |
+| `ECO_FRAMEWORK_RT` | runtime         | Eco runtime libraries (`InterfaceBus1`, `MemoryManager1`, `FileSystemManagement1`). |
+
+After setting them, restart Visual Studio so the values are picked up.
+
+### Install the Python runtime package
+
+The Python modules loaded by the bridge import `eco_python2acom`. Install the
+package once into the same interpreter that `PYTHON_HOME` points at:
+
+```cmd
+pip install -e ..\Eco.Python2ACOM
 ```
-/
-├── AssemblyFiles
-├── BuildFiles
-├── DependenciesFiles
-├── DesignFiles
-├── HeaderFiles
-├── SharedFiles
-├── SourceFiles
-└── UnitTestFiles
-```
 
----
+### Build
 
-## Folder Descriptions
+Open `Eco.ACOM2Python\AssemblyFiles\Windows\VS_v100\EcoACOM2Python.sln` in
+Visual Studio, choose a configuration and click **Build Solution**. The
+bridge library and the unit-test executable land in
+`BuildFiles\Windows\<Platform>\<Configuration>\`.
 
-### `AssemblyFiles`
+### Runtime layout next to `EcoACOM2PythonUnitTest.exe`
 
-Contains scripts, configuration files, and tools necessary for the project's build process (e.g., `Makefile`, `pom.xml`, files for CI/CD, or automation scripts).
+| File                                                  | Source                                                                  |
+|-------------------------------------------------------|-------------------------------------------------------------------------|
+| `219EDB626EF14B42BE16F93A566F1CC3.dll`                | bridge build output                                                     |
+| `python3.dll`                                         | `$(PYTHON_HOME)\`                                                       |
+| `53884AFC93C448ECAA929C8D3A562281.dll` (Eco.List1)    | `Eco.List1\BuildFiles\Windows\<Platform>\<Configuration>\`              |
 
-### `BuildFiles`
+The unit test (`EcoACOM2PythonUnitTest.exe`) covers four variants of the
+calculator demo from `Eco.Python2ACOM/examples/server/calculator/`, selected
+at compile time via the `ECO_TEST_VARIANT` define (`1`..`4`).
 
-Contains the compiled output files of the project (executables, DLL libraries, `.jar` files, or other build artifacts), ready for deployment or execution.
+## See also
 
-### `DependenciesFiles`
-
-Contains third-party libraries, frameworks, and external dependencies of the project that are not part of the core source code. These can be compiled libraries or source files of external packages.
-
-### `DesignFiles`
-
-Contains all artifacts related to the design and planning of the project: technical specifications (TS), UML diagrams, user interface mockups (UI/UX), database schemas, and other project documentation.
-
-### `HeaderFiles`
-
-Contains **private** header files (`.h`, `.hpp`) that describe the internal class structures and implementation details of the ACOM/COM components. These files are not intended for public consumption by external clients.
-
-### `SharedFiles`
-
-Contains **public** shared ACOM/COM interface header files (`.h`, `.hpp`) and Interface Definition Language source files (`.idl` files). These files provide external clients with the necessary information to interact with your component.
-
-### `SourceFiles`
-
-The core folder of the project. Contains the **main source code** of the application (`.c`, `.cpp`, `.py`, `.js`, `.java`, etc.).
-
-### `UnitTestFiles`
-
-Contains unit test files, integration tests, and other scripts for automated testing of the code located within `SourceFiles`.
+- [`Eco.Python2ACOM`](../Eco.Python2ACOM/README.md) — the Python-side runtime
+  that authors components consumed by this bridge.

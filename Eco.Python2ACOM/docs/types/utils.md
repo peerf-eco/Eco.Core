@@ -5,7 +5,8 @@
       members:
         - sizeof
         - cast
-        - pointer
-        - pointer_type
         - byref
         - addressof
+        - offsetof
+        - memmove
+        - memset

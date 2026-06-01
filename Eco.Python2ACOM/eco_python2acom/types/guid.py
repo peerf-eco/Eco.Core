@@ -77,22 +77,22 @@ class UGUID:
 
     def __init__(
         self,
-        data: Union[str, bytes],
+        data: Union[str, bytes] = bytes(GUID_LENGTH),
         preamble: int = 0x01,
     ) -> None:
         """Initialize UGUID from a GUID string or raw 16 bytes.
 
         Args:
             data: Either a GUID string (`"XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"`)
-                or 16 raw bytes.
+                or 16 raw bytes. Defaults to an all-zero GUID.
             preamble: Preamble byte (default `0x01`).
 
         Raises:
             TypeError: If `data` is not `str` or `bytes`.
             ValueError: If the string format is invalid or raw bytes are not 16 bytes long.
         """
-        self.preamble = UInt8(preamble)
-        self.length = UInt8(self.GUID_LENGTH)
+        self.preamble = preamble
+        self.length = self.GUID_LENGTH
 
         if isinstance(data, str):
             self._from_string(data)

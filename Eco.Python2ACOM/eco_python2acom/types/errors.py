@@ -24,7 +24,7 @@ class EcoErrorCode(IntEnum):
     Example:
         ```python
         result = bus.obj.RegisterComponent(byref(cid), factory)
-        if result.value != EcoErrorCode.SUCCESS:
+        if result != EcoErrorCode.SUCCESS:
             raise EcoError(result, "RegisterComponent failed")
         ```
 
@@ -57,6 +57,7 @@ class EcoErrorCode(IntEnum):
     FILEMGR_NOTREG = 0xFFE2  # File manager not registered
     NETMGR_NOTREG = 0xFFE1  # Network manager not registered
     OUTINTERFACE_NOCONNECTION = 0xFFE0  # Outgoing interface not connected
+    NOPYTHONBRIDGE = 0xFFDF  # Python bridge not supported
 
 
 # Human-readable error messages
@@ -78,6 +79,7 @@ ERROR_MESSAGES: dict[EcoErrorCode, str] = {
     EcoErrorCode.FILEMGR_NOTREG: "File system manager is not registered",
     EcoErrorCode.NETMGR_NOTREG: "Network manager is not registered",
     EcoErrorCode.OUTINTERFACE_NOCONNECTION: "Outgoing interface has no connection",
+    EcoErrorCode.NOPYTHONBRIDGE: "Python bridge is not supported",
 }
 
 
@@ -95,7 +97,7 @@ class EcoError(Exception):
     Example:
         ```python
         result = factory.obj.Alloc(None, None, byref(iid), byref(ppv))
-        if result.value != 0:
+        if result != 0:
             raise EcoError(result, "Failed to create component instance")
         ```
 

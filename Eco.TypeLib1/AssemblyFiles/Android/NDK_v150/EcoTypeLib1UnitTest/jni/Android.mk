@@ -57,7 +57,9 @@ LOCAL_C_INCLUDES += $(LOCAL_PATH)/../../../../../SharedFiles
 LOCAL_C_INCLUDES += $(LOCAL_PATH)/../../../../../UnitTestFiles/HeaderFiles
 TARGET_PLATFORM := android-15
 TARGET_OUT := $(LOCAL_PATH)/../build/libs/$(TARGET_ARCH_ABI)/$(CONFIGURATION)
-LOCAL_SRC_FILES := $(LOCAL_PATH)/../../../../../../UnitTestFiles/SourceFiles/EcoTypeLib1.c
+LOCAL_SRC_FILES := $(LOCAL_PATH)/../../../../../../UnitTestFiles/SourceFiles/EcoTypeLib1.c \
+                   $(LOCAL_PATH)/../../../../../../UnitTestFiles/SourceFiles/EcoTypeLib1Common.c \
+                   $(LOCAL_PATH)/../../../../../../UnitTestFiles/SourceFiles/EcoTypeLib1Calculator.c
 
 ifeq ($(TARGET_LINK),0)
 

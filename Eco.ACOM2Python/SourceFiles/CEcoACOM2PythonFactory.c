@@ -38,7 +38,7 @@ extern CEcoACOM2Python_566F1CC3 g_xCEcoACOM2Python_566F1CC3;
  *
  */
 static int16_t ECOCALLMETHOD CEcoACOM2Python_566F1CC3Factory_QueryInterface(IEcoComponentFactory* me, const UGUID* riid, void** ppv) {
-    if ( IsEqualUGUID(riid, &IID_IEcoUnknown) || IsEqualUGUID(riid, &IID_IEcoComponentFactory) ) {
+    if (IsEqualUGUID(riid, &IID_IEcoUnknown) || IsEqualUGUID(riid, &IID_IEcoComponentFactory)) {
         *ppv = me;
     }
     else {
@@ -64,7 +64,7 @@ static int16_t ECOCALLMETHOD CEcoACOM2Python_566F1CC3Factory_QueryInterface(IEco
 static uint32_t ECOCALLMETHOD CEcoACOM2Python_566F1CC3Factory_AddRef(/* in */ IEcoComponentFactory* me) {
     CEcoACOM2Python_566F1CC3Factory* pCMe = (CEcoACOM2Python_566F1CC3Factory*)me;
 
-    if (me == 0 ) {
+    if (me == 0) {
         return -1; /* ERR_ECO_POINTER */
     }
 
@@ -85,7 +85,7 @@ static uint32_t ECOCALLMETHOD CEcoACOM2Python_566F1CC3Factory_AddRef(/* in */ IE
 static uint32_t ECOCALLMETHOD CEcoACOM2Python_566F1CC3Factory_Release(/* in */ IEcoComponentFactory* me) {
     CEcoACOM2Python_566F1CC3Factory* pCMe = (CEcoACOM2Python_566F1CC3Factory*)me;
 
-    if (me == 0 ) {
+    if (me == 0) {
         return -1; /* ERR_ECO_POINTER */
     }
 
@@ -93,7 +93,7 @@ static uint32_t ECOCALLMETHOD CEcoACOM2Python_566F1CC3Factory_Release(/* in */ I
     atomicdecrement_int32_t(&pCMe->m_cRef);
 
     /* If the counter is zeroed, free the instance data */
-    if ( pCMe->m_cRef == 0 ) {
+    if (pCMe->m_cRef == 0) {
         return 0;
     }
     return pCMe->m_cRef;
@@ -114,7 +114,7 @@ static int16_t ECOCALLMETHOD CEcoACOM2Python_566F1CC3Factory_Init(/* in */ struc
     CEcoACOM2Python_566F1CC3Factory* pCMe = (CEcoACOM2Python_566F1CC3Factory*)me;
     int16_t result = ERR_ECO_POINTER;
 
-    if (me == 0 ) {
+    if (me == 0) {
         return result;
     }
 
@@ -145,12 +145,12 @@ static int16_t ECOCALLMETHOD CEcoACOM2Python_566F1CC3Factory_Alloc(/* in */ stru
     CEcoACOM2Python_566F1CC3* pCObj = 0;
     UGUID* rcid = (UGUID*)&CID_EcoMemoryManager1;
 
-    if (me == 0 || pISystem == 0 ) {
+    if (me == 0 || pISystem == 0) {
         return result; /* ERR_ECO_POINTER */
     }
 
     /* Aggregation provided that IID is IID_IEcoUnknown */
-    if ( ( pIUnknownOuter != 0 ) && !IsEqualUGUID(riid, &IID_IEcoUnknown ) ) {
+    if ((pIUnknownOuter != 0) && !IsEqualUGUID(riid, &IID_IEcoUnknown)) {
         /* aggregation not supported */
         return ERR_ECO_NOAGGREGATION;
     }
@@ -228,7 +228,7 @@ static int16_t ECOCALLMETHOD CEcoACOM2Python_566F1CC3Factory_Alloc(/* in */ stru
 static char_t* ECOCALLMETHOD CEcoACOM2Python_566F1CC3Factory_get_Name(/* in */ struct IEcoComponentFactory* me) {
     CEcoACOM2Python_566F1CC3Factory* pCMe = (CEcoACOM2Python_566F1CC3Factory*)me;
 
-    if (me == 0 ) {
+    if (me == 0) {
         return 0; /* ERR_ECO_POINTER */
     }
 
@@ -249,7 +249,7 @@ static char_t* ECOCALLMETHOD CEcoACOM2Python_566F1CC3Factory_get_Name(/* in */ s
 static char_t* ECOCALLMETHOD CEcoACOM2Python_566F1CC3Factory_get_Version(/* in */ struct IEcoComponentFactory* me) {
     CEcoACOM2Python_566F1CC3Factory* pCMe = (CEcoACOM2Python_566F1CC3Factory*)me;
 
-    if (me == 0 ) {
+    if (me == 0) {
         return 0; /* ERR_ECO_POINTER */
     }
 
@@ -270,7 +270,7 @@ static char_t* ECOCALLMETHOD CEcoACOM2Python_566F1CC3Factory_get_Version(/* in *
 static char_t* ECOCALLMETHOD CEcoACOM2Python_566F1CC3Factory_get_Manufacturer(/* in */ struct IEcoComponentFactory* me) {
     CEcoACOM2Python_566F1CC3Factory* pCMe = (CEcoACOM2Python_566F1CC3Factory*)me;
 
-    if (me == 0 ) {
+    if (me == 0) {
         return 0; /* ERR_ECO_POINTER */
     }
 
@@ -296,7 +296,7 @@ IEcoComponentFactoryVTbl g_x219EDB626EF14B42BE16F93A566F1CC3FactoryVTbl = {
  * </summary>
  *
  * <description>
- *   The function 
+ *   The function creates an instance of the component factory
  * </description>
  *
  */

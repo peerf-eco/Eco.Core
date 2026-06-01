@@ -76,13 +76,14 @@ endif
 
 # Include directories
 INC = \
+-I ..$(SLASH)..$(SLASH)..$(SLASH)UnitTestFiles$(SLASH)HeaderFiles \
 -I ..$(SLASH)..$(SLASH)..$(SLASH)HeaderFiles \
 -I ..$(SLASH)..$(SLASH)..$(SLASH)SharedFiles \
 -I "$(FRAMEWORK)$(SLASH)Eco.Core1$(SLASH)SharedFiles" \
 -I "$(FRAMEWORK)$(SLASH)Eco.System1$(SLASH)SharedFiles" \
 -I "$(FRAMEWORK)$(SLASH)Eco.InterfaceBus1$(SLASH)SharedFiles" \
 -I "$(FRAMEWORK)$(SLASH)Eco.MemoryManager1$(SLASH)SharedFiles" \
--I "$(FRAMEWORK)$(SLASH)Eco.FileSystemManagement1$(SLASH)SharedFiles" 
+-I "$(FRAMEWORK)$(SLASH)Eco.FileSystemManagement1$(SLASH)SharedFiles"
 
 # Libraries directories
 LIB_DIR = \
@@ -94,7 +95,9 @@ LIB_DIR = \
 
 # Source files.
 SRC = \
-..$(SLASH)..$(SLASH)..$(SLASH)UnitTestFiles$(SLASH)SourceFiles$(SLASH)EcoTypeLib1.c
+..$(SLASH)..$(SLASH)..$(SLASH)UnitTestFiles$(SLASH)SourceFiles$(SLASH)EcoTypeLib1.c \
+..$(SLASH)..$(SLASH)..$(SLASH)UnitTestFiles$(SLASH)SourceFiles$(SLASH)EcoTypeLib1Common.c \
+..$(SLASH)..$(SLASH)..$(SLASH)UnitTestFiles$(SLASH)SourceFiles$(SLASH)EcoTypeLib1Calculator.c
 
 # Libraries
 LIBS = -lm -lgcc -lmsvcrt

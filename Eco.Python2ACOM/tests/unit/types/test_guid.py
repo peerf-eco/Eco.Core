@@ -24,7 +24,7 @@ SAMPLE_GUID_ALT = "87654321-4321-8765-4321-876543218765"
 class TestUGUIDInitialization:
     """Tests for `UGUID` constructor.
 
-    Verifies initialization from string, bytes, and with custom preamble.
+    Verifies initialization from defaulta, string, bytes, and with custom preamble.
     """
 
     def test_init_from_guid_string(self) -> None:
@@ -47,6 +47,14 @@ class TestUGUIDInitialization:
         guid = UGUID(SAMPLE_GUID, preamble=0x02)
         assert guid.preamble == 0x02
         assert guid.length == 0x10
+
+    def test_init_from_defaults(self) -> None:
+        """Verifies no-arg `UGUID` builds an all-zero GUID with defaults."""
+        guid = UGUID()
+        assert guid.preamble == 0x01
+        assert guid.length == 0x10
+        assert guid.to_bytes() == bytes(0x10)
+        assert guid.to_string() == "00000000-0000-0000-0000-000000000000"
 
     @pytest.mark.parametrize(
         "invalid",
